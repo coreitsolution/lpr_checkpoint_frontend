@@ -7,7 +7,7 @@ import "./styles/Main.scss";
 import Login from './modules/login/Login';
 import SpecialRegistration from './modules/special-registration/SpecialRegistration'
 import CCTV from './modules/cctv/CCTV';
-import Setting from './modules/setting/setting';
+import Setting from './modules/setting/Setting';
 
 function Layout() {
   return (
