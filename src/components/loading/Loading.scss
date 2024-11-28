@@ -1,0 +1,64 @@
+.pulse-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Ensures it's on top of all other content */
+}
+
+.pulse {
+  width: 22.4px;
+  height: 22.4px;
+  border-radius: 50%;
+  background: #474bff;
+  box-shadow: 0 0 0 0 rgba(71, 75, 255, 0.5);
+  animation: pulse-animation 1.8s infinite linear;
+  position: relative;
+}
+
+.pulse:before,
+.pulse:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(71, 75, 255, 0.5);
+  animation: inherit;
+}
+
+.pulse:before {
+  animation-delay: -0.6s;
+}
+
+.pulse:after {
+  animation-delay: -1.2s;
+}
+
+@keyframes pulse-animation {
+  100% {
+    box-shadow: 0 0 0 44.8px rgba(71, 75, 255, 0);
+  }
+}
+
+///
+.spinner {
+  width: 11.2px;
+  height: 11.2px;
+  border-radius: 11.2px;
+  box-shadow: 28px 0px 0 0 rgba(71, 75, 255, 0.2),
+    22.7px 16.5px 0 0 rgba(71, 75, 255, 0.4),
+    8.68px 26.6px 0 0 rgba(71, 75, 255, 0.6),
+    -8.68px 26.6px 0 0 rgba(71, 75, 255, 0.8), -22.7px 16.5px 0 0 #474bff;
+  animation: spinner-b87k6z 1s infinite linear;
+}
+
+@keyframes spinner-b87k6z {
+  to {
+    transform: rotate(360deg);
+  }
+}

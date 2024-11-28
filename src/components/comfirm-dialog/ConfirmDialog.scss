@@ -1,0 +1,120 @@
+// Variables for reusability
+$primary-color: #007bff;
+$secondary-color: #f8f9fa;
+$text-color: #555;
+
+// Backdrop styling
+.dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  // Add fade-in animation to the backdrop
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+// Dialog container styling
+.dialog-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 400px;
+  text-align: center;
+  position: relative;
+
+  // Add fade-in animation to the dialog itself
+  opacity: 0;
+  transform: translateY(-20px); // Start slightly above
+  animation: fadeIn 0.3s ease forwards;
+
+  // Close button
+  .dialog-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  // Dialog icon
+  .dialog-icon {
+    margin-bottom: 20px;
+
+    img {
+      display: block;
+      margin: 0 auto;
+    }
+  }
+
+  // Title
+  .dialog-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  // Message
+  .dialog-message {
+    font-size: 16px;
+    color: $text-color;
+    margin-bottom: 20px;
+  }
+
+  // Actions
+  .dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+
+    // Button styling
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s ease;
+
+      &.btn-primary {
+        background-color: $primary-color;
+        color: #fff;
+
+        &:hover {
+          background-color: darken($primary-color, 10%);
+        }
+      }
+
+      &.btn-secondary {
+        background-color: $secondary-color;
+        color: #000;
+
+        &:hover {
+          background-color: lighten($secondary-color, 10%);
+        }
+      }
+    }
+  }
+}
+
+// Keyframe for fade-in animation
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px); // Start slightly above
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0); // Move to its final position
+  }
+}

@@ -1,0 +1,133 @@
+.borrow-primary {
+  border-right: none;
+  border-top: none;
+  border-left: none;
+  box-shadow: -15px 0px 30px -3px var(--primary-color);
+  background: rgb(0, 0, 0);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 1) 38%,
+    rgba(29, 61, 125, 1) 100%
+  );
+}
+
+.diagonal-box {
+  position: relative;
+  background-color: var(--primary-color);
+  clip-path: polygon(95% 0, 100% 0, 5% 100%, 0% 100%);
+  z-index: 2;
+}
+
+.oblique {
+  display: inline-block;
+  position: relative;
+  background-color: var(--primary-color);
+  box-sizing: border-box;
+  clip-path: polygon(100% 0, 20% 100%, 0 100%, 0 0);
+}
+
+.profile-container {
+  background: linear-gradient(
+    to right,
+    var(--primary-color),
+    rgba(255, 255, 255, 0.1)
+  );
+}
+
+.oblique::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 35px;
+  height: 60px;
+  background-color: #000000;
+  z-index: 1;
+  clip-path: polygon(94% 0, 10% 100%, 0 100%, 0 0);
+}
+
+.oblique-end {
+  display: inline-block;
+  position: relative;
+  background-color: #ffd700;
+  box-sizing: border-box;
+  clip-path: polygon(100% 0, 100% 100%, 80% 100%, 0 0);
+}
+
+.oblique-end::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 94px;
+  background-color: #000000;
+  z-index: 1;
+  clip-path: polygon(100% 0, 100% 100%, 75% 100%, 4% 0);
+}
+
+.top-nav .content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .top-nav .content {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.nav-container {
+  border-color: var(--primary-color);
+}
+
+.menu-icon-container {
+  border-color: var(--primary-color);
+  background-color: rgba(17, 33, 45, 1);
+}
+
+.bg-icon-active {
+  background-color: rgba(34, 124, 190, 1);
+  border-color: white;
+}
+
+
+.hamburger-menu {
+  position: relative;
+
+  .hamburger-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 24px;
+    z-index: 1000;
+
+    .line {
+      background-color: #FFFFFF;
+      height: 3px;
+      width: 100%;
+      border-radius: 2px;
+      transition: transform 0.3s, opacity 0.3s;
+
+      &.open:nth-child(1) {
+        width: 63%;
+        transform: translateY(5px) rotate(-45deg);
+      }
+      &.open:nth-child(2) {
+        transform: translateX(6px);
+      }
+      &.open:nth-child(3) {
+        width: 63%;
+        transform: translateY(-5px) rotate(45deg);
+      }
+    }
+  }
+}
+

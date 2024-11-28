@@ -1,0 +1,32 @@
+.primary-btn {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.secondary-btn {
+  background-color: white !important;
+  color: var(--primary-color) !important;
+  border: solid 1px var(--primary-color) !important;
+}
+
+.remove-btn {
+  background-color: gray !important;
+}
+
+.box-primary {
+  border: 1px solid var(--primary-color);
+}
+
+.export-btn {
+  background-color: gray !important;
+  height: 40px !important;
+  width: 40px !important;
+  border-radius: 4px !important;
+}
+
+.row-center {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: start !important;
+}

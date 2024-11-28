@@ -1,0 +1,24 @@
+:root {
+  --primary-color: rgba(43, 155, 237, 1); /* Define your primary color here */
+  --title-primary-color: rgba(57, 59, 58, 1);
+  --title-secondary-color: rgba(72, 73, 75, 1);
+  --bg-header: rgba(36, 39, 39, 1);
+}
+
+.mt-2 {
+  margin-top: 15px;
+}
+
+.btn-secondary {
+  background-color: gray !important;
+}
+
+.bg-content {
+  background-color: var(--title-secondary-color);
+  border-bottom: dotted 0.025px white;
+  color: white;
+}
+
+.title-header {
+  background-color: var(--title-primary-color);
+}
