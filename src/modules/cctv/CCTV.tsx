@@ -58,10 +58,6 @@ const CCTV = () => {
     setDropdownVisible(null)
   }
 
-  useEffect(() => {
-    console.log(isFullWidth)
-  }, [isFullWidth])
-
   return (
     <div className={`main-content pe-1 min-w-[950px] ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>
       <div 

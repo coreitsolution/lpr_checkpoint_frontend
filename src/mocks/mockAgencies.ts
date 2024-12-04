@@ -8,8 +8,8 @@ export const agenciesData: Agencies[] = [
     address: '123 Street',
     latitude: '13.7563',
     longitude: '100.5018',
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 2,
@@ -18,7 +18,7 @@ export const agenciesData: Agencies[] = [
     address: '123 Street',
     latitude: '13.753924',
     longitude: '100.506335',
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];

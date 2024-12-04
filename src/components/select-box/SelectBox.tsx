@@ -9,6 +9,7 @@ type SelectBoxProps = SelectProps & {
     value: any;
     onChange: (event: SelectChangeEvent<any>) => void;
     options: { value: any; label: string }[];
+    label: string;
     className?: string;
 };
 

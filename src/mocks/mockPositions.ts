@@ -1,0 +1,33 @@
+import { Positions } from "../features/dropdown/dropdownTypes"
+
+export const positions: Positions[] = [
+  { id: 1, name_th: "พลทหาร", name_en: "Private" },
+  { id: 2, name_th: "สิบตรี", name_en: "Corporal" },
+  { id: 3, name_th: "สิบโท", name_en: "Sergeant" },
+  { id: 4, name_th: "สิบเอก", name_en: "Staff Sergeant" },
+  { id: 5, name_th: "จ่าสิบตรี", name_en: "Warrant Officer Class 1" },
+  { id: 6, name_th: "จ่าสิบเอก", name_en: "Warrant Officer Class 2" },
+  { id: 7, name_th: "ร้อยตรี", name_en: "Second Lieutenant" },
+  { id: 8, name_th: "ร้อยโท", name_en: "First Lieutenant" },
+  { id: 9, name_th: "ร้อยเอก", name_en: "Captain" },
+  { id: 10, name_th: "พันตรี", name_en: "Major" },
+  { id: 11, name_th: "พันโท", name_en: "Lieutenant Colonel" },
+  { id: 12, name_th: "พันเอก", name_en: "Colonel" },
+  { id: 13, name_th: "พลตรี", name_en: "Brigadier General" },
+  { id: 14, name_th: "พลโท", name_en: "Lieutenant General" },
+  { id: 15, name_th: "พลเอก", name_en: "General" },
+  { id: 16, name_th: "พลตำรวจ", name_en: "Police Private" },
+  { id: 17, name_th: "สิบตำรวจตรี", name_en: "Police Corporal" },
+  { id: 18, name_th: "สิบตำรวจโท", name_en: "Police Sergeant" },
+  { id: 19, name_th: "สิบตำรวจเอก", name_en: "Police Staff Sergeant" },
+  { id: 20, name_th: "จ่าสิบตำรวจ", name_en: "Police Warrant Officer" },
+  { id: 21, name_th: "ร้อยตำรวจตรี", name_en: "Police Sub-Lieutenant" },
+  { id: 22, name_th: "ร้อยตำรวจโท", name_en: "Police Lieutenant" },
+  { id: 23, name_th: "ร้อยตำรวจเอก", name_en: "Police Captain" },
+  { id: 24, name_th: "พันตำรวจตรี", name_en: "Police Major" },
+  { id: 25, name_th: "พันตำรวจโท", name_en: "Police Lieutenant Colonel" },
+  { id: 26, name_th: "พันตำรวจเอก", name_en: "Police Colonel" },
+  { id: 27, name_th: "พลตำรวจตรี", name_en: "Police Brigadier General" },
+  { id: 28, name_th: "พลตำรวจโท", name_en: "Police Lieutenant General" },
+  { id: 29, name_th: "พลตำรวจเอก", name_en: "Police General" }
+];

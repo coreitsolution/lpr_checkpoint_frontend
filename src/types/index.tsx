@@ -58,3 +58,46 @@ export interface RegistrationTypesData {
   created_at: Date
   updated_at: Date
 }
+
+// Map
+export interface MapProps {
+  height?: string;
+  width?: string;
+  panControl?: boolean;
+  zoomControl?: boolean;
+  mapTypeControl?: boolean;
+  streetViewControl?: boolean;
+  fullscreenControl?: boolean;
+  onMapLoad?: (mapInstance: google.maps.Map | null) => void;
+}
+
+export interface MapConfig {
+  mapId: string;
+  center: {
+    lat: number;
+    lng: number;
+  };
+  zoom: number;
+  panControl?: boolean;
+  zoomControl?: boolean;
+  mapTypeControl?: boolean;
+  streetViewControl?: boolean;
+  fullscreenControl?: boolean;
+}
+
+export interface SearchResult {
+  name: string;
+  location: google.maps.LatLngLiteral;
+  placeId?: string;
+}
+
+export type CoordinateFormat = {
+  lat: number;
+  lng: number;
+}
+
+export interface MarkerManager {
+  currentMarker: google.maps.marker.AdvancedMarkerElement | null;
+  clearMarker: () => void;
+  createMarker: (location: google.maps.LatLngLiteral) => Promise<void>;
+}

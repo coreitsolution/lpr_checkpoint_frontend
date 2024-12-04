@@ -857,11 +857,9 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
   useEffect(() => {
     if (selectedMenu === "collapse") {
       setCollapse(true)
-      console.log(true)
     }
     else {
       setCollapse(false)
-      console.log(false)
     }
   }, [selectedMenu])
 
@@ -1054,8 +1052,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
                     <div className='w-full h-full text-center'>
                       <label className='ml-1'>{item.plate}</label>
                       <div className='grid grid-cols-2 h-[100px] w-full'>
-                        <img key={index} src={item.pathImage} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle w-full h-full" />
-                        <img key={index} src={item.pathImage} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle w-full h-full" />
+                        <img key={index + "_1"} src={item.pathImage} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle w-full h-full" />
+                        <img key={index + "_2"} src={item.pathImage} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle w-full h-full" />
                       </div>
                     </div>
                     <div 

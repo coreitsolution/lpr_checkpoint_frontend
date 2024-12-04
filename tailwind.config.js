@@ -13,6 +13,8 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
 			screens: {
+				'lt1008': { max: '1008px' },
+				'lt1443': { max: '1443px' },
         'lt1440': { max: '1440px' },
 				'lt1535': { max: '1535px' },
         'lt1832': { max: '1832px' },
@@ -40,6 +42,9 @@ export default {
         bahamaBlue: '#185887',
         sunglow: '#FFD233',
         cinnabar: '#E53935',
+				emerald: '#4ECB71', 
+				nobel2: '#9E9E9E',
+				coralRed: '#EF4444',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
