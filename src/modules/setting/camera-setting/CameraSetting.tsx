@@ -455,7 +455,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.checkpointId}
-                  onChange={(value) => handleTextChange('checkpointId', value)}
+                  onChange={(event) => handleTextChange('checkpointId', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px]'>
@@ -485,7 +485,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.route}
-                  onChange={(value) => handleTextChange('route', value)}
+                  onChange={(event) => handleTextChange('route', event.target.value)}
                 />
               </div>
               <div className='my-[10px]'>
@@ -495,7 +495,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.rtspLiveView}
-                  onChange={(value) => handleTextChange('rtspLiveView', value)}
+                  onChange={(event) => handleTextChange('rtspLiveView', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px]'>
@@ -505,7 +505,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.streamEncode}
-                  onChange={(value) => handleTextChange('streamEncode', value)}
+                  onChange={(event) => handleTextChange('streamEncode', event.target.value)}
                 />
                 <TextBox
                   id="api-server"
@@ -513,7 +513,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.apiServer}
-                  onChange={(value) => handleTextChange('apiServer', value)}
+                  onChange={(event) => handleTextChange('apiServer', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px] mt-[40px]'>
@@ -542,7 +542,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.checkpoint}
-                  onChange={(value) => handleTextChange('checkpoint', value)}
+                  onChange={(event) => handleTextChange('checkpoint', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px]'>
@@ -574,7 +574,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.location.latitude}
-                  onChange={(value) => handleTextLocationChange('latitude', value)}
+                  onChange={(event) => handleTextLocationChange('latitude', event.target.value)}
                 />
                 <TextBox
                   id="longtitude"
@@ -582,7 +582,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.location.longtitude}
-                  onChange={(value) => handleTextLocationChange('longtitude', value)}
+                  onChange={(event) => handleTextLocationChange('longtitude', event.target.value)}
                 />
                 {/* Google Map Icon */}
                 <div className='flex items-end'>
@@ -601,7 +601,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.rtspProcess}
-                  onChange={(value) => handleTextChange('rtspProcess', value)}
+                  onChange={(event) => handleTextChange('rtspProcess', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px]'>
@@ -611,7 +611,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.pcSerialNumber}
-                  onChange={(value) => handleTextChange('pcSerialNumber', value)}
+                  onChange={(event) => handleTextChange('pcSerialNumber', event.target.value)}
                 />
                 <TextBox
                   id="license"
@@ -619,7 +619,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.license}
-                  onChange={(value) => handleTextChange('license', value)}
+                  onChange={(event) => handleTextChange('license', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px] mt-[40px]'>
@@ -658,7 +658,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.officer.name}
-                  onChange={(value) => handleTextOfficerChange('name', value)}
+                  onChange={(event) => handleTextOfficerChange('name', event.target.value)}
                 />
               </div>
               <div className='grid grid-cols-2 gap-5 my-[10px]'>
@@ -668,7 +668,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.officer.phone}
-                  onChange={(value) => handleTextOfficerChange('phone', value)}
+                  onChange={(event) => handleTextOfficerChange('phone', event.target.value)}
                 />
               </div>
             </div>
@@ -681,7 +681,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.officer.surname}
-                  onChange={(value) => handleTextOfficerChange('surname', value)}
+                  onChange={(event) => handleTextOfficerChange('surname', event.target.value)}
                 />
                 <SelectBox
                   sx={{ marginTop: "15px" }}

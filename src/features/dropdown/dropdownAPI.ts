@@ -24,7 +24,7 @@ import { positions } from "../../mocks/mockPositions";
 
 export const fetchAgencies = async (): Promise<Agencies[]> => {
   if (isDevEnv) {
-    return Promise.resolve(agenciesData);
+    return Promise.resolve(agenciesData.sort((a, b) => (a.agency.localeCompare(b.agency))));
   }
   return await fetchClient<Agencies[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -33,7 +33,7 @@ export const fetchAgencies = async (): Promise<Agencies[]> => {
 
 export const fetchRegistrationTypes = async (): Promise<RegistrationTypesData[]> => {
   if (isDevEnv) {
-    return Promise.resolve(registrationTypesData);
+    return Promise.resolve(registrationTypesData.sort((a, b) => (a.registration_type.localeCompare(b.registration_type))));
   }
   return await fetchClient<RegistrationTypesData[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -42,7 +42,7 @@ export const fetchRegistrationTypes = async (): Promise<RegistrationTypesData[]>
 
 export const fetchDataStatus = async (): Promise<DataStatusData[]> => {
   if (isDevEnv) {
-    return Promise.resolve(dataStatusData);
+    return Promise.resolve(dataStatusData.sort((a, b) => (a.status.localeCompare(b.status))));
   }
   return await fetchClient<DataStatusData[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -51,7 +51,7 @@ export const fetchDataStatus = async (): Promise<DataStatusData[]> => {
 
 export const fetchProvinces = async (): Promise<Province[]> => {
   if (isDevEnv) {
-    return Promise.resolve(provinces.sort((a, b) => (a.name_th > b.name_th ? -1 : 1)));
+    return Promise.resolve(provinces.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
   return await fetchClient<Province[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -60,7 +60,7 @@ export const fetchProvinces = async (): Promise<Province[]> => {
 
 export const fetchPoliceDivisions = async (): Promise<PoliceDivisions[]> => {
   if (isDevEnv) {
-    return Promise.resolve(policeDivisions);
+    return Promise.resolve(policeDivisions.sort((a, b) => (a.police_division.localeCompare(b.police_division, "th"))));
   }
   return await fetchClient<PoliceDivisions[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -69,7 +69,7 @@ export const fetchPoliceDivisions = async (): Promise<PoliceDivisions[]> => {
 
 export const fetchDistricts = async (): Promise<Districts[]> => {
   if (isDevEnv) {
-    return Promise.resolve(districts.sort((a, b) => (a.name_th > b.name_th ? -1 : 1)))
+    return Promise.resolve(districts.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
   return await fetchClient<Districts[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -79,7 +79,7 @@ export const fetchDistricts = async (): Promise<Districts[]> => {
 export const fetchSubDistricts = async (districtId: number): Promise<SubDistricts[]> => {
   if (isDevEnv) {
     return Promise.resolve(
-      subDistricts.filter((subDistrict) => subDistrict.district_id === districtId).sort((a, b) => (a.name_th > b.name_th ? -1 : 1))
+      subDistricts.filter((subDistrict) => subDistrict.district_id === districtId).sort((a, b) => (a.name_th.localeCompare(b.name_th, "th")))
     );
   }
 
@@ -94,7 +94,7 @@ export const fetchSubDistricts = async (districtId: number): Promise<SubDistrict
 
 export const fetchNamePrefixes = async (): Promise<NamePrefixes[]> => {
   if (isDevEnv) {
-    return Promise.resolve(namePrefixes);
+    return Promise.resolve(namePrefixes.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
   return await fetchClient<NamePrefixes[]>(
     "https://jsonplaceholder.typicode.com/users"
@@ -103,7 +103,7 @@ export const fetchNamePrefixes = async (): Promise<NamePrefixes[]> => {
 
 export const fetchPositions = async (): Promise<Positions[]> => {
   if (isDevEnv) {
-    return Promise.resolve(positions);
+    return Promise.resolve(positions.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
   return await fetchClient<Positions[]>(
     "https://jsonplaceholder.typicode.com/users"

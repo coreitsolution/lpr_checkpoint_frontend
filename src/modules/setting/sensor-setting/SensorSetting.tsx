@@ -50,7 +50,6 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
   const handleCustomShapeDrawn = (customShape: CustomShape) => {
     setIsDrawingEnabled(false)
     setSensorSettingData(customShape)
-    console.log('CustomShape drawn:', customShape)
   }
 
   const handleClearCanvas = () => {

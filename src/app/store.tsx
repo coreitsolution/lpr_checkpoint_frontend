@@ -4,7 +4,9 @@ import detectPersonReducer from "../features/detect-person/detectPersonSlice";
 import userManagementReducer from "../features/user-management/userManagementSlice";
 import SpecialLicenseReducer from "../features/special-license/specialLicenseSlice";
 import dropdownReducer from "../features/dropdown/dropdownSlice";
-import cameraSettingsSlice from "../features/camera-settings/cameraSettingsSlice";
+import cameraSettingsReducer from "../features/camera-settings/cameraSettingsSlice";
+import liveViewRealTimeReducer from "../features/live-view-real-time/liveViewRealTimeSlice";
+import registrationDataReducer from "../features/registration-data/RegistrationDataSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +15,9 @@ export const store = configureStore({
     userMgmt: userManagementReducer,
     licenses: SpecialLicenseReducer,
     dropdown: dropdownReducer,
-    cameraSettings: cameraSettingsSlice,
+    cameraSettings: cameraSettingsReducer,
+    liveViewRealTimes: liveViewRealTimeReducer,
+    registrationData: registrationDataReducer,
   },
 });
 

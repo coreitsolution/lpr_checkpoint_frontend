@@ -1,10 +1,19 @@
 import { fetchClient } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
-import { CameraSettings, NewCameraSettings, CameraDetailSetting } from "./cameraSettingsTypes"
-import { cameraSettingsData, cameraDetailSettingsData } from "../../mocks/mockCameraSettings"
+import { CameraSettings, NewCameraSettings, CameraDetailSetting, ReqStream, StreamDetail } from "./cameraSettingsTypes"
+import { cameraSettingsData, cameraDetailSettingsData, streamDetailData } from "../../mocks/mockCameraSettings"
 
 let mockData = [...cameraSettingsData]
 let mockDataDetail = [...cameraDetailSettingsData]
+
+export const postStartStream = async (reqStream: ReqStream[]): Promise<StreamDetail[]> => {
+  if (isDevEnv) {
+    return Promise.resolve(streamDetailData)
+  }
+  return await fetchClient<StreamDetail[]>(
+    "http://192.168.1.141:3103/api/v1/onvif/start-stream"
+  )
+}
 
 export const fetchCameraSettings = async (): Promise<CameraDetailSetting> => {
   if (isDevEnv) {

@@ -1,20 +1,22 @@
 import React, { useState } from "react";
-import TextField from "@mui/material/TextField";
+import TextField, {TextFieldProps} from "@mui/material/TextField";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import { Typography } from "@mui/material";
 
-interface TextBoxProps {
+type TextBoxProps = TextFieldProps & {
   id?: string;
   label?: string;
   variant?: "outlined" | "filled" | "standard";
   className?: string;
   placeHolder: string;
   value?: string;
-  onChange?: (value: string) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyPress?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   isError?: boolean;
   helperText?: string | null;
   disabled?: boolean;
+  labelFontSize?: string;
+  textFieldFontSize?: string;
 }
 
 const TextBox: React.FC<TextBoxProps> = ({
@@ -29,12 +31,14 @@ const TextBox: React.FC<TextBoxProps> = ({
   isError = false,
   helperText,
   disabled,
+  labelFontSize,
+  textFieldFontSize,
   ...props
 }) => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
-      onChange(event.target.value);
+      onChange(event);
     }
   };
 
@@ -46,7 +50,7 @@ const TextBox: React.FC<TextBoxProps> = ({
   
   return (
     <div className="flex flex-col w-full">
-      <Typography variant="subtitle1" color="white">
+      <Typography sx={{ fontSize: labelFontSize || undefined }} variant="subtitle1" color="white">
         {label}
       </Typography>
       <TextField
@@ -65,7 +69,7 @@ const TextBox: React.FC<TextBoxProps> = ({
         slotProps={{
           input: {
             className: `bg-white w-full ${className}`, // Custom styling for the input
-            style: { color: "black" }, // Ensure text is white
+            style: { color: "black", fontSize: textFieldFontSize || undefined }, // Ensure text is white
           },
         }}
         helperText={isError ? helperText : ""}

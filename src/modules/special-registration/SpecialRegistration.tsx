@@ -3,45 +3,60 @@ import { format } from "date-fns"
 import PopupMessage from "../../utils/popupMessage"
 import ManageExtraRegistration from "../manage-extra-registration/ManageExtraRegistration"
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
-import axios  from 'axios'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
+
+// Icon
 import { Icon } from '../../components/icons/Icon'
 import { Pencil, Trash2, Plus, Import } from 'lucide-react'
 
+// Types
 import {
-  ExtraRegistrationData
-} from '../../features/api/types'
+  SpecialRegistrationData
+} from '../../features/registration-data/RegistrationDataTypes'
+import { FilterSpecialRegistration } from "../../features/api/types"
 
+
+// API
 import { 
   fetchAgenciesThunk,
   fetchDataStatusThunk,
   fetchProvincesThunk,
   fetchRegistrationTypesThunk
  } from "../../features/dropdown/dropdownSlice"
+ import { 
+  fetchSpecialRegistrationDataThunk,
+  deleteSpecialRegistrationDataThunk
+ } from "../../features/registration-data/RegistrationDataSlice"
 
  // Context
 import { useHamburger } from "../../context/HamburgerContext"
 
 // Component
 import Loading from "../../components/loading/Loading"
+import SearchFilter from "../search-filter/SearchFilter"
 
 function ExtraRegistration() {
+  const dispatch: AppDispatch = useDispatch()
+  const { specialRegistrationData, status, error } = useSelector(
+    (state: RootState) => state.registrationData
+  )
+
   const [isAddRegistationOpen, setIsAddRegistationOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [extraRegistrations, setExtraRegistrations] = useState<ExtraRegistrationData[]>([])
-  const [selectedRow, setSelectedRow] = useState<ExtraRegistrationData | null>(null)
+  const [originalData, setOriginalData] = useState<SpecialRegistrationData[]>([])
+  const [specialRegistrationsList, setSpecialRegistrationsList] = useState<SpecialRegistrationData[]>([])
+  const [selectedRow, setSelectedRow] = useState<SpecialRegistrationData | null>(null)
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
   
   const apiUrl = import.meta.env.VITE_API_URL
 
-  const dispatch: AppDispatch = useDispatch()
-  const { agencies, provinces, dataStatus, registrationTypes, status, error } = useSelector(
+  const { agencies, provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
 
-  const handleEditClick = (item: ExtraRegistrationData) => {
+  const handleEditClick = (item: SpecialRegistrationData) => {
     setSelectedRow(item)
     setIsAddRegistationOpen(true)
     setIsEditMode(true)
@@ -54,37 +69,69 @@ function ExtraRegistration() {
 
   const handleDeleteClick = async (id: number) => {
     try {
-      const response = await axios.delete(`${apiUrl}/registrationInformation/${id}`)
-      if (response.status === 200) {
-        setExtraRegistrations((prev) => prev.filter((item) => item.id !== id))
-        PopupMessage("ลบข้อมูลสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-      } 
-      else {
-        PopupMessage("ลบข้อมูลไม่สำเร็จ", "ข้อมูลไม่สามารถลบได้", "error")
-      }
+      await dispatch(deleteSpecialRegistrationDataThunk(id))
+      PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
     } 
     catch (error) {
       PopupMessage("ลบข้อมูลไม่สำเร็จ", "ข้อมูลไม่สามารถลบได้", "error")
     }
   }
 
-  useEffect(() => {
-    const fetchRegistrationInformationData = async () => {
-      try {
-        const response = await axios.get<ExtraRegistrationData[]>(`${apiUrl}/registrationInformation`)
-        setExtraRegistrations(response.data)
-      } 
-      catch (err) {
-        PopupMessage("ดึงข้อมูลไม่สำเร็จ", "ไม่สามารถดึงข้อมูลการลงทะเบียนได้", "error")
-      }
+  const setFilterData = (filterData: FilterSpecialRegistration) => {
+    setIsLoading(true)
+    const {
+      letterCategory,
+      carRegistration,
+      selectedProvince,
+      selectedRegistrationType,
+      selectedAgency,
+      selectedStatus,
+    } = filterData
+  
+    if (
+      !letterCategory &&
+      !carRegistration &&
+      !selectedProvince &&
+      !selectedRegistrationType &&
+      !selectedAgency &&
+      !selectedStatus
+    ) {
+      setSpecialRegistrationsList(originalData)
+      return
     }
+  
+    const getProvinceId = provinces.find((province) => province.name_th === selectedProvince)?.id || 0
+    const getStatusId = dataStatus.find((status) => status.status === selectedStatus)?.id || 0
+    const getAgencyId = agencies.find((agency) => agency.agency === selectedAgency)?.id || 0
+    const getRegistrationTypeId = registrationTypes.find((type) => type.registration_type === selectedRegistrationType)?.id || 0
+  
+    const filteredData = originalData.filter((row) => {
+      return (
+        (!getProvinceId || row.agency_id === getProvinceId) &&
+        (!getStatusId || row.status_id === getStatusId) &&
+        (!getAgencyId || row.agency_id === getAgencyId) &&
+        (!getRegistrationTypeId || row.registration_type_id === getRegistrationTypeId) &&
+        (!letterCategory || row.letter_category.includes(letterCategory)) &&
+        (!carRegistration || row.car_registration.includes(carRegistration))
+      )
+    })
+  
+    setSpecialRegistrationsList(filteredData)
+  }
+
+  useEffect(() => {
+    setIsLoading(false)
+  }, [specialRegistrationsList])
+
+  useEffect(() => {
+    dispatch(fetchSpecialRegistrationDataThunk())
 
     if (!isAddRegistationOpen) {
       setIsLoading(true)
       setTimeout(async () => {
-        await fetchRegistrationInformationData()
+        dispatch(fetchSpecialRegistrationDataThunk())
         setIsLoading(false)
-      }, 500);
+      }, 500)
     }
     dispatch(fetchAgenciesThunk())
     dispatch(fetchProvincesThunk())
@@ -92,10 +139,17 @@ function ExtraRegistration() {
     dispatch(fetchDataStatusThunk())
   }, [apiUrl, dispatch, isAddRegistationOpen])
 
+  useEffect(() => {
+    if (specialRegistrationData) {
+      setSpecialRegistrationsList(specialRegistrationData)
+      setOriginalData(specialRegistrationData)
+    }
+  }, [specialRegistrationData])
+
   return (
-    <div className={`main-content pe-6 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
+    <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
-      <div id="extra-registration" className="grid grid-cols-1 w-full">
+      <div id="extra-registration" className="grid grid-cols-1 w-[85%]">
         <div id="head" className="flex h-[50px] justify-between">
           <div>
             <p className="text-[20px] text-white">รายการทะเบียนพิเศษ</p>
@@ -132,8 +186,8 @@ function ExtraRegistration() {
             </thead>
             <tbody className="text-white">
               {
-                extraRegistrations && extraRegistrations.length > 0 ? 
-                extraRegistrations.map((item) => (
+                specialRegistrationsList && specialRegistrationsList.length > 0 ? 
+                specialRegistrationsList.map((item) => (
                   <tr key={item.id} className="h-[80px] border-b border-b-[1px] border-dashed border-darkGray">
                     <td className="pl-[10px] w-[280px] text-start bg-celtic">
                       {  
@@ -157,13 +211,13 @@ function ExtraRegistration() {
                         )
                       }
                     </td>
-                    <td className="text-center bg-celtic">
+                    <td className="text-start bg-celtic">
                       {
-                        registrationTypes.find((row) => row.id === item.registration_type_id)?.registration_type
+                        <p className="pl-[10px]">{registrationTypes.find((row) => row.id === item.registration_type_id)?.registration_type}</p>
                       }
                     </td>
-                    <td className="text-center bg-tuna">{format(item.created_at, "dd/MM/yyyy")}</td>
-                    <td className="text-center bg-celtic">{format(item.updated_at, "dd/MM/yyyy")}</td>
+                    <td className="text-center bg-tuna">{format(new Date(item.created_at ? item.created_at : ""), "dd/MM/yyyy")}</td>
+                    <td className="text-center bg-celtic">{format(new Date(item.updated_at), "dd/MM/yyyy")}</td>
                     <td className="text-center bg-tuna">
                       {
                         item.data_owner === "" ? "ไม่ระบุตัวตน" : item.data_owner
@@ -201,6 +255,11 @@ function ExtraRegistration() {
               }
             </tbody>
           </table>
+        </div>
+        <div id="search-filter" className="w-[14%] fixed right-0 top-0 pt-[95px] h-full">
+          <SearchFilter 
+            setFilterData={setFilterData}
+          />
         </div>
         <Dialog open={isAddRegistationOpen} onClose={() => setIsAddRegistationOpen(false)} className="relative z-50">
           <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">

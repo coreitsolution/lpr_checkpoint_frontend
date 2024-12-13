@@ -17,6 +17,8 @@ interface LocationDialog {
   compareData: SearchResult[];
   data?: SearchResult;
   isCompare: boolean;
+  closeText?:string;
+  closeButtonCss?:string;
 }
 
 export default function LocationDetailDialog({
@@ -25,6 +27,8 @@ export default function LocationDetailDialog({
   open,
   close,
   isCompare = false,
+  closeText,
+  closeButtonCss,
 }: LocationDialog) {
   const [fullWidth, setFullWidth] = React.useState(true);
   const [maxWidth, setMaxWidth] = React.useState<DialogProps["maxWidth"]>("sm");
@@ -280,7 +284,7 @@ export default function LocationDetailDialog({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button className="primary-btn" onClick={handleClose}>Close</Button>
+          <Button className={ closeButtonCss ? closeButtonCss : "primary-btn"} onClick={handleClose}>{ closeText ? closeText : "Close"}</Button>
         </DialogActions>
       </div>
     </Dialog>

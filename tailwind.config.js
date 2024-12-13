@@ -45,6 +45,7 @@ export default {
 				emerald: '#4ECB71', 
 				nobel2: '#9E9E9E',
 				coralRed: '#EF4444',
+				gainsboro: '#D9D9D9',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

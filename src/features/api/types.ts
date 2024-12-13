@@ -95,8 +95,10 @@ export interface FilesData {
   extra_registration_id: number | null
   file_name: string
   file_path: string
-  file_import_date: Date
+  file_import_date: string
 }
+
+export type NewFilesData = Omit<FilesData, 'id'>
 
 export interface ExtraRegistrationData {
   id: number
@@ -104,7 +106,7 @@ export interface ExtraRegistrationData {
   behavior2: string
   car_registration: string
   case_id: string
-  created_at: Date
+  created_at: string
   data_owner: string
   end_arrest_date: Date | undefined
   images: string[]
@@ -115,7 +117,7 @@ export interface ExtraRegistrationData {
   start_arrest_date: Date | undefined
   agency_id: number
   status_id: number
-  updated_at: Date
+  updated_at: string
 }
 
 export interface AgenciesData {
@@ -157,4 +159,13 @@ export interface Officer {
   surname: string
   position: string
   phone: string
+}
+
+export interface FilterSpecialRegistration {
+  letterCategory: string
+  carRegistration: string
+  selectedProvince: string
+  selectedRegistrationType: string
+  selectedAgency: string
+  selectedStatus: string
 }

@@ -122,6 +122,7 @@ function Nav() {
 
         {/* User Section */}
         <div className="flex items-center space-x-5 mr-[50px] text-white">
+          <p className="text-[20px]">นางสาวธรพร ศรีสมร</p>
           <img src={`https://randomuser.me/api/portraits/women/1.jpg`} alt="User" className="w-12 h-12 rounded-full border-2 border-blue-600" />
           <div className="grid grid-cols-[20px_auto] border border-white rounded-[5px] py-[3px] px-[12px]">
             <span className="mr-[5px]">{languageSelected === 'th' ? <Th /> : <Us />}</span>
@@ -138,7 +139,7 @@ function Nav() {
       </div>
 
       {/* side nav */}
-      <div className={`fixed h-4/6 w-[80px] bg-black mt-[2rem] border-2 border-dodgerBlue rounded-xl px-2 py-12 transition-transform duration-300
+      <div className={`fixed h-[70vh] w-[80px] bg-black mt-[2rem] border-2 border-dodgerBlue rounded-xl px-2 py-12 transition-transform duration-300
         ${isOpen ? "translate-x-0 translate-y-1 left-3" : "-translate-x-full translate-y-1 left-0"}
         `}>
         <div className="absolute top-3 left-0 w-full flex justify-center">
@@ -149,7 +150,7 @@ function Nav() {
             />
           )}
         </div>
-        <div className="overflow-hidden h-[540px]">
+        <div className="overflow-hidden h-[58vh]">
           <div
             style={{ transform: `translateY(${sidePosition}px)` }}
             className="flex flex-col gap-2 transition-transform duration-300 ease-out"
@@ -169,7 +170,7 @@ function Nav() {
             ))}
           </div>
         </div>
-        <div className="absolute bottom-3 left-0 w-full flex justify-center">
+        <div className="absolute bottom-0 left-0 pb-3 w-full flex justify-center bg-black rounded-b-[10px]">
           {sidePosition !== -200 && (
             <RiArrowDownSFill
               className="text-white cursor-pointer w-[2.5em] h-[2.5em]"

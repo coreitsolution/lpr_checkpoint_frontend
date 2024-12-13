@@ -52,7 +52,7 @@ const Setting = () => {
     {name: "แสดงผล 3 หน้าจอ", value: 3},
     {name: "แสดงผล 4 หน้าจอ", value: 4},
   ])
-  const [selectedValue, setSelectedValue] = useState(4)
+
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -96,7 +96,7 @@ const Setting = () => {
 
   const handleDeleteClick = async (id: number) => {
     await dispatch(deleteCameraSettingThunk(id))
-    PopupMessage("", "บันทึกข้อมูลสำเร็จ", 'success')
+    PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
   }
 
   const handleScreenSelect = async (value: number) => {
@@ -120,7 +120,7 @@ const Setting = () => {
   }
 
   return (
-    <div id="setting" className={`main-content pe-6 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
+    <div id="setting" className={`main-content pe-6 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-300`}>
       {isLoading && <Loading />}
       <div className='flex flex-col pt-10 mb-[30px]'>
         <label className='text-white mb-4'>ตั้งค่าหน้าจอแสดงผล</label>
@@ -142,7 +142,7 @@ const Setting = () => {
           <div className={`${cameraSetting && cameraSetting.cameraSettings.length < 4 ? "bg-dodgerBlue" : "bg-nobel"} rounded-[5px]`}>
             <Button
               onClick={() => handleCameraButtonClick(true)}
-              disabled={cameraSetting && cameraSetting.cameraSettings.length > 4 ? true : false}
+              disabled={cameraSetting && cameraSetting.cameraSettings.length >= 4 ? true : false}
             >
               <Icon icon={Plus} size={25} color="white" />
               <span className='ml-[5px] text-white text-[15px]'>กล้อง</span>

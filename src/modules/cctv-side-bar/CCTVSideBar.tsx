@@ -1,11 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select"
+  MenuItem,
+} from "@mui/material"
 import { format } from "date-fns"
 import "../../styles/variables.scss"
 
@@ -21,11 +18,16 @@ import RiArrowLeftSFill from "~icons/ri/arrow-left-s-fill"
 // Modules
 import LocationDetailDialog from '../search/detail/location-detail/LocationDetail'
 
+// API
+import { fetchVehicles } from "../../features/search/searchSlice"
+import { fetchLastRecognitionsThunk, fetchVehicleCountThunk, fetchSystemStatusThunk, fetchConnectionThunk, dowloadFileThunk } from "../../features/live-view-real-time/liveViewRealTimeSlice"
+
 // Types
 import {
   SearchResult,
 } from "../../features/api/types"
-import { fetchVehicles } from "../../features/search/searchSlice"
+import { CameraDetailSetting } from "../../features/camera-settings/cameraSettingsTypes"
+import { LastRecognitionResult, VehicleCountResult, ConnectionResult, SystemStatusResult } from "../../features/live-view-real-time/liveViewRealTimeTypes"
 
 // Services
 import { apiService } from '../../features/api/apiService'
@@ -37,11 +39,13 @@ import Loading from "../../components/loading/Loading"
 
 interface CCTVSideBarProp {
   setCollapse: (status: boolean) => void
+  cameraSetting: CameraDetailSetting | null
+  setUpdateLastRecognition: (status: LastRecognitionResult) => void
 }
 
-const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
+const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, setUpdateLastRecognition}) => {
   const [selectedMenu, setSelectedMenu] = useState<string | null>('lastRecognition')
-  const [LPRCameraSetting, setLPRCameraSetting] = useState(0)
+  const [LPRCameraSetting, setLPRCameraSetting] = useState("ทั้งหมด")
   const buttonDowloadRefs = useRef<(HTMLButtonElement | null)[]>([])
   const vehicleInfoRefs = useRef<(HTMLDivElement | null)[]>([])
   const [isOpenFullDirectionDialog, setOpenFullDirectionDialog] = useState(false)
@@ -49,10 +53,16 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
   const [compareData, setCompareData] = useState<SearchResult[]>([])
   const [compare, setIsCompare] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [LPRCameraDropdown, setLPRCameraDropdown] = useState<{ id: number, name: string, value: string }[]>([])
+  const [lastRecognitionListData, setLastRecognitionListData] = useState<LastRecognitionResult[]>([])
+  const [originalData, setOriginalData] = useState<LastRecognitionResult[]>([])
+  const [vehicleListData, setVehicleListData] = useState<VehicleCountResult[]>([])
+  const [connectionListData, setConnectionListData] = useState<ConnectionResult[]>([])
+  const [systemStatusListData, setSystemStatusListData] = useState<SystemStatusResult[]>([])
 
   const dispatch: AppDispatch = useDispatch()
-  const { vehicles, status, error } = useSelector(
-    (state: RootState) => state.vehicles
+  const { liveViewRealTimeData, vehicleCountData, systemStatusData, connectionData, status, error } = useSelector(
+    (state: RootState) => state.liveViewRealTimes
   )
 
   const tabIcon = {
@@ -61,743 +71,127 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
     SystemStatusIcon: "/icons/system-status",
     ConnectionIcon: "/icons/connection",
   }
-  // Mock Data
-  const [LPRCameraDropdown, setLPRCameraDropdown] = useState([
-    { id: 0, value: 0, name: 'ทั้งหมด' },
-    { id: 1, value: 1, name: 'LPR Camera 1' },
-    { id: 2, value: 2, name: 'LPR Camera 2' },
-    { id: 3, value: 3, name: 'LPR Camera 3' },
-    { id: 4, value: 4, name: 'LPR Camera 4' },
-  ])
 
-  // Mock Data
-  const [vehicleCountList, setVehicleCountList] = useState([
-    { 
-      id: 0, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 1, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 2, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 3, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 4, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 5, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 6, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 7, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 8, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 9, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 10, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 11, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 12, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 13, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 14, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 15, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 16, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 17, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 18, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 19, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 20, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 21, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 22, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 23, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 24, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 25, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 26, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 27, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 28, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 29, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 30, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 31, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 32, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 33, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 34, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 35, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 36, 
-      startTime: "28/06/2024 (07:00)", 
-      endTime: "28/06/2024 (08:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-    { 
-      id: 37, 
-      startTime: "28/06/2024 (06:00)", 
-      endTime: "28/06/2024 (07:00)", 
-      vehicle: 0,
-      watchOutVehicle: 0,
-      summary: 0,
-    },
-  ])
+  useEffect(() => {
+    if (cameraSetting?.cameraSettings) {
+      const dropdownData = cameraSetting.cameraSettings.map(({ id, checkpoint_id }) => ({
+        id,
+        name: checkpoint_id,
+        value: checkpoint_id,
+      }))
+      const newDropdownData = [ {id: 0, name: "ทั้งหมด", value: "ทั้งหมด"} , ...dropdownData]
+      setLPRCameraDropdown(newDropdownData)
+    }
+  }, [cameraSetting])
 
-  // Mock Data
-  const [systemStatusList, setSystemStatusList] = useState([
-    { 
-      id: 1, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 2, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 3, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 4, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 5, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 6, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 7, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 8, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 9, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 10, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 11, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 12, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 13, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 14, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 15, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 16, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 17, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 18, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 19, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 20, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 21, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 22, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 23, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 24, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 25, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 26, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 27, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 28, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 29, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-    { 
-      id: 30, 
-      time: "07:20:28", 
-      message: "cdsFeedData: Field’facelist_id_alert’ not found", 
-    },
-  ])
+  useEffect(() => {
+    dispatch(fetchLastRecognitionsThunk())
+    dispatch(fetchVehicleCountThunk())
+    dispatch(fetchSystemStatusThunk())
+    dispatch(fetchConnectionThunk())
 
-  // Mock Data
-  const [connectionList, setConnectionList] = useState([
-    { 
-      id: 0, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 1
-    },
-    { 
-      id: 1, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 2
-    },
-    { 
-      id: 2, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 3
-    },
-    { 
-      id: 3, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 4
-    },
-    { 
-      id: 4, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 1
-    },
-    { 
-      id: 5, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 2
-    },
-    { 
-      id: 6, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 3
-    },
-    { 
-      id: 7, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 4
-    },
-    { 
-      id: 8, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 1
-    },
-    { 
-      id: 9, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 2
-    },
-    { 
-      id: 10, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 3
-    },
-    { 
-      id: 11, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 4
-    },
-    { 
-      id: 12, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 1
-    },
-    { 
-      id: 13, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 2
-    },
-    { 
-      id: 14, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 3
-    },
-    { 
-      id: 15, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 4
-    },
-    { 
-      id: 16, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 1
-    },
-    { 
-      id: 17, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 2
-    },
-    { 
-      id: 18, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 3
-    },
-    { 
-      id: 19, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 4
-    },
-    { 
-      id: 20, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 1
-    },
-    { 
-      id: 21, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 2
-    },
-    { 
-      id: 22, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 3
-    },
-    { 
-      id: 23, 
-      sendingTime: "28/06/2024 (18:30:00)", 
-      ipServer: "190.168.0.199", 
-      port: 20,
-      host: 199,
-      sendCompleted: 12500,
-      pending: 4500,
-      status: 4
-    },
-  ])
+    const interval = setInterval(() => {
+      dispatch(fetchLastRecognitionsThunk())
+      dispatch(fetchVehicleCountThunk())
+      dispatch(fetchSystemStatusThunk())
+      dispatch(fetchConnectionThunk())
+    }, 5000)
 
-  const sortedVehicleCountList = [...vehicleCountList]
+    return () => clearInterval(interval)
+  }, [dispatch])
+
+  useEffect(() => {
+    if (liveViewRealTimeData) {
+      setLastRecognitionListData((prev) => [...prev, liveViewRealTimeData])
+      setOriginalData((prev) => [...prev, liveViewRealTimeData])
+      setUpdateLastRecognition(liveViewRealTimeData)
+    }
+  }, [liveViewRealTimeData])
+
+  useEffect(() => {
+    if (vehicleCountData) {
+      setVehicleListData((prev) => [...prev, vehicleCountData])
+    }
+  }, [vehicleCountData])
+
+  useEffect(() => {
+    if (systemStatusData) {
+      setSystemStatusListData((prev) => [...prev, systemStatusData])
+    }
+  }, [systemStatusData])
+
+  useEffect(() => {
+    if (connectionData) {
+      setConnectionListData((prev) => [...prev, connectionData])
+    }
+  }, [connectionData])
+
+  useEffect(() => {
+    if (LPRCameraSetting === "ทั้งหมด") {
+      setLastRecognitionListData(originalData)
+    }
+    else {
+      const filterDataa = originalData.filter((item) => item.cameraName === LPRCameraSetting)
+      setLastRecognitionListData(filterDataa)
+    }
+  }, [LPRCameraSetting])
+
+  const sortedVehicleCountList = [...vehicleListData]
   .sort((a, b) => b.id - a.id)
   .slice(0, 20)
 
-  const sortedSystemStatusList = [...systemStatusList]
+  const sortedSystemStatusList = [...systemStatusListData]
   .sort((a, b) => b.id - a.id)
   .slice(0, 20)
 
-  const sortedConnectionList = [...connectionList]
+  const sortedConnectionList = [...connectionListData]
   .sort((a, b) => b.id - a.id)
   .slice(0, 20)
 
-  const sortedRecognitionData = [...vehicles]
+  const sortedRecognitionData = [...lastRecognitionListData]
   .sort((a, b) => b.id - a.id)
   .slice(0, 20)
 
-  const handleDowloadButtonClick = (event: React.MouseEvent, index: number) => {
+  const handleDowloadButtonClick = async(event: React.MouseEvent, index: number) => {
     event.stopPropagation()
-    alert(`Download Clicked ${index}`)
+    try {
+      const result = await dispatch(dowloadFileThunk(sortedRecognitionData[index])).unwrap()
+      
+      if (result) {
+        if (result.startsWith('/zip/')) {
+          const baseUrl = window.location.origin
+          const fullUrl = `${baseUrl}${result}`
+          window.open(fullUrl, '_blank')
+          return
+        }
+
+        // For production API response
+        const response = await fetch(result)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const blob = await response.blob()
+        const downloadUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        
+        link.href = downloadUrl
+        link.download = 'download.zip'
+
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        window.URL.revokeObjectURL(downloadUrl)
+      }
+    } 
+    catch (error) {
+      console.error('Download failed:', error)
+      alert('Failed to download file. Please try again.')
+    }
   }
 
-  const handleVehicleInfoClick = async (event: React.MouseEvent, index: number, id: number) => {
+  const handleVehicleInfoClick = async (event: React.MouseEvent, id: number) => {
     event.stopPropagation()
     setIsLoading(true)
 
@@ -808,7 +202,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
       setCompareData(compareData)
       setOpenFullDirectionDialog(true)
       setIsLoading(false)
-    }, 500);
+    }, 500)
   }
 
   const handleFullDirectionDialogClose = () => {
@@ -1017,50 +411,73 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
       </div>
       <div className={selectedMenu === ("collapse") ? "hidden" : 'flex w-[510px] h-full mt-[30px]' }>
         {/* lastRecognition */}
-        <div className={ selectedMenu === "lastRecognition" ? "" : "hidden"}>
+        <div className={ selectedMenu === "lastRecognition" ? "w-full" : "hidden"}>
           {/* Content */}
           <div className='flex p-[12px] border-[1px] border-dodgerBlue'>
             <div className='flex flex-col w-full h-full'>
               <label className='flex justify-start text-white'>LPR Camera</label>
-              <Select 
+              <Select
                 name="select-lpr-camera-setting" 
                 value={LPRCameraSetting.toString()}
-                onValueChange={(value) => setLPRCameraSetting(Number(value))}
+                onChange={(e) => setLPRCameraSetting(e.target.value)}
+                style={{ backgroundColor: "#fff", color: "#000", width: "100%", height: "30px" }}
               >
-                <SelectTrigger className="w-full h-[35px] text-black my-[20px] bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className='bg-white'>
-                  {
-                    LPRCameraDropdown && LPRCameraDropdown.length > 0 ? 
-                    LPRCameraDropdown.map((item, index) => (
-                      <SelectItem key={item.id} value={item.value.toString()} className={ index % 2 === 0 ? 'bg-white' : 'bg-whiteSmoke'}>{ item.name }</SelectItem>
-                    ))
-                    : null
-                  }
-                </SelectContent>
+                {
+                  LPRCameraDropdown && LPRCameraDropdown.length > 0 ? 
+                  LPRCameraDropdown.map((item, index) => (
+                    <MenuItem 
+                      key={item.id} 
+                      value={item.name} 
+                      style={{ backgroundColor: `${index % 2 === 0 ? 'white' : 'whiteSmoke'}` }} 
+                      className={`cursor-pointer`}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'lightgray'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : 'whiteSmoke'
+                      }}
+                    >
+                      { item.name }
+                    </MenuItem>
+                  ))
+                  : null
+                }
               </Select>
-              <div className='h-[71.2vh] overflow-y-scroll text-white'>
+              <div className='h-[76.2vh] mt-[10px] overflow-y-auto text-white'>
               {
                 sortedRecognitionData && sortedRecognitionData.length > 0 ?
                 sortedRecognitionData.map((item, index) => (
                   <div 
                     className='grid grid-cols-2 text-[14px] w-full border-[1px] border-geyser'
                     ref={el => vehicleInfoRefs.current[index] = el}
-                    onClick={(e) => handleVehicleInfoClick(e, index, item.id)}
+                    onClick={(e) => handleVehicleInfoClick(e, item.id)}
                   >
                     <div className='w-full h-full text-center'>
                       <label className='ml-1'>{item.plate}</label>
-                      <div className='grid grid-cols-2 h-[100px] w-full'>
-                        <img key={index + "_1"} src={item.pathImage} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle w-full h-full" />
-                        <img key={index + "_2"} src={item.pathImage} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle w-full h-full" />
+                      <div className='flex h-[100px] w-full'>
+                        <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
+                          <img 
+                            key={`${index}_1`} 
+                            src={item.pathImageVehicle} 
+                            alt={`image-${index}`} 
+                            className="w-full h-full" 
+                          />
+                        </div>
+                        <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
+                          <img 
+                            key={`${index}_2`} 
+                            src={item.pathImage} 
+                            alt={`image-${index}`} 
+                            className="w-full h-[50%]" 
+                          />
+                        </div>
                       </div>
                     </div>
                     <div 
                       className="w-full h-full"
                     >
                       <div className='bg-celti text-center'>
-                        <label className="px-1">{format(item.vehicle.date, "dd/MM/yyyy hh:mm:ss")}</label>
+                        <label className="px-1">{format(new Date(item.vehicle.date), "dd/MM/yyyy hh:mm:ss")}</label>
                         <label className="px-1 border-l-[1px] border-white">{item.vehicle.accuracy}</label>
                       </div>
                       <div className="h-[100px] relative flex flex-col p-1 pl-2">
@@ -1109,6 +526,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
               open={isOpenFullDirectionDialog}
               close={handleFullDirectionDialogClose}
               isCompare={compare}
+              closeText='ยกเลิก'
+              closeButtonCss='custom-close-btn'
             />
           ) : (
             <></>
@@ -1179,7 +598,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse}) => {
                             className={`h-[35px] border-b-[1px] border-dashed border-darkGray 
                               ${ index % 2 === 0 ? 'bg-celtic' : 'bg-tuna'}`}
                           >
-                            <td className='text-start pl-[5px]'>{item.time} <span>&#62;</span> {item.message}</td>
+                            <td className='text-start pl-[5px]'>{item.time} <span>&#62</span> {item.message}</td>
                           </tr>
                         ))
                       : ""}

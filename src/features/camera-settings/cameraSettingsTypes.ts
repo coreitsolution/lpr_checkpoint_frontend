@@ -7,11 +7,37 @@ export interface CameraDetailSetting {
   cameraSettings: CameraSettings[]
 }
 
+export interface ReqStream {
+  name: string
+  streamUrl: string
+  port: string
+}
+
+export interface StreamDetail {
+  uid: string
+  name: string
+  streamUrl: string
+  wsPort: string
+  ffmpegOptions: FfmpegOptions
+}
+
+export interface FfmpegOptions {
+  "-stats": string
+  "-r": number
+  "-vf": string
+  "-preset": string
+  "-tune": string
+  "-reconnect": string
+  "-reconnect_streamed": string
+  "-reconnect_delay_max": string
+}
+
 export interface CameraSettings {
   id: number
   camera_status: number
   checkpoint_id: string
   checkpoint: string
+  port?: string
   latitude: string
   longtitude: string
   number_of_detections: number

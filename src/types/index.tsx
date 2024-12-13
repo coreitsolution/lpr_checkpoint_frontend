@@ -61,43 +61,43 @@ export interface RegistrationTypesData {
 
 // Map
 export interface MapProps {
-  height?: string;
-  width?: string;
-  panControl?: boolean;
-  zoomControl?: boolean;
-  mapTypeControl?: boolean;
-  streetViewControl?: boolean;
-  fullscreenControl?: boolean;
-  onMapLoad?: (mapInstance: google.maps.Map | null) => void;
+  height?: string
+  width?: string
+  panControl?: boolean
+  zoomControl?: boolean
+  mapTypeControl?: boolean
+  streetViewControl?: boolean
+  fullscreenControl?: boolean
+  onMapLoad?: (mapInstance: google.maps.Map | null) => void
 }
 
 export interface MapConfig {
-  mapId: string;
+  mapId: string
   center: {
-    lat: number;
-    lng: number;
-  };
-  zoom: number;
-  panControl?: boolean;
-  zoomControl?: boolean;
-  mapTypeControl?: boolean;
-  streetViewControl?: boolean;
-  fullscreenControl?: boolean;
+    lat: number
+    lng: number
+  }
+  zoom: number
+  panControl?: boolean
+  zoomControl?: boolean
+  mapTypeControl?: boolean
+  streetViewControl?: boolean
+  fullscreenControl?: boolean
 }
 
 export interface SearchResult {
-  name: string;
-  location: google.maps.LatLngLiteral;
-  placeId?: string;
+  name: string
+  location: google.maps.LatLngLiteral
+  placeId?: string
 }
 
 export type CoordinateFormat = {
-  lat: number;
-  lng: number;
+  lat: number
+  lng: number
 }
 
 export interface MarkerManager {
-  currentMarker: google.maps.marker.AdvancedMarkerElement | null;
-  clearMarker: () => void;
-  createMarker: (location: google.maps.LatLngLiteral) => Promise<void>;
+  currentMarker: google.maps.marker.AdvancedMarkerElement | null
+  clearMarker: () => void
+  createMarker: (location: google.maps.LatLngLiteral) => Promise<void>
 }

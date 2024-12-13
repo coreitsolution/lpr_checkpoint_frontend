@@ -11,6 +11,8 @@ type SelectBoxProps = SelectProps & {
     options: { value: any; label: string }[];
     label: string;
     className?: string;
+    placeholder?: string;
+    labelFontSize?: string;
 };
 
 const SelectBox: React.FC<SelectBoxProps> = ({
@@ -20,11 +22,13 @@ const SelectBox: React.FC<SelectBoxProps> = ({
     options,
     label,
     className,
+    placeholder,
+    labelFontSize,
     ...props
 }) => {
     return (
         <div className='flex flex-col w-full'>
-            <Typography variant='subtitle1' color='white'>{label}</Typography>
+            <Typography sx={{ fontSize: labelFontSize || undefined }} variant='subtitle1' color='white'>{label}</Typography>
             <Select
                 id={id}
                 value={value}

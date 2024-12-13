@@ -1,19 +1,29 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { fetchCameraSettings, postCameraSetting, putCameraSetting, deleteCameraSetting, putCameraDetailSettings } from "./cameraSettingsAPI"
-import { CameraSettings, NewCameraSettings, CameraDetailSetting } from "./cameraSettingsTypes"
+import { fetchCameraSettings, postCameraSetting, putCameraSetting, deleteCameraSetting, putCameraDetailSettings, postStartStream } from "./cameraSettingsAPI"
+import { CameraSettings, NewCameraSettings, CameraDetailSetting, ReqStream, StreamDetail } from "./cameraSettingsTypes"
 import { Status } from "../../constants/statusEnum"
 
 interface CameraSettingsState {
   cameraSetting: CameraDetailSetting | null
+  streamDetail: StreamDetail[] | null
   status: Status
   error: string | null
 }
 
 const initialState: CameraSettingsState = {
   cameraSetting: null,
+  streamDetail: null,
   status: Status.IDLE,
   error: null,
 }
+
+export const postStartStreamThunk = createAsyncThunk(
+  "cameraSettings/postStartStream",
+  async (reqStream: ReqStream[]) => {
+    const response = await postStartStream(reqStream)
+    return response as StreamDetail[];
+  }
+)
 
 export const fetchCameraSettingsThunk = createAsyncThunk(
   "cameraSettings/fetchCameraSettings",
@@ -135,6 +145,19 @@ const cameraSettingsSlice = createSlice({
       .addCase(deleteCameraSettingThunk.rejected, (state, action) => {
         state.status = Status.FAILED
         state.error = action.error.message || "Failed to delete camera setting"
+      })
+
+      .addCase(postStartStreamThunk.pending, (state) => {
+        state.status = Status.LOADING
+        state.error = null
+      })
+      .addCase(postStartStreamThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED
+        state.streamDetail = (action.payload)
+      })
+      .addCase(postStartStreamThunk.rejected, (state, action) => {
+        state.status = Status.FAILED
+        state.error = action.error.message || "Failed to post camera setting"
       })
   },
 })

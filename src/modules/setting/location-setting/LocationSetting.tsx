@@ -71,7 +71,7 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPo
               placeHolder=""
               className="w-full"
               value={searchText}
-              onChange={handleSearchChange}
+              onChange={(e: any) => handleSearchChange(e.target.value)}
               onKeyPress={handleKeyPress}
               isError={ searchError ? true : false}
               helperText={searchError}
