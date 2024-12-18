@@ -1,12 +1,12 @@
 import React, {useState, useRef, useCallback, useEffect} from 'react'
 import { AppDispatch } from "../../../app/store"
-import { useSelector, useDispatch } from "react-redux"
-
+import { useDispatch } from "react-redux"
+import { IMAGE_URL } from '@/config/apiConfig'
 // Types
 import {
-  CameraSettings
+  CameraDetailSettings
 } from '../../../features/camera-settings/cameraSettingsTypes'
-import { CustomShape } from "../../../components/drawing-canvas/types"
+import { DetectionArea } from "../../../components/drawing-canvas/types"
 
 // Components
 import TextBox from '../../../components/text-box/TextBox'
@@ -26,28 +26,28 @@ import {
 
 interface SensorSettingProps {
   closeDialog: () => void
-  selectedRow: CameraSettings | null
+  selectedRow: CameraDetailSettings | null
 }
 
 const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow}) => {
 
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false)
   const [clearCanvas, setClearCanvas] = useState(false)
-  const [sensorSettingData, setSensorSettingData] = useState<CustomShape | null>(null)
-  const [originalData, setOriginalData] = useState<CustomShape | null>(null)
+  const [sensorSettingData, setSensorSettingData] = useState<DetectionArea | null>(null)
+  const [originalData, setOriginalData] = useState<DetectionArea | null>(null)
   const imgRef = useRef<HTMLImageElement>(null)
   const dispatch: AppDispatch = useDispatch()
 
   useEffect(() => {
     if (selectedRow) {
-      if (selectedRow.sensor_setting) {
-        setSensorSettingData(selectedRow.sensor_setting)
-        setOriginalData(selectedRow.sensor_setting)
+      if (selectedRow.detection_area) {
+        setSensorSettingData(JSON.parse(selectedRow.detection_area))
+        setOriginalData(JSON.parse(selectedRow.detection_area))
       }
     }
   }, [selectedRow])
 
-  const handleCustomShapeDrawn = (customShape: CustomShape) => {
+  const handleCustomShapeDrawn = (customShape: DetectionArea) => {
     setIsDrawingEnabled(false)
     setSensorSettingData(customShape)
   }
@@ -71,11 +71,15 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
           PopupMessage("ไม่พบการเปลี่ยนแปลง", "ข้อมูลไม่มีการเปลี่ยนแปลง", "warning")
           return
         }
+        else if (!sensorSettingData) {
+          PopupMessage("ข้อมูลไม่สมบูรณ์", "กรุณากรอกข้อมูลเซ็นเซอร์", "warning")
+          return
+        }
         else {
           let updateData = selectedRow
           updateData = {
             ...selectedRow, 
-            sensor_setting: sensorSettingData ? sensorSettingData : null
+            detection_area: sensorSettingData ? JSON.stringify(sensorSettingData) : ""
           }
           if (updateData) {
             await dispatch(putCameraSettingThunk(updateData))
@@ -102,7 +106,7 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
               label="กล้อง (ID)"
               placeHolder=""
               className="w-full"
-              value={selectedRow?.checkpoint_id}
+              value={selectedRow?.cam_id}
               disabled={true}
             />
           </div>
@@ -129,12 +133,15 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
         </div>
         <div className='p-5 border-[1px] border-dodgerBlue mb-[30px]'>
           <div className='relative mb-[10px]'>
-            <img 
-              src="/images/car_test.png" 
+            <img
+              src={selectedRow?.url ? `${IMAGE_URL}${selectedRow.url}` : undefined}
               alt="Sensor Image"
-              className='w-full h-[450px]'
+              className={`w-full h-[450px] ${!selectedRow?.url ? "bg-white" : ""}`}
               ref={imgRef}
             />
+            { !selectedRow?.url && (
+              <label className='absolute inset-0 flex items-center justify-center text-black'>กล้องยังไม่สามารถจับภาพได้</label>
+            ) }
             {imgRef.current && (
               <DrawingCanvas
                 imgRef={imgRef.current}
@@ -150,9 +157,12 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
               {/* Start Button */}
               <button 
                 type="button" 
-                className={`flex items-center justify-center w-[90px] h-[40px] rounded mr-[10px] ${ !isDrawingEnabled ? "bg-dodgerBlue" : "bg-dodgerBlue/30"}`} 
+                className={`flex items-center justify-center w-[90px] h-[40px] rounded mr-[10px] 
+                  ${ !isDrawingEnabled ? "bg-dodgerBlue" : "bg-dodgerBlue/30"}
+                  disabled:bg-celti
+                `} 
                 onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
-                disabled={isDrawingEnabled}
+                disabled={isDrawingEnabled || sensorSettingData !== null}
               >
                 <img src="/icons/start.png" alt="Start" className='w-[20px] h-[20px]' />
                 <span className='ml-[5px]'>Start</span>

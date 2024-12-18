@@ -10,7 +10,6 @@ import { FilterSpecialRegistration } from "../../features/api/types";
 
 // API
 import {
-  fetchAgenciesThunk,
   fetchProvincesThunk,
   fetchRegistrationTypesThunk,
   fetchDataStatusThunk,
@@ -28,68 +27,76 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
 
   const [letterCategory, setLetterCategory] = useState("")
   const [carRegistration, setCarRegistration] = useState("")
-  const [selectedProvince, setSelectedProvince] = useState("")
-  const [selectedRegistrationType, setSelectedRegistrationType] = useState("")
-  const [selectedAgency, setSelectedAgency] = useState("")
-  const [selectedStatus, setSelectedStatus] = useState("")
+  const [selectedProvince, setSelectedProvince] = useState<number | ''>('')
+  const [selectedRegistrationType, setSelectedRegistrationType] = useState<number | ''>('')
+  const [agencyText, setAgencyText] = useState("")
+  const [selectedStatus, setSelectedStatus] = useState<number | ''>('')
+  const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string; value: number; }[]>([]);
+  const [provincesOptions, setProvincesOptions] = useState<{ label: string; value: number; }[]>([]);
+  const [dataStatusOptions, setDataStatusOptions] = useState<{ label: string; value: number; }[]>([]);
 
   const filterData: FilterSpecialRegistration = {
     letterCategory: letterCategory,
     carRegistration: carRegistration,
     selectedProvince: selectedProvince,
     selectedRegistrationType: selectedRegistrationType,
-    selectedAgency: selectedAgency,
+    agency: agencyText,
     selectedStatus: selectedStatus,
   }
 
   const dispatch: AppDispatch = useDispatch();
-  const { agencies, dataStatus, provinces, registrationTypes } = useSelector(
+  const { dataStatus, provinces, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
 
-  const registrationTypesOptions = registrationTypes.map((row) => ({
-    value: row.registration_type,
-    label: row.registration_type,
-    id: row.id,
-  }))
-
-  const agenciesOptions = agencies.map((row) => ({
-    value: row.agency,
-    label: row.agency,
-    id: row.id,
-  }))
-
-  const dataStatusOptions = dataStatus.map((row) => ({
-    value: row.status,
-    label: row.status,
-    id: row.id,
-  }))
-
   useEffect(() => {
-    dispatch(fetchAgenciesThunk())
-    dispatch(fetchProvincesThunk())
     dispatch(fetchRegistrationTypesThunk())
+    dispatch(fetchProvincesThunk("?orderBy=name_th"))
     dispatch(fetchDataStatusThunk())
   }, [dispatch])
+
+  useEffect(() => {
+    if (provinces && provinces.data) {
+      const options = provinces.data.map((row) => ({
+        label: row.name_th,
+        value: row.id,
+      }));
+      setProvincesOptions(options)
+    }
+  }, [provinces])
+
+  useEffect(() => {
+    if (registrationTypes && registrationTypes.data) {
+      const options = registrationTypes.data.map((row) => ({
+        label: row.title_en,
+        value: row.id,
+      }));
+      setRegistrationTypesOptions(options)
+    }
+  }, [registrationTypes])
+
+  useEffect(() => {
+    if (dataStatus && dataStatus) {
+      const options = dataStatus.map((row) => ({
+        label: row.status,
+        value: row.id,
+      }));
+      setDataStatusOptions([{label: "ทุกสถานะ", value: 2}, ...options])
+    }
+  }, [dataStatus])
 
   const handleReset = () => {
     setLetterCategory("")
     setCarRegistration("")
-    setSelectedProvince("")
-    setSelectedRegistrationType("")
-    setSelectedAgency("")
-    setSelectedStatus("")
+    setSelectedProvince('')
+    setSelectedRegistrationType('')
+    setAgencyText("")
+    setSelectedStatus('')
   }
 
   const handleSearch = () => {
     setFilterData(filterData)
   }
-
-  const provinceOptions = provinces.map((row) => ({
-    value: row.name_th,
-    label: row.name_th,
-    id: row.id,
-  }))
 
   return (
     
@@ -154,7 +161,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 className="w-full"
                 value={selectedProvince}
                 onChange={(event: SelectChangeEvent<any>) => setSelectedProvince(event.target.value)}
-                options={provinceOptions}
+                options={provincesOptions}
                 label="หมวดจังหวัด"
                 labelFontSize="15px"
               />
@@ -172,15 +179,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               />
             </div>
             <div className="grid grid-cols-1 my-[10px]">
-              <SelectBox
-                sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
-                id="select-agencies"
-                className="w-full"
-                value={selectedAgency}
-                onChange={(event: SelectChangeEvent<any>) => setSelectedAgency(event.target.value)}
-                options={agenciesOptions}
+              <TextBox
+                sx={{ marginTop: "5px" }}
+                id="agency"
                 label="หน่วยงานเจ้าของข้อมูล"
+                placeHolder=""
+                className="w-full"
+                value={agencyText}
                 labelFontSize="15px"
+                textFieldFontSize="15px"
+                onChange={(e: any) => setAgencyText(e.target.value)}
               />
             </div>
             <div className="grid grid-cols-1 my-[10px]">

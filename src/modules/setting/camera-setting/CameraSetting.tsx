@@ -1,66 +1,73 @@
-import React, {useEffect, useState, useCallback} from 'react'
-import {
-  SelectChangeEvent,
-} from "@mui/material"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+import React, { useEffect, useState, useCallback } from "react";
+import { SelectChangeEvent } from "@mui/material";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "../../../app/store";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { format } from "date-fns";
 
 // Types
 import {
   CameraSettings,
-  CreateCameraSettings  
-} from '../../../features/camera-settings/cameraSettingsTypes'
-import { SearchResult } from '../../../types/index'
-import { Province, Districts, SubDistricts } from '../../../features/dropdown/dropdownTypes'
+  CreateCameraSettings,
+  CameraDetailSettings,
+  NewCameraDetailSettings,
+} from "../../../features/camera-settings/cameraSettingsTypes";
+import { SearchResult } from "../../../types/index";
 
 // Components
-import ToggleButton from '../../../components/toggle-button/ToggleButton'
-import TextBox from '../../../components/text-box/TextBox'
-import SelectBox from '../../../components/select-box/SelectBox'
-import Loading from "../../../components/loading/Loading"
+import ToggleButton from "../../../components/toggle-button/ToggleButton";
+import TextBox from "../../../components/text-box/TextBox";
+import SelectBox from "../../../components/select-box/SelectBox";
+import Loading from "../../../components/loading/Loading";
+
 // API
-import { 
+import {
   fetchProvincesThunk,
   fetchPoliceDivisionsThunk,
   fetchDistrictsThunk,
   fetchSubDistrictsThunk,
-  fetchNamePrefixesThunk,
+  fetchCommonPrefixesThunk,
+  fetchOfficerPrefixesThunk,
   fetchPositionThunk,
-} from "../../../features/dropdown/dropdownSlice"
-import { 
+} from "../../../features/dropdown/dropdownSlice";
+import {
   postCameraSettingThunk,
   putCameraSettingThunk,
-} from "../../../features/camera-settings/cameraSettingsSlice"
+} from "../../../features/camera-settings/cameraSettingsSlice";
 
 // Icon
-import { Icon } from '../../../components/icons/Icon'
-import { Save } from 'lucide-react'
+import { Icon } from "../../../components/icons/Icon";
+import { Save } from "lucide-react";
 
 // Modules
-import LocationSetting from '../location-setting/LocationSetting'
+import LocationSetting from "../location-setting/LocationSetting";
 
 // Pop-up
-import PopupMessage from "../../../utils/popupMessage"
-
+import PopupMessage from "../../../utils/popupMessage";
 interface CameraSettingProps {
-  closeDialog: () => void
-  selectedRow: CameraSettings | null
-  isEditMode: boolean
+  closeDialog: () => void;
+  selectedRow: CameraDetailSettings | null;
+  isEditMode: boolean;
 }
 
-const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, isEditMode}) => {
-  const [originalData, setOriginalData] = useState<CameraSettings | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+const CameraSetting: React.FC<CameraSettingProps> = ({
+  closeDialog,
+  selectedRow,
+  isEditMode,
+}) => {
+  const [originalData, setOriginalData] = useState<CameraDetailSettings | null>(
+    null
+  );
   const [state, setState] = useState({
+    id: undefined as number | undefined,
     policeDivision: "",
     isLoading: false,
     isLocationSettingOpen: false,
     isSensorSettingOpen: false,
-    provinceSelect: "",
-    policeDivisionsSelect: "",
-    districtsSelect: "",
-    subDistrictsSelect: "",
+    provinceSelect: '',
+    policeDivisionsSelect: '',
+    districtsSelect: '',
+    subDistrictsSelect: '',
     checkpoint: "",
     checkpointId: "",
     route: "",
@@ -73,14 +80,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
     license: "",
     location: {
       latitude: "",
-      longtitude: "",
+      longitude: "",
     },
     officer: {
-      namePrefixesSelect: "",
+      namePrefixesSelect: '',
       name: "",
       surname: "",
       phone: "",
-      positionsSelect: "",
+      positionsSelect: '',
     },
     toggles: {
       startService: false,
@@ -88,36 +95,48 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
       syncDataStatus: false,
       licenseStatus: false,
     },
-  })
+  });
 
-  const dispatch: AppDispatch = useDispatch()
-  const dropdown = useSelector((state: RootState) => state.dropdown)
+  const dispatch: AppDispatch = useDispatch();
+  const {
+    provinces,
+    subDistricts,
+    districts,
+    policeDivisions,
+    officerPrefixes,
+    positions,
+  } = useSelector((state: RootState) => state.dropdown);
+  const [provincesOptions, setProvincesOptions] = useState<{ label: string; value: number }[]>([]);
+  const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string; value: number }[]>([]);
+  const [districtsOptions, setDistrictsOptions] = useState<{ label: string; value: number }[]>([]);
+  const [policeDivisionsOptions, setPoliceDivisionsOptions] = useState<{ label: string; value: number }[]>([]);
+  const [officerPrefixesOptions, setOfficerPrefixesOptions] = useState<{ label: string; value: number }[]>([]);
+  const [positionsOptions, setPositionsOptions] = useState<{ label: string; value: number }[]>([]);
 
   const fetchData = async () => {
-    setState((prev) => ({ ...prev, isLoading: true }))
+    setState((prev) => ({ ...prev, isLoading: true }));
     await Promise.all([
-      dispatch(fetchProvincesThunk()),
+      dispatch(fetchProvincesThunk("?orderBy=name_th")),
       dispatch(fetchPoliceDivisionsThunk()),
-      dispatch(fetchDistrictsThunk()),
-      dispatch(fetchNamePrefixesThunk()),
+      dispatch(fetchOfficerPrefixesThunk()),
       dispatch(fetchPositionThunk()),
-    ])
-    setState((prev) => ({ ...prev, isLoading: false }))
-  }
+    ]);
+    setState((prev) => ({ ...prev, isLoading: false }));
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [dispatch])
+    fetchData();
+  }, [dispatch]);
 
   useEffect(() => {
     if (
-      dropdown.provinces.length > 0 &&
-      dropdown.policeDivisions.length > 0 &&
-      dropdown.districts.length > 0 &&
-      dropdown.namePrefixes.length > 0 &&
-      dropdown.positions.length > 0
+      provinces?.data &&
+      provinces?.data?.length > 0 &&
+      policeDivisions?.data &&
+      policeDivisions?.data?.length > 0 &&
+      officerPrefixes?.data && officerPrefixes?.data.length > 0 &&
+      positions?.data && positions?.data.length > 0
     ) {
-      setIsLoading(false)
       if (isEditMode && selectedRow) {
         setState((prev) => ({
           ...prev,
@@ -125,76 +144,79 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
           isLoading: false,
           isLocationSettingOpen: false,
           isSensorSettingOpen: false,
-          provinceSelect: selectedRow.province,
-          districtsSelect: selectedRow.district,
-          subDistrictsSelect: selectedRow.sub_district,
-          policeDivisionsSelect: selectedRow.police_division,
-          checkpoint: selectedRow.checkpoint,
-          checkpointId: selectedRow.checkpoint_id,
+          provinceSelect: selectedRow.province_id.toString(),
+          districtsSelect: selectedRow.district_id.toString(),
+          subDistrictsSelect: selectedRow.sub_district_id.toString(),
+          policeDivisionsSelect: selectedRow.division_id.toString(),
+          checkpoint: selectedRow.checkpoint_name,
+          checkpointId: selectedRow.cam_id,
           route: selectedRow.route,
-          rtspLiveView: selectedRow.rtsp_live_view,
+          rtspLiveView: selectedRow.rtsp_live_url,
           streamEncode: selectedRow.stream_encode,
-          apiServer: selectedRow.api_server,
-          rtspProcess: selectedRow.rtsp_process,
+          apiServer: selectedRow.api_server_url,
+          rtspProcess: selectedRow.rtsp_process_url,
           pcSerialNumber: selectedRow.pc_serial_number,
-          number_of_detections: selectedRow.number_of_detections,
-          license: selectedRow.license,
+          number_of_detections: 0,
+          license: selectedRow.license_key,
           location: {
             latitude: selectedRow.latitude,
-            longtitude: selectedRow.longtitude,
+            longitude: selectedRow.longitude,
           },
           officer: {
-            namePrefixesSelect: selectedRow.officer.prefix,
-            name: selectedRow.officer.name,
-            surname: selectedRow.officer.surname,
-            phone: selectedRow.officer.phone,
-            positionsSelect: selectedRow.officer.position,
+            namePrefixesSelect: selectedRow.officer_title_id.toString(),
+            name: selectedRow.officer_firstname,
+            surname: selectedRow.officer_lastname,
+            phone: selectedRow.officer_phone,
+            positionsSelect: selectedRow.officer_position_id.toString(),
           },
           toggles: {
-            startService: selectedRow.camera_status === 1 ? true : false,
-            apiServerStatus: selectedRow.api_server_status === 1 ? true : false,
-            syncDataStatus: selectedRow.sync_data_status === 1 ? true : false,
-            licenseStatus: selectedRow.license_status === 1 ? true : false,
-          }
-          }))
-        setOriginalData(selectedRow)
-      } 
+            startService: false,
+            apiServerStatus: false,
+            syncDataStatus: false,
+            licenseStatus: false,
+          },
+        }));
+        setOriginalData(selectedRow);
+      }
     }
   }, [
-    dropdown.provinces,
-    dropdown.policeDivisions,
-    dropdown.districts,
-    dropdown.namePrefixes,
-    dropdown.positions,
+    provinces,
+    policeDivisions,
+    districts,
+    officerPrefixes,
+    positions,
     isEditMode,
-    selectedRow
-  ])
-  
+    selectedRow,
+  ]);
+
   const hasChanges = () => {
-    return JSON.stringify(state) !== JSON.stringify(originalData)
-  }
+    return JSON.stringify(state) !== JSON.stringify(originalData);
+  };
 
   const handleToggle = (key: keyof typeof state.toggles, value: boolean) => {
     setState((prev) => ({
       ...prev,
       toggles: { ...prev.toggles, [key]: value },
-    }))
-  }
+    }));
+  };
 
   const handleDropdownChange = (key: keyof typeof state, value: string) => {
-    setState((prev) => ({ ...prev, [key]: value }))
-  }
+    setState((prev) => ({ ...prev, [key]: value }));
+  };
 
-  const handleDropdownOfficerChange = (key: keyof typeof state.officer, value: string) => {
-    setState((prev) => ({ 
-      ...prev, 
+  const handleDropdownOfficerChange = (
+    key: keyof typeof state.officer,
+    value: string
+  ) => {
+    setState((prev) => ({
+      ...prev,
       officer: { ...prev.officer, [key]: value },
-    }))
-  }
+    }));
+  };
 
   const handleButtonClick = (key: keyof typeof state, value: boolean) => {
-    setState((prev) => ({ ...prev, [key]: value }))
-  }
+    setState((prev) => ({ ...prev, [key]: value }));
+  };
 
   const comfirmPoint = (result: SearchResult) => {
     setState((prev) => ({
@@ -202,270 +224,317 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
       location: {
         ...prev.location,
         latitude: result.location.lat.toString(),
-        longtitude: result.location.lng.toString(),
+        longitude: result.location.lng.toString(),
       },
-    }))
-  }
-
+    }));
+  };
+  
   useEffect(() => {
     const fetchData = async () => {
-      if (state.districtsSelect) {
-        const districtsId = dropdown.districts.find((row) => row.name_th === state.districtsSelect)?.id
-        if (districtsId) {
-          await dispatch(fetchSubDistrictsThunk(districtsId))
-        }
+      if (state.provinceSelect) {
+        await dispatch(fetchDistrictsThunk(`?filter=province_id:${state.provinceSelect}`));
       }
-    }
-    fetchData()
-  }, [dispatch, state.districtsSelect])
+      if (state.districtsSelect) {
+        await dispatch(
+          fetchSubDistrictsThunk(`?filter=district_id:${state.districtsSelect},province_id:${state.provinceSelect}`)
+        );
+      }
+    };
+    fetchData();
+  }, [dispatch, state.provinceSelect, state.districtsSelect]);
 
-  const provinceOptions = dropdown.provinces.map((row) => ({
-    value: row.name_th,
-    label: row.name_th,
-  }));
-  
-  const policeDivisionOptions = dropdown.policeDivisions.map((row) => ({
-    value: row.police_division,
-    label: row.police_division,
-  }));
-  
-  const districtOptions = dropdown.districts
-    .filter(
-      (district: Districts) =>
-        district.province_id === 
-        dropdown.provinces.find((province: Province) => state.provinceSelect === province.name_th)?.id
-    )
-    .map((row) => ({
-      value: row.name_th,
-      label: row.name_th,
-    }));
-  
-  const subDistrictOptions = dropdown.subDistricts
-    .filter(
-      (subDistrict: SubDistricts) =>
-        subDistrict.district_id === 
-        dropdown.districts.find((district: Districts) => state.districtsSelect === district.name_th)?.id
-    )
-    .map((row) => ({
-      value: row.name_th,
-      label: row.name_th,
-    }));
-  
-  const namePrefixOptions = dropdown.namePrefixes.map((row) => ({
-    value: row.name_th,
-    label: row.name_th,
-  }));
-  
-  const positionOptions = dropdown.positions.map((row) => ({
-    value: row.name_th,
-    label: row.name_th,
-  }));
-  
-  const options = {
-    province: provinceOptions,
-    policeDivision: policeDivisionOptions,
-    districts: districtOptions,
-    subDistricts: subDistrictOptions,
-    namePrefixes: namePrefixOptions,
-    positions: positionOptions,
+  useEffect(() => {
+    if (provinces && provinces.data) {
+      const options = provinces.data.map((row) => ({
+        label: row.name_th,
+        value: row.id,
+      }));
+      setProvincesOptions(options);
+    }
+  }, [provinces]);
+
+  useEffect(() => {
+    if (districts && districts.data) {
+      const options = districts.data.map((row) => ({
+        label: row.name_th,
+        value: row.id,
+      }));
+      setDistrictsOptions(options);
+    }
+  }, [districts]);
+
+  useEffect(() => {
+    if (subDistricts && subDistricts.data) {
+      const options = subDistricts.data.map((row) => ({
+        label: row.name_th,
+        value: row.id,
+      }));
+      setSubDistrictsOptions(options);
+    }
+  }, [subDistricts]);
+
+  useEffect(() => {
+    if (policeDivisions && policeDivisions.data) {
+      const options = policeDivisions.data.map((row) => ({
+        label: row.title_th,
+        value: row.id,
+      }));
+      setPoliceDivisionsOptions(options);
+    }
+  }, [policeDivisions]);
+
+  useEffect(() => {
+    if (officerPrefixes && officerPrefixes.data) {
+      const options = officerPrefixes.data.map((row) => ({
+        label: row.title_th,
+        value: row.id,
+      }));
+      setOfficerPrefixesOptions(options);
+    }
+  }, [officerPrefixes]);
+
+  useEffect(() => {
+    if (positions && positions.data) {
+      const options = positions.data.map((row) => ({
+        label: row.position_th,
+        value: row.id,
+      }));
+      setPositionsOptions(options);
+    }
+  }, [positions]);
+
+  const createCameraSettings = (): NewCameraDetailSettings | null => {
+    const defaultDetectionArea = {
+      frame: {
+        width: 850,
+        height: 450,
+      },
+      points: [
+        { x: 0, y:100 },
+        { x: 850, y:100 },
+        { x: 850, y:350 },
+        { x: 0, y:350 },
+        { x: 0, y:100 }
+      ]
+    }
+
+    const cameraSettings: NewCameraDetailSettings = {
+      cam_id: state.checkpointId,
+      checkpoint_name: state.checkpoint,
+      latitude: Number(state.location.latitude),
+      longitude: Number(state.location.longitude),
+      division_id: Number(state.policeDivisionsSelect),
+      province_id: Number(state.provinceSelect),
+      district_id: Number(state.districtsSelect),
+      sub_district_id: Number(state.subDistrictsSelect),
+      route: state.route,
+      rtsp_live_url: state.rtspLiveView,
+      rtsp_process_url: state.rtspProcess,
+      stream_encode: state.streamEncode,
+      api_server_url: state.apiServer,
+      pc_serial_number: state.pcSerialNumber,
+      license_key: state.license,
+      officer_title_id: Number(state.officer.namePrefixesSelect),
+      officer_firstname: state.officer.name,
+      officer_lastname: state.officer.surname,
+      officer_position_id: Number(state.officer.positionsSelect),
+      officer_phone: state.officer.phone,
+      detection_area: JSON.stringify(defaultDetectionArea),
+      visible: 1,
+      active: 1,
+    };
+
+    const isValid = Object.keys(cameraSettings).every((key) => {
+      const value = cameraSettings[key as keyof NewCameraDetailSettings];
+      if (
+        value == null ||
+        value === "" ||
+        (typeof value === "object" && Object.keys(value).length === 0)
+      ) {
+        console.error(`Invalid or empty field: ${key}`, value);
+        return false;
+      }
+      return true;
+    });
+
+    if (!isValid) {
+      console.error("Camera settings data is invalid.");
+      return null;
+    }
+
+    return cameraSettings;
   };
 
-  const createCameraSettings = (): CreateCameraSettings | null => {
-    // Check each value for emptiness or missing values
-    const cameraSettings: CreateCameraSettings = {
-      camera_status: state.toggles.startService ? 1 : 0,
-      checkpoint_id: state.checkpointId,
-      checkpoint: state.checkpoint,
-      latitude: state.location.latitude,
-      longtitude: state.location.longtitude,
-      number_of_detections: 0,
-      police_division: state.policeDivisionsSelect,
-      province: state.provinceSelect,
-      district: state.districtsSelect,
-      sub_district: state.subDistrictsSelect,
-      route: state.route,
-      rtsp_live_view: state.rtspLiveView,
-      rtsp_process: state.rtspProcess,
-      stream_encode: state.streamEncode,
-      api_server: state.apiServer,
-      pc_serial_number: state.pcSerialNumber,
-      license: state.license,
-      api_server_status: state.toggles.apiServerStatus ? 1 : 0,
-      sync_data_status: state.toggles.syncDataStatus ? 1 : 0,
-      license_status: state.toggles.licenseStatus ? 1 : 0,
-      officer: {
-        prefix: state.officer.namePrefixesSelect,
-        name: state.officer.name,
-        surname: state.officer.surname,
-        position: state.officer.positionsSelect,
-        phone: state.officer.phone,
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-  
-    const isValid = Object.keys(cameraSettings).every(key => {
-      const value = cameraSettings[key as keyof CreateCameraSettings]
-      if (value == null || value === "" || (typeof value === "object" && Object.keys(value).length === 0)) {
-        console.error(`Invalid or empty field: ${key}`, value)
-        return false
-      }
-      return true
-    })
-  
-    if (!isValid) {
-      console.error("Camera settings data is invalid.")
-      return null
-    }
-  
-    return cameraSettings
-  }
-
-  const updateCameraSettings = (): CameraSettings | null => {
+  const updateCameraSettings = (): CameraDetailSettings | null => {
     if (!selectedRow?.id) {
       console.error("The selected row does not have a valid 'id'.");
       return null;
     }
     // Check each value for emptiness or missing values
-    const cameraSettings: CameraSettings = {
+    const cameraSettings: CameraDetailSettings = {
       id: selectedRow.id,
-      camera_status: state.toggles.startService ? 1 : 0,
-      checkpoint_id: state.checkpointId,
-      checkpoint: state.checkpoint,
-      latitude: state.location.latitude,
-      longtitude: state.location.longtitude,
-      number_of_detections: state.number_of_detections,
-      police_division: state.policeDivisionsSelect,
-      province: state.provinceSelect,
-      district: state.districtsSelect,
-      sub_district: state.subDistrictsSelect,
+      cam_id: state.checkpointId,
+      cam_uid: selectedRow.cam_uid,
+      checkpoint_name: state.checkpoint,
+      division_id: Number(state.policeDivisionsSelect),
+      province_id: Number(state.provinceSelect),
+      district_id: Number(state.districtsSelect),
+      sub_district_id: Number(state.subDistrictsSelect),
+      number_of_detections: 0,
       route: state.route,
-      rtsp_live_view: state.rtspLiveView,
-      rtsp_process: state.rtspProcess,
+      latitude: state.location.latitude,
+      longitude: state.location.longitude,
+      rtsp_live_url: state.rtspLiveView,
+      rtsp_process_url: state.rtspProcess,
       stream_encode: state.streamEncode,
-      api_server: state.apiServer,
+      api_server_url: state.apiServer,
+      live_server_url: selectedRow.live_server_url,
+      live_stream_url: selectedRow.live_stream_url,
+      wsport: selectedRow.wsport,
       pc_serial_number: state.pcSerialNumber,
-      license: state.license,
-      api_server_status: state.toggles.apiServerStatus ? 1 : 0,
-      sync_data_status: state.toggles.syncDataStatus ? 1 : 0,
-      license_status: state.toggles.licenseStatus ? 1 : 0,
-      officer: {
-        prefix: state.officer.namePrefixesSelect,
-        name: state.officer.name,
-        surname: state.officer.surname,
-        position: state.officer.positionsSelect,
-        phone: state.officer.phone,
-      },
-      updated_at: new Date().toISOString(),
+      license_key: state.license,
+      officer_title_id: Number(state.officer.namePrefixesSelect),
+      officer_firstname: state.officer.name,
+      officer_lastname: state.officer.surname,
+      officer_position_id: Number(state.officer.positionsSelect),
+      officer_phone: state.officer.phone,
+      detection_area: selectedRow.detection_area,
+      streaming: selectedRow.streaming,
+      visible: selectedRow.visible,
+      active: selectedRow.active,
+      alive: selectedRow.alive,
+      last_online: selectedRow.last_online,
+      last_check: selectedRow.last_check,
+      createdAt: selectedRow.createdAt,
+      updatedAt: format(new Date(), "yyyy-MM-dd hh:mm:ss"),
     }
 
-    const isValid = Object.keys(cameraSettings).every(key => {
-      const value = cameraSettings[key as keyof CameraSettings]
+    const isValid = Object.entries(cameraSettings).every(([key, value]) => {
+      if (key === "last_online" || key === "last_check") {
+        return true
+      }
       if (value == null || value === "") {
-        console.error(`Invalid or empty field: ${key}`, value)
+        console.error(`Invalid or empty field: ${key}`, value);
         return false
       }
       return true
-    })
-  
+    });
+
     if (!isValid) {
-      console.error("Camera settings data is invalid.")
+      console.error("Camera settings data is invalid.");
       return null
     }
-  
+
     return cameraSettings
-  }
+  };
 
   const handleSubmit = useCallback(async () => {
     try {
       if (isEditMode && selectedRow) {
         if (!hasChanges()) {
-          PopupMessage("ไม่พบการเปลี่ยนแปลง", "ข้อมูลไม่มีการเปลี่ยนแปลง", "warning")
-          return
-        }
-        else {
-          const updateCameraSetting = updateCameraSettings()
+          PopupMessage(
+            "ไม่พบการเปลี่ยนแปลง",
+            "ข้อมูลไม่มีการเปลี่ยนแปลง",
+            "warning"
+          );
+          return;
+        } else {
+          const updateCameraSetting = updateCameraSettings();
           if (updateCameraSetting) {
-            await dispatch(putCameraSettingThunk(updateCameraSetting))
-            closeDialog()
-          } 
-          else {
-            PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", 'error')
+            await dispatch(putCameraSettingThunk(updateCameraSetting));
+            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
+            closeDialog();
+          } else {
+            PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error");
           }
         }
-      }
-      else {
-        const newCameraSetting = createCameraSettings()
+      } else {
+        const newCameraSetting = createCameraSettings();
         if (newCameraSetting) {
-          await dispatch(postCameraSettingThunk(newCameraSetting))
-          closeDialog()
-        } 
-        else {
-          PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", 'error')
+          await dispatch(postCameraSettingThunk(newCameraSetting));
+          PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
+          closeDialog();
+        } else {
+          PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error");
         }
       }
-    } 
-    catch (error) {
-      PopupMessage("พบข้อผิดพลาด", `ไม่สามารถสร้างการตั้งค่ากล้องได้: ${error}`, 'error')
+    } catch (error) {
+      PopupMessage(
+        "พบข้อผิดพลาด",
+        `ไม่สามารถสร้างการตั้งค่ากล้องได้: ${error}`,
+        "error"
+      );
     }
-  }, [dispatch, state])
+  }, [dispatch, state]);
 
   const handleTextChange = (key: keyof typeof state, value: string) => {
-    setState((prev) => ({ ...prev, [key]: value }))
-  }
+    setState((prev) => ({ ...prev, [key]: value }));
+  };
 
-  const handleTextLocationChange = (key: keyof typeof state.location, value: string) => {
-    setState((prev) => ({ 
-      ...prev, 
-      location: { ...prev.location, [key]: value },
-    }))
-  }
-
-  const handleTextOfficerChange = (key: keyof typeof state.officer, value: string) => {
+  const handleTextLocationChange = (
+    key: keyof typeof state.location,
+    value: string
+  ) => {
     setState((prev) => ({
-      ...prev, 
+      ...prev,
+      location: { ...prev.location, [key]: value },
+    }));
+  };
+
+  const handleTextOfficerChange = (
+    key: keyof typeof state.officer,
+    value: string
+  ) => {
+    setState((prev) => ({
+      ...prev,
       officer: { ...prev.officer, [key]: value },
-    }))
-  }
-  
+    }));
+  };
+
   return (
-    <div id='camera-setting'>
-      {isLoading && <Loading />}
+    <div id="camera-setting">
       <div className="bg-black text-white p-[30px] border-[1px] border-dodgerBlue w-full">
         {state.isLoading && <Loading />}
         {/* Header */}
-        <div className='border-b-[1px] border-dodgerBlue pb-[20px]'>
-          <div className='flex justify-between mb-[20px]'>
-            <label className='text-[20px]'>ข้อมูลกล้อง</label>
+        <div className="border-b-[1px] border-dodgerBlue pb-[20px]">
+          <div className="flex justify-between mb-[20px]">
+            <label className="text-[20px]">ข้อมูลกล้อง</label>
             <div>
-              <ToggleButton 
-                onChange={(checked) => handleToggle('startService', checked)}
+              <ToggleButton
+                onChange={(checked) => handleToggle("startService", checked)}
                 checked={state.toggles.startService}
               />
-              <label className='ml-[16px]'>Start Service</label>
+              <label className="ml-[16px]">Start Service</label>
             </div>
           </div>
-          <div className='grid grid-cols-2 lt1443:grid-cols-1 gap-[60px]'>
+          <div className="grid grid-cols-2 lt1443:grid-cols-1 gap-[60px]">
             {/* First Column */}
             <div>
-              <div className='my-[10px]'>
+              <div className="my-[10px]">
                 <TextBox
                   id="checkpoint-id"
                   label="ID (จุดตรวจ)"
                   placeHolder=""
                   className="w-full"
                   value={state.checkpointId}
-                  onChange={(event) => handleTextChange('checkpointId', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("checkpointId", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <SelectBox
                   sx={{ marginTop: "15px" }}
                   id="police-divisions"
                   className="w-full"
                   value={state.policeDivisionsSelect}
-                  onChange={(event: SelectChangeEvent<any>) => handleDropdownChange('policeDivisionsSelect', event.target.value)}
-                  options={options.policeDivision}
+                  onChange={(event: SelectChangeEvent<any>) =>
+                    handleDropdownChange(
+                      "policeDivisionsSelect",
+                      event.target.value
+                    )
+                  }
+                  options={policeDivisionsOptions}
                   label="Police Division (ภาค)"
                 />
                 <SelectBox
@@ -473,39 +542,47 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   id="province"
                   className="w-full"
                   value={state.provinceSelect}
-                  onChange={(event: SelectChangeEvent<any>) => handleDropdownChange('provinceSelect', event.target.value)}
-                  options={options.province}
+                  onChange={(event: SelectChangeEvent<any>) =>
+                    handleDropdownChange("provinceSelect", event.target.value)
+                  }
+                  options={provincesOptions}
                   label="Province (จังหวัด)"
                 />
               </div>
-              <div className='my-[10px]'>
+              <div className="my-[10px]">
                 <TextBox
                   id="route"
                   label="Route (ถนน)"
                   placeHolder=""
                   className="w-full"
                   value={state.route}
-                  onChange={(event) => handleTextChange('route', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("route", event.target.value)
+                  }
                 />
               </div>
-              <div className='my-[10px]'>
+              <div className="my-[10px]">
                 <TextBox
                   id="rtsp-live-view"
                   label="RTSP Live View"
                   placeHolder=""
                   className="w-full"
                   value={state.rtspLiveView}
-                  onChange={(event) => handleTextChange('rtspLiveView', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("rtspLiveView", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <TextBox
                   id="stream-encode"
                   label="Steam Encode"
                   placeHolder=""
                   className="w-full"
                   value={state.streamEncode}
-                  onChange={(event) => handleTextChange('streamEncode', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("streamEncode", event.target.value)
+                  }
                 />
                 <TextBox
                   id="api-server"
@@ -513,46 +590,56 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.apiServer}
-                  onChange={(event) => handleTextChange('apiServer', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("apiServer", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px] mt-[40px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px] mt-[40px]">
                 <div>
-                  <ToggleButton 
-                    onChange={(checked) => handleToggle('apiServerStatus', checked)}
+                  <ToggleButton
+                    onChange={(checked) =>
+                      handleToggle("apiServerStatus", checked)
+                    }
                     checked={state.toggles.apiServerStatus}
                   />
-                  <label className='ml-[16px]'>API Server Status</label>
+                  <label className="ml-[16px]">API Server Status</label>
                 </div>
                 <div>
-                  <ToggleButton 
-                    onChange={(checked) => handleToggle('syncDataStatus', checked)}
+                  <ToggleButton
+                    onChange={(checked) =>
+                      handleToggle("syncDataStatus", checked)
+                    }
                     checked={state.toggles.syncDataStatus}
                   />
-                  <label className='ml-[16px]'>Sync Data Status </label>
+                  <label className="ml-[16px]">Sync Data Status </label>
                 </div>
               </div>
             </div>
             {/* Seconds Column */}
             <div>
-              <div className='my-[10px]'>
+              <div className="my-[10px]">
                 <TextBox
                   id="checkpoint"
                   label="Check point (ด่านตรวจ)"
                   placeHolder=""
                   className="w-full"
                   value={state.checkpoint}
-                  onChange={(event) => handleTextChange('checkpoint', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("checkpoint", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <SelectBox
                   sx={{ marginTop: "15px" }}
                   id="district"
                   className="w-full"
                   value={state.districtsSelect}
-                  onChange={(event: SelectChangeEvent<any>) => handleDropdownChange('districtsSelect', event.target.value)}
-                  options={options.districts}
+                  onChange={(event: SelectChangeEvent<any>) =>
+                    handleDropdownChange("districtsSelect", event.target.value)
+                  }
+                  options={districtsOptions}
                   label="District (อำเภอ)"
                   disabled={state.provinceSelect === '' ? true : false}
                 />
@@ -561,57 +648,76 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   id="sub-district"
                   className="w-full"
                   value={state.subDistrictsSelect}
-                  onChange={(event: SelectChangeEvent<any>) => handleDropdownChange('subDistrictsSelect', event.target.value)}
-                  options={options.subDistricts}
+                  onChange={(event: SelectChangeEvent<any>) =>
+                    handleDropdownChange(
+                      "subDistrictsSelect",
+                      event.target.value
+                    )
+                  }
+                  options={subDistrictsOptions}
                   label="Sub District (ตำบล)"
                   disabled={state.districtsSelect === '' ? true : false}
                 />
               </div>
-              <div className='grid grid-cols-[auto_auto_50px] gap-5 my-[10px]'>
+              <div className="grid grid-cols-[auto_auto_50px] gap-5 my-[10px]">
                 <TextBox
                   id="latitude"
                   label="Location Latitude"
                   placeHolder=""
                   className="w-full"
                   value={state.location.latitude}
-                  onChange={(event) => handleTextLocationChange('latitude', event.target.value)}
+                  onChange={(event) =>
+                    handleTextLocationChange("latitude", event.target.value)
+                  }
                 />
                 <TextBox
-                  id="longtitude"
-                  label="Location Longtitude"
+                  id="longitude"
+                  label="Location longitude"
                   placeHolder=""
                   className="w-full"
-                  value={state.location.longtitude}
-                  onChange={(event) => handleTextLocationChange('longtitude', event.target.value)}
+                  value={state.location.longitude}
+                  onChange={(event) =>
+                    handleTextLocationChange("longitude", event.target.value)
+                  }
                 />
                 {/* Google Map Icon */}
-                <div className='flex items-end'>
-                  <button 
-                    className='flex items-center justify-center bg-dodgerBlue w-full h-[40px] rounded-[5px]'
-                    onClick={() => handleButtonClick("isLocationSettingOpen", true)}
+                <div className="flex items-end">
+                  <button
+                    className="flex items-center justify-center bg-dodgerBlue w-full h-[40px] rounded-[5px]"
+                    onClick={() =>
+                      handleButtonClick("isLocationSettingOpen", true)
+                    }
                   >
-                    <img src="/icons/pin_google-maps.png" alt="Google Map" className='w-[25px] h-[25px]' />
+                    <img
+                      src="/icons/pin_google-maps.png"
+                      alt="Google Map"
+                      className="w-[25px] h-[25px]"
+                    />
                   </button>
                 </div>
               </div>
-              <div className='my-[10px]'>
+              <div className="my-[10px]">
                 <TextBox
                   id="rtsp-process"
                   label="RTSP Process"
                   placeHolder=""
                   className="w-full"
                   value={state.rtspProcess}
-                  onChange={(event) => handleTextChange('rtspProcess', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("rtspProcess", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <TextBox
                   id="pc-serial-number"
                   label="PC Serial Number"
                   placeHolder=""
                   className="w-full"
                   value={state.pcSerialNumber}
-                  onChange={(event) => handleTextChange('pcSerialNumber', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("pcSerialNumber", event.target.value)
+                  }
                 />
                 <TextBox
                   id="license"
@@ -619,16 +725,20 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.license}
-                  onChange={(event) => handleTextChange('license', event.target.value)}
+                  onChange={(event) =>
+                    handleTextChange("license", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px] mt-[40px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px] mt-[40px]">
                 <div>
-                  <ToggleButton 
-                    onChange={(checked) => handleToggle('licenseStatus', checked)}
+                  <ToggleButton
+                    onChange={(checked) =>
+                      handleToggle("licenseStatus", checked)
+                    }
                     checked={state.toggles.licenseStatus}
                   />
-                  <label className='ml-[16px]'>License Status</label>
+                  <label className="ml-[16px]">License Status</label>
                 </div>
               </div>
             </div>
@@ -636,20 +746,25 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
         </div>
         {/* Middle */}
         <div>
-          <div className='flex my-[20px]'>
-            <label className='text-[20px]'>เจ้าหน้าที่</label>
+          <div className="flex my-[20px]">
+            <label className="text-[20px]">เจ้าหน้าที่</label>
           </div>
-          <div className='grid grid-cols-2 gap-[60px]'>
+          <div className="grid grid-cols-2 gap-[60px]">
             {/* First Column */}
             <div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <SelectBox
                   sx={{ marginTop: "15px" }}
                   id="name-prefix"
                   className="w-full"
                   value={state.officer.namePrefixesSelect}
-                  onChange={(event: SelectChangeEvent<any>) => handleDropdownOfficerChange('namePrefixesSelect', event.target.value)}
-                  options={options.namePrefixes}
+                  onChange={(event: SelectChangeEvent<any>) =>
+                    handleDropdownOfficerChange(
+                      "namePrefixesSelect",
+                      event.target.value
+                    )
+                  }
+                  options={officerPrefixesOptions}
                   label="คำนำหน้า"
                 />
                 <TextBox
@@ -658,38 +773,49 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
                   placeHolder=""
                   className="w-full"
                   value={state.officer.name}
-                  onChange={(event) => handleTextOfficerChange('name', event.target.value)}
+                  onChange={(event) =>
+                    handleTextOfficerChange("name", event.target.value)
+                  }
                 />
               </div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <TextBox
                   id="phone"
                   label="เบอร์โทร"
                   placeHolder=""
                   className="w-full"
                   value={state.officer.phone}
-                  onChange={(event) => handleTextOfficerChange('phone', event.target.value)}
+                  onChange={(event) =>
+                    handleTextOfficerChange("phone", event.target.value)
+                  }
                 />
               </div>
             </div>
             {/* Seconds Column */}
             <div>
-              <div className='grid grid-cols-2 gap-5 my-[10px]'>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
                 <TextBox
                   id="surname"
                   label="นามสกุล"
                   placeHolder=""
                   className="w-full"
                   value={state.officer.surname}
-                  onChange={(event) => handleTextOfficerChange('surname', event.target.value)}
+                  onChange={(event) =>
+                    handleTextOfficerChange("surname", event.target.value)
+                  }
                 />
                 <SelectBox
                   sx={{ marginTop: "15px" }}
                   id="position"
                   className="w-full"
                   value={state.officer.positionsSelect}
-                  onChange={(event: SelectChangeEvent<any>) => handleDropdownOfficerChange('positionsSelect', event.target.value)}
-                  options={options.positions}
+                  onChange={(event: SelectChangeEvent<any>) =>
+                    handleDropdownOfficerChange(
+                      "positionsSelect",
+                      event.target.value
+                    )
+                  }
+                  options={positionsOptions}
                   label="ตำแหน่ง"
                 />
               </div>
@@ -698,42 +824,48 @@ const CameraSetting: React.FC<CameraSettingProps> = ({closeDialog, selectedRow, 
         </div>
       </div>
       {/* Footer */}
-      <div className='flex justify-end my-6 ml-7'>
-        <button 
-          type="button" 
-          className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
+      <div className="flex justify-end my-6 ml-7">
+        <button
+          type="button"
+          className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]"
           onClick={() => handleSubmit()}
         >
-          <Icon icon={Save} size={20} color='white' />
-          <span className='ml-[5px]'>บันทึก</span>
+          <Icon icon={Save} size={20} color="white" />
+          <span className="ml-[5px]">บันทึก</span>
         </button>
-        <button 
-          type="button" 
-          className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded" 
+        <button
+          type="button"
+          className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded"
           onClick={closeDialog}
         >
           ยกเลิก
         </button>
       </div>
       {/* Location Setting Dialog */}
-      <Dialog open={state.isLocationSettingOpen} onClose={() => handleButtonClick("isLocationSettingOpen", false)} className="relative z-50">
+      <Dialog
+        open={state.isLocationSettingOpen}
+        onClose={() => handleButtonClick("isLocationSettingOpen", false)}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
-          <DialogPanel 
-          className="space-y-4 border bg-[var(--background-color)] p-5 bg-black text-white 
+          <DialogPanel
+            className="space-y-4 border bg-[var(--background-color)] p-5 bg-black text-white 
           w-[50%] min-w-[700px] h-full max-h-[850px] overflow-y-auto"
           >
             <div className="flex justify-between">
               <DialogTitle className="text-[28px]">Location กล้อง</DialogTitle>
             </div>
-            <LocationSetting 
-              closeDialog={() => handleButtonClick("isLocationSettingOpen", false)} 
+            <LocationSetting
+              closeDialog={() =>
+                handleButtonClick("isLocationSettingOpen", false)
+              }
               comfirmPoint={comfirmPoint}
             />
           </DialogPanel>
         </div>
       </Dialog>
     </div>
-  )
-}
+  );
+};
 
-export default CameraSetting
+export default CameraSetting;

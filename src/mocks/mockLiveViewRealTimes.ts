@@ -1,73 +1,68 @@
-import { LastRecognitionResult, VehicleCountResult, SystemStatusResult, ConnectionResult } from "../features/live-view-real-time/liveViewRealTimeTypes"
+import { LastRecognitionData, VehicleCountResult, SystemStatusResult, ConnectionResult } from "../features/live-view-real-time/liveViewRealTimeTypes"
 
-export const lastRecognitionData: LastRecognitionResult = 
-{
-  id: 1,
-  registration_type: "Black List",
-  cameraName: "CAM-102",
-  plate: "3กฎ 1233 กรุงเทพมหานคร",
-  location: "Bangkok",
-  pathImageVehicle: "/images/real-time-mock-image/car1.png",
-  pathImage: "/images/real-time-mock-image/car1-plate.png",
-  directionString: "Bangkok -> Nakhon Pathom",
-  directionDetail: [
-    { color: "red", direction: "North", dateTime: "2024-11-01 08:00:00" },
-    { color: "blue", direction: "West", dateTime: "2024-11-01 09:30:00" },
-  ],
-  periodTime: "2024-11-01 08:00:00 to 2024-11-01 10:00:00",
-  map: [
-    { lat: 13.7211, lng: 100.5287 }, // Sathorn
-    { lat: 13.726, lng: 100.535 }, // Lumpini Park
-    { lat: 13.7377, lng: 100.5521 }, // Asok Intersection
-    { lat: 13.7448, lng: 100.5665 }, // Thonglor
-    { lat: 13.7489, lng: 100.5778 }, // Ekkamai
-    { lat: 13.7425, lng: 100.6013 }, // Phra Khanong
-    { lat: 13.7279, lng: 100.6116 }, // On Nut
-    { lat: 13.7212, lng: 100.6303 }, // Bang Na
-    { lat: 13.7026, lng: 100.6455 }, // Srinagarindra
-    { lat: 13.6924, lng: 100.6803 }, // King Rama IX Park
-    { lat: 13.677, lng: 100.6931 }, // Near Seacon Square
-    { lat: 13.6687, lng: 100.7285 }, // Lat Krabang Road
-    { lat: 13.7246, lng: 100.7809 }, // Near Suvarnabhumi Airport (Lat Krabang Area)
-  ],
-  vehicle: {
-    id: 1,
-    plate: "ABC-1234",
-    location: "Tokyo, Japan",
-    type: "Sedan",
-    brand: "Toyota",
-    color: "White",
-    model: "Camry",
-    date: "2024-06-28",
-    time: "20:12:04",
-    accuracy: "98%",
-    imgCar: "/images/real-time-mock-image/car1.png",
-    imgPlate: "/images/real-time-mock-image/car1-plate.png",
-  },
-  brand: "Toyota",
-    color: "White",
-    model: "Camry",
-  ownerPerson: {
-    name: "John Doe",
-    nationNumber: 1234567890123,
-    address: "123 Main Street, Bangkok, Thailand",
-  },
-  agency: {
-    id: 1,
-    agency: 'หน่วยงานที่ 1',
-    phone: '0123456789',
-    address: '123 Street',
-    latitude: '13.7563',
-    longitude: '100.5018',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  benefitPerson: {
-    name: "Jane Doe",
-    nationNumber: 9876543210987,
-    address: "456 Elm Street, Bangkok, Thailand",
-  },
-}
+export const lastRecognitionData: LastRecognitionData[] = 
+[{
+  "id": 1,
+  "agent_uid": "Testss",
+  "agent_version": "4.1.10",
+  "agent_type": "Tests",
+  "app_version": "3",
+  "data_type": "Tests",
+  "company_id": "demo",
+  "camera_id": 10000102,
+  "site_id": 0,
+  "site_name": "",
+  "gps_latitude": null,
+  "gps_longitude": null,
+  "epoch_start": "2024-11-14T15:44:41.000Z",
+  "epoch_end": "2024-11-14T15:44:42.000Z",
+  "frame_start": 0,
+  "frame_end": 16,
+  "plate": "9กฐ1234",
+  "plate_confidence": "94.24",
+  "country": "th",
+  "region": "th-10",
+  "region_confidence": "99.00",
+  "vehicle_body_type": "motorcycle",
+  "vehicle_body_type_confidence": "98.96",
+  "vehicle_make": "honda",
+  "vehicle_make_confidence": "0.00",
+  "vehicle_make_model": "honda_accordttttttttttttttt",
+  "vehicle_make_model_confidence": "0.00",
+  "vehicle_color": "black",
+  "vehicle_color_confidence": "0.00",
+  "vehicle_make_year": "2010-2014",
+  "vehicle_make_year_confidence": "0.00",
+  "orientation": "135",
+  "orientation_confidence": "93.89",
+  "travel_direction": 68,
+  "source_image_width": 1920,
+  "source_image_height": 1080,
+  "overview_image": "/example.jpg",
+  "overview_image_width": 560,
+  "overview_image_height": 315,
+  "vehicle_image": "/example.jpg",
+  "vehicle_region_x": 695,
+  "vehicle_region_y": 363,
+  "vehicle_region_width": 324,
+  "vehicle_region_height": 338,
+  "plate_image": "/example.jpg",
+  "plate_x1": 731,
+  "plate_x2": 826,
+  "plate_x3": 814,
+  "plate_x4": 718,
+  "plate_y1": 548,
+  "plate_y2": 554,
+  "plate_y3": 622,
+  "plate_y4": 615,
+  "is_parked": "0",
+  "lane": "",
+  "processing_time_ms": "11.65",
+  "sync_date_time_ms": "0.00",
+  "sync_state": "",
+  "sync_date": "2024-11-14T15:44:47.000Z",
+  "user_data": "Test"
+}]
 
 export const vehicleCountData: VehicleCountResult = 
 { 

@@ -1,52 +1,52 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { Status } from "../../constants/statusEnum";
 import { 
-  fetchAgencies, 
   fetchRegistrationTypes,
   fetchDataStatus,
   fetchProvinces,
   fetchPoliceDivisions,
   fetchDistricts,
   fetchSubDistricts,
-  fetchNamePrefixes,
+  fetchCommonPrefixes,
+  fetchOfficerPrefixes,
   fetchPositions
 } from "./dropdownAPI";
 import { 
-  Province,
-  Agencies,
-  RegistrationTypesData,
+  Provinces,
+  RegistrationTypes,
   DataStatusData,
   PoliceDivisions,
   Districts,
   SubDistricts,
-  NamePrefixes,
-  Positions
+  OfficerPositions,
+  OfficerTitles,
+  CommonTitles
 } from "./dropdownTypes";
 
 interface DropdownState {
-  provinces: Province[];
-  agencies: Agencies[];
+  provinces: Provinces | null;
   dataStatus: DataStatusData[];
-  registrationTypes: RegistrationTypesData[];
-  policeDivisions: PoliceDivisions[];
-  districts: Districts[];
-  subDistricts: SubDistricts[];
-  namePrefixes: NamePrefixes[];
-  positions: Positions[];
+  registrationTypes: RegistrationTypes | null;
+  policeDivisions: PoliceDivisions | null;
+  districts: Districts | null;
+  subDistricts: SubDistricts | null;
+  commonPrefixes: CommonTitles | null;
+  officerPrefixes: OfficerTitles | null;
+  positions: OfficerPositions | null;
   status: Status;
   error: string | null;
 }
 
 const initialState: DropdownState = {
-  provinces: [],
-  agencies: [],
+  provinces: null,
   dataStatus: [],
-  registrationTypes: [],
-  policeDivisions:[],
-  districts: [],
-  subDistricts: [],
-  namePrefixes: [],
-  positions: [],
+  registrationTypes: null,
+  policeDivisions:null,
+  districts: null,
+  subDistricts: null,
+  commonPrefixes: null,
+  officerPrefixes: null,
+  positions: null,
   status: Status.IDLE,
   error: null,
 };
@@ -62,64 +62,64 @@ export const fetchDataStatusThunk = createAsyncThunk(
 
 export const fetchProvincesThunk = createAsyncThunk(
   "provinces/fetchProvinces",
-  async () => {
-    const response = await fetchProvinces();
-    return response;
-  }
-);
-
-export const fetchAgenciesThunk = createAsyncThunk(
-  "agencies/fetchAgencies",
-  async () => {
-    const response = await fetchAgencies();
+  async (param?: string) => {
+    const response = await fetchProvinces(param);
     return response;
   }
 );
 
 export const fetchRegistrationTypesThunk = createAsyncThunk(
   "registrationTypes/fetchRegistrationTypes",
-  async () => {
-    const response = await fetchRegistrationTypes();
+  async (param?: string) => {
+    const response = await fetchRegistrationTypes(param);
     return response;
   }
 );
 
 export const fetchPoliceDivisionsThunk = createAsyncThunk(
   "policeDivisions/fetchPoliceDivisions",
-  async () => {
-    const response = await fetchPoliceDivisions();
+  async (param?: string) => {
+    const response = await fetchPoliceDivisions(param);
     return response;
   }
 );
 
 export const fetchDistrictsThunk = createAsyncThunk(
   "districts/fetchDistricts",
-  async () => {
-    const response = await fetchDistricts();
+  async (param?: string) => {
+    const response = await fetchDistricts(param);
     return response;
   }
 );
 
 export const fetchSubDistrictsThunk = createAsyncThunk(
   "subDistricts/fetchSubDistricts",
-  async (districtId: number) => {
-    const response = await fetchSubDistricts(districtId);
+  async (param?: string) => {
+    const response = await fetchSubDistricts(param);
     return response;
   }
 );
 
-export const fetchNamePrefixesThunk = createAsyncThunk(
-  "namePrefixes/fetchNamePrefixes",
-  async () => {
-    const response = await fetchNamePrefixes();
+export const fetchCommonPrefixesThunk = createAsyncThunk(
+  "namePrefixes/fetchCommonPrefixes",
+  async (param?: string) => {
+    const response = await fetchCommonPrefixes(param);
+    return response;
+  }
+);
+
+export const fetchOfficerPrefixesThunk = createAsyncThunk(
+  "namePrefixes/fetchOfficerPrefixes",
+  async (param?: string) => {
+    const response = await fetchOfficerPrefixes(param);
     return response;
   }
 );
 
 export const fetchPositionThunk = createAsyncThunk(
   "position/fetchPositions",
-  async () => {
-    const response = await fetchPositions();
+  async (param?: string) => {
+    const response = await fetchPositions(param);
     return response;
   }
 );
@@ -155,20 +155,6 @@ const dropdownSlice = createSlice({
       .addCase(fetchDataStatusThunk.rejected, (state, action) => {
         state.status = Status.FAILED;
         state.error = action.error.message || "Failed to fetch dataStatus";
-      });
-
-    builder
-      .addCase(fetchAgenciesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
-      })
-      .addCase(fetchAgenciesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
-        state.agencies = action.payload;
-      })
-      .addCase(fetchAgenciesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch agencies";
       });
 
     builder
@@ -228,17 +214,31 @@ const dropdownSlice = createSlice({
       });
 
     builder
-      .addCase(fetchNamePrefixesThunk.pending, (state) => {
+      .addCase(fetchCommonPrefixesThunk.pending, (state) => {
         state.status = Status.LOADING;
         state.error = null;
       })
-      .addCase(fetchNamePrefixesThunk.fulfilled, (state, action) => {
+      .addCase(fetchCommonPrefixesThunk.fulfilled, (state, action) => {
         state.status = Status.SUCCEEDED;
-        state.namePrefixes = action.payload;
+        state.commonPrefixes = action.payload;
       })
-      .addCase(fetchNamePrefixesThunk.rejected, (state, action) => {
+      .addCase(fetchCommonPrefixesThunk.rejected, (state, action) => {
         state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch namePrefixes";
+        state.error = action.error.message || "Failed to fetch commonPrefixes";
+      });
+
+    builder
+      .addCase(fetchOfficerPrefixesThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchOfficerPrefixesThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.officerPrefixes = action.payload;
+      })
+      .addCase(fetchOfficerPrefixesThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch officerPrefixes";
       });
 
     builder

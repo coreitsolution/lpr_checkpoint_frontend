@@ -5,29 +5,29 @@ import ManageExtraRegistration from "../manage-extra-registration/ManageExtraReg
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
+import { FILE_URL } from '@/config/apiConfig'
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
-import { Pencil, Trash2, Plus, Import } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 
 // Types
 import {
-  SpecialRegistrationData
+  SpecialPlatesRespondsDetail
 } from '../../features/registration-data/RegistrationDataTypes'
 import { FilterSpecialRegistration } from "../../features/api/types"
 
 
 // API
 import { 
-  fetchAgenciesThunk,
   fetchDataStatusThunk,
   fetchProvincesThunk,
   fetchRegistrationTypesThunk
- } from "../../features/dropdown/dropdownSlice"
- import { 
-  fetchSpecialRegistrationDataThunk,
-  deleteSpecialRegistrationDataThunk
- } from "../../features/registration-data/RegistrationDataSlice"
+} from "../../features/dropdown/dropdownSlice"
+import { 
+  fetchSpecialPlateDataThunk,
+  deleteSpecialPlateDataThunk
+} from "../../features/registration-data/RegistrationDataSlice"
 
  // Context
 import { useHamburger } from "../../context/HamburgerContext"
@@ -38,25 +38,23 @@ import SearchFilter from "../search-filter/SearchFilter"
 
 function ExtraRegistration() {
   const dispatch: AppDispatch = useDispatch()
-  const { specialRegistrationData, status, error } = useSelector(
+  const { specialPlatesData, status, error } = useSelector(
     (state: RootState) => state.registrationData
   )
 
   const [isAddRegistationOpen, setIsAddRegistationOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [originalData, setOriginalData] = useState<SpecialRegistrationData[]>([])
-  const [specialRegistrationsList, setSpecialRegistrationsList] = useState<SpecialRegistrationData[]>([])
-  const [selectedRow, setSelectedRow] = useState<SpecialRegistrationData | null>(null)
+  const [originalData, setOriginalData] = useState<SpecialPlatesRespondsDetail[]>([])
+  const [specialRegistrationsList, setSpecialRegistrationsList] = useState<SpecialPlatesRespondsDetail[]>([])
+  const [selectedRow, setSelectedRow] = useState<SpecialPlatesRespondsDetail | null>(null)
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
-  
-  const apiUrl = import.meta.env.VITE_API_URL
 
-  const { agencies, provinces, dataStatus, registrationTypes } = useSelector(
+  const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
 
-  const handleEditClick = (item: SpecialRegistrationData) => {
+  const handleEditClick = (item: SpecialPlatesRespondsDetail) => {
     setSelectedRow(item)
     setIsAddRegistationOpen(true)
     setIsEditMode(true)
@@ -69,7 +67,7 @@ function ExtraRegistration() {
 
   const handleDeleteClick = async (id: number) => {
     try {
-      await dispatch(deleteSpecialRegistrationDataThunk(id))
+      await dispatch(deleteSpecialPlateDataThunk(id))
       PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
     } 
     catch (error) {
@@ -84,7 +82,7 @@ function ExtraRegistration() {
       carRegistration,
       selectedProvince,
       selectedRegistrationType,
-      selectedAgency,
+      agency,
       selectedStatus,
     } = filterData
   
@@ -93,30 +91,31 @@ function ExtraRegistration() {
       !carRegistration &&
       !selectedProvince &&
       !selectedRegistrationType &&
-      !selectedAgency &&
-      !selectedStatus
+      !agency &&
+      (selectedStatus === 2 || selectedStatus === "")
     ) {
       setSpecialRegistrationsList(originalData)
+      setIsLoading(false)
       return
     }
   
-    const getProvinceId = provinces.find((province) => province.name_th === selectedProvince)?.id || 0
-    const getStatusId = dataStatus.find((status) => status.status === selectedStatus)?.id || 0
-    const getAgencyId = agencies.find((agency) => agency.agency === selectedAgency)?.id || 0
-    const getRegistrationTypeId = registrationTypes.find((type) => type.registration_type === selectedRegistrationType)?.id || 0
-  
     const filteredData = originalData.filter((row) => {
-      return (
-        (!getProvinceId || row.agency_id === getProvinceId) &&
-        (!getStatusId || row.status_id === getStatusId) &&
-        (!getAgencyId || row.agency_id === getAgencyId) &&
-        (!getRegistrationTypeId || row.registration_type_id === getRegistrationTypeId) &&
-        (!letterCategory || row.letter_category.includes(letterCategory)) &&
-        (!carRegistration || row.car_registration.includes(carRegistration))
-      )
-    })
+      const isProvinceMatch = !selectedProvince || row.province_id === selectedProvince;
+      const isStatusMatch = selectedStatus === 2 || selectedStatus === "" || row.active === selectedStatus;
+      const isAgencyMatch = !agency || row.case_owner_agency.includes(agency);
+      const isPlateClassMatch = !selectedRegistrationType || row.plate_class_id === selectedRegistrationType;
+      const isLetterCategoryMatch = !letterCategory || row.plate_group.includes(letterCategory);
+      const isCarRegistrationMatch = !carRegistration || row.plate_number.includes(carRegistration);
+  
+      return isProvinceMatch && isStatusMatch && isAgencyMatch && isPlateClassMatch && isLetterCategoryMatch && isCarRegistrationMatch;
+    });
   
     setSpecialRegistrationsList(filteredData)
+    setIsLoading(false)
+  }
+
+  const handleImportClick = () => {
+    
   }
 
   useEffect(() => {
@@ -124,39 +123,47 @@ function ExtraRegistration() {
   }, [specialRegistrationsList])
 
   useEffect(() => {
-    dispatch(fetchSpecialRegistrationDataThunk())
+    dispatch(fetchSpecialPlateDataThunk())
 
     if (!isAddRegistationOpen) {
       setIsLoading(true)
       setTimeout(async () => {
-        dispatch(fetchSpecialRegistrationDataThunk())
+        dispatch(fetchSpecialPlateDataThunk())
         setIsLoading(false)
       }, 500)
     }
-    dispatch(fetchAgenciesThunk())
     dispatch(fetchProvincesThunk())
     dispatch(fetchRegistrationTypesThunk())
     dispatch(fetchDataStatusThunk())
-  }, [apiUrl, dispatch, isAddRegistationOpen])
+  }, [dispatch, isAddRegistationOpen])
 
   useEffect(() => {
-    if (specialRegistrationData) {
-      setSpecialRegistrationsList(specialRegistrationData)
-      setOriginalData(specialRegistrationData)
+    if (specialPlatesData && specialPlatesData.data) {
+      setSpecialRegistrationsList(specialPlatesData.data)
+      setOriginalData(specialPlatesData.data)
     }
-  }, [specialRegistrationData])
+    else {
+      setSpecialRegistrationsList([])
+      setOriginalData([])
+    }
+  }, [specialPlatesData])
 
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
       <div id="extra-registration" className="grid grid-cols-1 w-[85%]">
         <div id="head" className="flex h-[50px] justify-between">
-          <div>
+          <div className="flex flex-col">
             <p className="text-[20px] text-white">รายการทะเบียนพิเศษ</p>
+            <p className="text-[14px] text-white">{`จำนวน ${specialRegistrationsList.length} รายการ`}</p>
           </div>
           <div className="flex items-end space-x-2">
-            <button type="button" className="flex justify-center items-center bg-white text-dodgerBlue w-[120px] h-[35px] rounded hover:bg-slate-200">
-              <Icon icon={Import} size={20} color="dodgerBlue" />
+            <button 
+              type="button" 
+              className="flex justify-center items-center bg-white text-dodgerBlue w-[120px] h-[35px] rounded hover:bg-slate-200"
+              onClick={handleImportClick}
+            >
+              <Icon icon={Upload} size={20} color="dodgerBlue" />
               <span className="ml-[8px] text-[15px]">นำเข้าข้อมูล</span>
             </button>
             <button 
@@ -191,17 +198,17 @@ function ExtraRegistration() {
                   <tr key={item.id} className="h-[80px] border-b border-b-[1px] border-dashed border-darkGray">
                     <td className="pl-[10px] w-[280px] text-start bg-celtic">
                       {  
-                        item.letter_category + " " + item.car_registration + " " + provinces.find((row) => row.id === item.province_id)?.name_th
+                        item.plate_group + " " + item.plate_number + " " + provinces?.data?.find((row) => row.id === item.province_id)?.name_th
                       }
                     </td>
                     <td className="text-center bg-tuna w-[200px]">
                       {
-                        Array.isArray(item.images) && item.images.length > 0 ? 
+                        Array.isArray(item.special_plate_images) && item.special_plate_images.length > 0 ? 
                         (
                           <div>
                             {
-                              item.images.map((image, index) => (
-                                <img key={index} src={image} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]" />
+                              item.special_plate_images.map((image, index) => (
+                                <img key={index} src={`${FILE_URL}${image.url}`} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]" />
                               ))
                             }
                           </div>
@@ -213,32 +220,32 @@ function ExtraRegistration() {
                     </td>
                     <td className="text-start bg-celtic">
                       {
-                        <p className="pl-[10px]">{registrationTypes.find((row) => row.id === item.registration_type_id)?.registration_type}</p>
+                        <p className="pl-[10px]">{registrationTypes?.data?.find((row) => row.id === item.plate_class_id)?.title_en}</p>
                       }
                     </td>
-                    <td className="text-center bg-tuna">{format(new Date(item.created_at ? item.created_at : ""), "dd/MM/yyyy")}</td>
-                    <td className="text-center bg-celtic">{format(new Date(item.updated_at), "dd/MM/yyyy")}</td>
+                    <td className="text-center bg-tuna">{format(new Date(item.createdAt ? item.createdAt : ""), "dd/MM/yyyy")}</td>
+                    <td className="text-center bg-celtic">{format(new Date(item.updatedAt ? item.updatedAt : ""), "dd/MM/yyyy")}</td>
                     <td className="text-center bg-tuna">
                       {
-                        item.data_owner === "" ? "ไม่ระบุตัวตน" : item.data_owner
+                        item.case_owner_name === "" ? "ไม่ระบุตัวตน" : item.case_owner_name
                       }
                     </td>
                     <td className="text-center bg-celtic">
                       {
-                        agencies.find((row) => row.id === item.agency_id)?.agency
+                        item.case_owner_agency
                       }
                     </td>
                     <td className="bg-tuna align-middle text-center">
                       <label 
                         className={`w-[80px] h-[30px] inline-flex items-center justify-center align-middle rounded
                           ${
-                            dataStatus.find((row) => row.id === item.status_id)?.status.toLowerCase() === "active"
+                            dataStatus.find((row) => row.id === item.active)?.id === 1
                               ? "bg-fruitSalad" 
                               : "bg-nobel"
                           }`}
                       >
                         {
-                          dataStatus.find((row) => row.id === item.status_id)?.status
+                          dataStatus.find((row) => row.id === item.active)?.status
                         }
                       </label>
                     </td>
@@ -261,7 +268,7 @@ function ExtraRegistration() {
             setFilterData={setFilterData}
           />
         </div>
-        <Dialog open={isAddRegistationOpen} onClose={() => setIsAddRegistationOpen(false)} className="relative z-50">
+        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="relative z-50">
           <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
             <DialogPanel className="space-y-4 border bg-[var(--background-color)] p-5 max-w-[80%] bg-black text-white">
               <div className="flex justify-between">

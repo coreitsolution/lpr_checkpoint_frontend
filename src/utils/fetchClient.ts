@@ -1,30 +1,37 @@
 export interface FetchOptions extends RequestInit {
   queryParams?: Record<string, string>;
+  skipAuth?: boolean;
+  isFormData?: boolean;
 }
 
 export const fetchClient = async <T>(
-  url: string,
+  endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> => {
-  const { queryParams, ...fetchOptions } = options;
+  const token = localStorage.getItem('token');
 
-  // สร้าง Query String
-  const queryString = queryParams
-    ? "?" + new URLSearchParams(queryParams).toString()
-    : "";
+  const headers: HeadersInit = {
+    ...(options.isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(token && !options.skipAuth ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
 
-  const response = await fetch(`${url}${queryString}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...fetchOptions.headers,
-    },
-    ...fetchOptions,
+  const response = await fetch(endpoint, {
+    ...options,
+    headers,
   });
 
   if (!response.ok) {
-    const errorMessage = await response.text();
-    throw new Error(errorMessage || "Something went wrong");
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login'; // Redirect to login page
+    }
+    throw new Error(response.statusText);
   }
 
   return response.json();
 };
+
+export const combineURL = (url:string, endpoint:string) => {
+  return `${url}${endpoint}`
+}

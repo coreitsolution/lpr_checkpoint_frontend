@@ -2,6 +2,11 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+import { format } from "date-fns"
+import {
+  Button,
+  keyframes
+} from "@mui/material"
 
 // Components
 import { VideoPlayer } from '../../components/video-player/VideoPlayer.js'
@@ -20,23 +25,37 @@ import { useHamburger } from "../../context/HamburgerContext"
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
-import { CircleAlert } from 'lucide-react'
+import { CircleAlert, RotateCw } from 'lucide-react'
+import ReplayCircleFilledIcon from '@mui/icons-material/ReplayCircleFilled';
 
 // API
 import { 
   fetchCameraSettingsThunk,
-  postStartStreamThunk
+  fetchCameraScreenSettingsThunk,
+  postStartStreamThunk,
+  postStopStreamThunk,
+  postRestartStreamThunk,
 } from "../../features/camera-settings/cameraSettingsSlice"
 
 // Types
 import { 
-  StreamDetail
+  CameraDetailSettings,
+  StartStopStream,
 } from "../../features/camera-settings/cameraSettingsTypes"
-import { LastRecognitionResult } from "../../features/live-view-real-time/liveViewRealTimeTypes"
+import { LastRecognitionData } from "../../features/live-view-real-time/liveViewRealTimeTypes"
+
+const spinAnimation = keyframes`
+  0% {
+    transform: scaleX(-1) rotate(0deg);
+  }
+  100% {
+    transform: scaleX(-1) rotate(-360deg);
+  }
+`;
 
 const CCTV = () => {
   const dispatch: AppDispatch = useDispatch()
-  const { cameraSetting, status, error } = useSelector(
+  const { cameraSettings, cameraScreenSetting, status, error } = useSelector(
     (state: RootState) => state.cameraSettings
   )
   const [isFullWidth, setIsFullWidth] = useState(false)
@@ -45,28 +64,39 @@ const CCTV = () => {
   const setCollapse = (status: boolean) =>  {
     setIsFullWidth(status)
   }
-
+  const [cameraDetailSettingData, setCameraDetailSettingData] = useState<CameraDetailSettings[]>([])
   const [cameraSettingDropdown, setCameraSettingDropdown] = useState<{ id: number, name: string }[]>([])
-  const [liveView, setLiveView] = useState<StreamDetail[]>([])
   const [dropdownVisible, setDropdownVisible] = useState<number | null>(null)
   const dropdownRefs = useRef<(HTMLDivElement | null)[]>([])
+  const startButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const stopButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const restartButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [activeStreamUrls, setActiveStreamUrls] = useState<Record<number, { id: string, url: string, name:string}>>({})
-  const [streamLPRMapping, setStreamLPRMapping] = useState<Record<string, LastRecognitionResult>>({})
-  const [streamLPRData, setStreamLPRData] = useState<LastRecognitionResult | null>(null)
+  const [streamLPRMapping, setStreamLPRMapping] = useState<Record<string, LastRecognitionData>>({})
+  const [streamLPRData, setStreamLPRData] = useState<LastRecognitionData | null>(null)
   const [isCarDetectOpen, setIsCarDetectOpen] = useState(false)
-
-  const setUpdateLastRecognition = (update: LastRecognitionResult) => {
-    setStreamLPRMapping((prevMapping) => ({
-      ...prevMapping,
-      [update.cameraName]: update,
-    }))
-    setStreamLPRData(update)
-    setIsCarDetectOpen(true)
+  const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
+  const [isRestartStreamDisabled, setIsRestartStreamDisabled] = useState(false);
+  const [isRestartStreamAnimating, setIsRestartStreamAnimating] = useState(false);
+  const setUpdateLastRecognition = (update: LastRecognitionData | null) => {
+    if (update) {
+      setStreamLPRMapping((prevMapping) => ({
+        ...prevMapping,
+        [update.camera_id]: update,
+      }))
+      setStreamLPRData(update)
+      setIsCarDetectOpen(true)
+    }
+    else {
+      setStreamLPRData(null)
+      setIsCarDetectOpen(false)
+    }
   }
 
   const checkRegistrationTypeColor = (): string => {
-    const type = streamLPRData?.registration_type.toLocaleLowerCase()
+    // const type = streamLPRData?.registration_type.toLocaleLowerCase()
+    const type = streamLPRData?.plate
     if (type === "black list") {
       return "bg-cinnabar"
     }
@@ -96,34 +126,64 @@ const CCTV = () => {
     }
   }
 
+  const handleRestartButtonClick = useCallback(async (event: React.MouseEvent) => {
+    event.stopPropagation()
+    setIsRestartStreamDisabled(true);
+    setIsRestartStreamAnimating(true);
+    try {
+      await dispatch(postRestartStreamThunk())
+    }
+    catch {
+      
+    } 
+    finally {
+      setTimeout(() => {
+        setIsRestartStreamDisabled(false);
+        setIsRestartStreamAnimating(false);
+      }, 30000)
+    }
+  }, [dispatch])
+
+  const handleStartButtonClick = useCallback(async (event: React.MouseEvent, index: number) => {
+    event.stopPropagation()
+    
+    try {
+      const uid: StartStopStream = { cam_uid: cameraDetailSettingData[index].cam_uid }
+      await dispatch(postStartStreamThunk(uid))
+    }
+    catch {
+
+    }
+  }, [dispatch])
+
+  const handleStopButtonClick = useCallback(async (event: React.MouseEvent, index: number) => {
+    event.stopPropagation()
+    
+    try {
+      const uid: StartStopStream = { cam_uid: cameraDetailSettingData[index].cam_uid }
+      await dispatch(postStopStreamThunk(uid))
+    }
+    catch {
+
+    }
+  }, [dispatch])
+
   const handleCameraSelect = (selectedId: number, cameraIndex: number) => {
-    const selectedCamera = cameraSetting?.cameraSettings.find(
+    const selectedCamera = cameraDetailSettingData.find(
       (camera) => camera.id === selectedId
     );
     if (selectedCamera) {
-      const newStreamUrl = createStreamUrl(
-        selectedCamera.rtsp_live_view,
-        selectedCamera.port ? selectedCamera.port : ""
-      );
       setActiveStreamUrls((prevUrls) => ({
         ...prevUrls,
-        [cameraIndex]: { id: `CCTV-${selectedCamera.checkpoint_id}`, url: newStreamUrl, name: selectedCamera.checkpoint_id},
+        [cameraIndex]: { id: `CCTV-${selectedCamera.cam_id}`, url: selectedCamera.live_stream_url, name: selectedCamera.cam_id},
       }));
     }
     setDropdownVisible(null);
   };
 
-  const createStreamUrl = (rstp: string, port: string):string => {
-    const httpUrl = rstp.replace("rtsp://", "http://")
-    const parsedUrl = new URL(httpUrl)
-    const ip = parsedUrl.hostname
-
-    const streamURL = `ws://${ip}:${port}`
-    return streamURL
-  }
-
   useEffect(() => {
     dispatch(fetchCameraSettingsThunk())
+    dispatch(fetchCameraScreenSettingsThunk())
   }, [dispatch])
 
   useEffect(() => {
@@ -131,35 +191,23 @@ const CCTV = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const requestStartStream = useCallback(async () => {
-    if (cameraSetting?.cameraSettings) {
-      const reqStartStream = cameraSetting.cameraSettings.map((camera) => ({
-        name: camera.checkpoint_id,
-        streamUrl: camera.rtsp_live_view,
-        port: camera.port ? camera.port : "",
-      }))
-  
-      const response = await dispatch(postStartStreamThunk(reqStartStream))
-
-      if (Array.isArray(response.payload)) {
-        setLiveView(response.payload)
-      } 
-      else {
-        console.error('Failed to start streams:', response)
-      }
-    }
-  }, [cameraSetting, dispatch])
-
   useEffect(() => {
-    if (cameraSetting?.cameraSettings) {
-      const dropdownData = cameraSetting.cameraSettings.map(({ id, checkpoint_id }) => ({
+    if (cameraSettings && cameraSettings.data) {
+      const dropdownData = cameraSettings.data.map(({ id, cam_id }) => ({
         id,
-        name: checkpoint_id,
+        name: cam_id,
       }))
       setCameraSettingDropdown(dropdownData)
-      requestStartStream()
+      setCameraDetailSettingData(cameraSettings.data)
     }
-  }, [cameraSetting, requestStartStream])
+  }, [cameraSettings])
+
+  useEffect(() => {
+    if (cameraScreenSetting && cameraScreenSetting.data) {
+      const numValue = Number(cameraScreenSetting.data[0].value) || 1
+      setSelectedScreenValue(numValue)
+    }
+  }, [cameraScreenSetting])
 
   return (
     <div className={`main-content pe-1 min-w-[950px] ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>
@@ -170,10 +218,10 @@ const CCTV = () => {
         } transition-all duration-500`}
       >
         <div className="w-full h-[88vh] pl-[10px] pr-[20px] py-[15px] mt-[22px] border-[1px] border-dodgerBlue rounded-[10px]">
-          <div className={`w-full ${cameraSetting && cameraSetting?.screen > 1 ? "grid grid-cols-2 lt1535:grid-cols-1" : "grid grid-cols-1"} h-[85vh] gap-5 overflow-y-auto`}>
+          <div className={`w-full ${selectedScreenValue > 1 ? "grid grid-cols-2 lt1535:grid-cols-1" : "grid grid-cols-1"} h-[85vh] gap-5 overflow-y-auto`}>
           {
-            liveView.slice(0, cameraSetting?.screen).map((live, index) => (
-              <div key={live.uid} id={`CCTV${index + 1}`} className="flex relative">
+            cameraDetailSettingData.slice(0, selectedScreenValue).map((live, index) => (
+              <div key={live.cam_id} id={`CCTV${index + 1}`} className="flex relative">
                 {/* CCTV Stream */}
                 <div
                   className="flex float-left justify-center items-center w-full bg-geyser"
@@ -201,27 +249,82 @@ const CCTV = () => {
                     </div>
                     <div className="pb-2">
                       <VideoPlayer
-                        streamUrl={(activeStreamUrls[index] && activeStreamUrls[index].url) || createStreamUrl(live.streamUrl, live.wsPort || "")}
-                        id={(activeStreamUrls[index] && activeStreamUrls[index].id) || `CCTV-${live.name}`}
-                        customClass="w-full h-[33vh]"  // Ensuring uniform size
+                        streamUrl={(activeStreamUrls[index] && activeStreamUrls[index].url) || live.live_stream_url}
+                        id={(activeStreamUrls[index] && activeStreamUrls[index].id) || `CCTV-${live.cam_id}`}
+                        customClass={`${selectedScreenValue > 1 ? "h-[33vh]" : "h-full"} w-full`}
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="absolute top-1 left-[160px] text-[15px] text-white">
-                  <label>จุดตรวจ : {activeStreamUrls[index] && activeStreamUrls[index].name || live.name}</label>
+                  <label>จุดตรวจ : {activeStreamUrls[index] && activeStreamUrls[index].name || live.cam_id}</label>
                 </div>
 
-                <div className="absolute top-0 right-1">
-                  <button
-                    type="button"
-                    ref={(el) => (buttonRefs.current[index] = el)}
-                    onClick={(e) => handleButtonClick(e, index)}
-                    className="relative z-10"
-                  >
-                    <img src={CCTVSetting} alt="Setting" className="w-[30px] h-[30px]" />
-                  </button>
+                <div className="absolute top-0 right-0">
+                  <div className='flex'>
+                    <Button
+                      ref={(el) => (startButtonRefs.current[index] = el)}
+                      onClick={(e) => handleStartButtonClick(e, index)}
+                      className="relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean"
+                      sx={{
+                        textTransform: 'none',
+                        marginRight: '5px',
+                        display: "none",
+                      }}
+                    >
+                      <span className='text-[14px] text-white'>Start</span>
+                    </Button>
+
+                    <Button
+                      ref={(el) => (stopButtonRefs.current[index] = el)}
+                      onClick={(e) => handleStopButtonClick(e, index)}
+                      className="hidden relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean"
+                      sx={{
+                        textTransform: 'none',
+                        marginRight: '5px',
+                        display: "none",
+                      }}
+                    >
+                      <span className='text-[14px] text-white'>Stop</span>
+                    </Button>
+
+                    <Button
+                      ref={(el) => (restartButtonRefs.current[index] = el)}
+                      onClick={(e) => handleRestartButtonClick(e)}
+                      className="relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean"
+                      sx={{
+                        textTransform: 'none',
+                        opacity: isRestartStreamDisabled ? 0.6 : 1,
+                        cursor: isRestartStreamDisabled ? 'not-allowed' : 'pointer',
+                      }}
+                      startIcon={
+                        <ReplayCircleFilledIcon 
+                        sx={{
+                          color: 'white',
+                          transform: 'scaleX(-1)',
+                          animation: isRestartStreamAnimating ? `${spinAnimation} 2s linear infinite` : 'none',
+                        }}
+                        />
+                      }
+                    >
+                      {/* <Icon icon={RotateCw} size={16} color="white"></Icon> */}
+                      <span className='text-[14px] text-white '>Restart Live</span>
+                    </Button>
+
+                    <Button
+                      ref={(el) => (buttonRefs.current[index] = el)}
+                      onClick={(e) => handleButtonClick(e, index)}
+                      className="relative z-10"
+                      sx={{
+                        padding: "0px",
+                        margin: "0px",
+                        width: "0px"
+                      }}
+                    >
+                      <img src={CCTVSetting} alt="Setting" className="w-[30px] h-[30px]" />
+                    </Button>
+                  </div>
 
                   {dropdownVisible === index && (
                     <div
@@ -249,20 +352,20 @@ const CCTV = () => {
             {
               (() => {
                 const lprCount = (() => {
-                  if (cameraSetting?.screen === 1) return 0;
-                  if (cameraSetting?.screen === 2) return 2;
-                  if (cameraSetting?.screen === 3) return 1;
+                  if (selectedScreenValue === 1) return 0;
+                  if (selectedScreenValue === 2) return 2;
+                  if (selectedScreenValue === 3) return 1;
                   return 0; // For screen = 4 or undefined
                 })();
 
                 if (lprCount === 0) {
-                  return <div></div>
+                  return ""
                 }
 
-                const liveViewWithLPR = liveView
-                  .slice(0, cameraSetting?.screen)
+                const liveViewWithLPR = cameraDetailSettingData
+                  .slice(0, selectedScreenValue)
                   .map((live, index) => ({
-                    lprData: streamLPRMapping[live.name] || null,
+                    lprData: streamLPRMapping[live.cam_id] || null,
                     isLPRIncluded: index < lprCount,
                   }));
 
@@ -294,18 +397,18 @@ const CCTV = () => {
                             </div>
                           </div>
                           <div className="px-4 pb-2 w-full h-[33.5vh] py-[0.3rem] overflow-y-auto">
-                            {lprData && cameraSetting?.screen !== 3 ? (
+                            {lprData && selectedScreenValue !== 3 ? (
                               <div className="flex flex-1 flex-col">
                                 <div className={`flex items-center justify-center align-middle h-[19vh] w-full`}>
                                   <div className={`inline-flex items-center justify-center w-[564px] h-[276px]`}>
                                     <img
                                       className="h-full w-[50%]"
-                                      src={streamLPRData?.pathImageVehicle}
+                                      src={streamLPRData?.vehicle_image}
                                       alt={`Car ${index + 1}`}
                                     />
                                     <img
                                       className="h-[50%] w-[50%]"
-                                      src={streamLPRData?.pathImage}
+                                      src={streamLPRData?.plate_image}
                                       alt={`Car ${index + 1}`}
                                     />
                                   </div>
@@ -315,29 +418,29 @@ const CCTV = () => {
                                   <p className='border-b-[2px] border-gainsboro mx-[25px] mt-[10px]'></p>
                                   <div className="grid grid-cols-2 text-white text-[18px] font-light p-2">
                                     <div className='border-r-[1px] border-gainsboro'>
-                                      <p>{lprData.brand} {lprData.model}</p>
-                                      <p>{lprData.color}</p>
+                                      <p>{lprData.vehicle_make} {lprData.vehicle_make_model}</p>
+                                      <p>{lprData.vehicle_color}</p>
                                     </div>
                                     <div>
-                                      <p>{lprData.vehicle.date}</p>
-                                      <p>{lprData.vehicle.time}</p>
+                                      <p>{format(new Date(lprData.epoch_start), "dd/MM/yyyy")}</p>
+                                      <p>{format(new Date(lprData.epoch_start), "hh:mm:ss")}</p>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             ) : ""}
-                            {streamLPRData && cameraSetting?.screen === 3 ? (
+                            {streamLPRData && selectedScreenValue === 3 ? (
                               <div className="flex flex-1 flex-col">
                                 <div className={`flex items-center justify-center align-middle h-[19vh] w-full`}>
                                   <div className={`inline-flex items-center justify-center w-[564px] h-[276px]`}>
                                     <img
                                       className="h-full w-[50%]"
-                                      src={streamLPRData?.pathImageVehicle}
+                                      src={streamLPRData?.vehicle_image}
                                       alt={`Car ${index + 1}`}
                                     />
                                     <img
                                       className="h-[50%] w-[50%]"
-                                      src={streamLPRData?.pathImage}
+                                      src={streamLPRData?.plate_image}
                                       alt={`Car ${index + 1}`}
                                     />
                                   </div>
@@ -347,12 +450,12 @@ const CCTV = () => {
                                   <p className='border-b-[2px] border-gainsboro mx-[25px] mt-[10px]'></p>
                                   <div className="grid grid-cols-2 text-white text-[18px] font-light p-2">
                                     <div className='border-r-[1px] border-gainsboro'>
-                                      <p>{streamLPRData?.brand} {streamLPRData?.model}</p>
-                                      <p>{streamLPRData?.color}</p>
+                                      <p>{lprData.vehicle_make} {lprData.vehicle_make_model}</p>
+                                      <p>{lprData.vehicle_color}</p>
                                     </div>
                                     <div>
-                                      <p>{streamLPRData?.vehicle.date}</p>
-                                      <p>{streamLPRData?.vehicle.time}</p>
+                                      <p>{format(new Date(lprData.epoch_start), "dd/MM/yyyy")}</p>
+                                      <p>{format(new Date(lprData.epoch_start), "hh:mm:ss")}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -375,7 +478,7 @@ const CCTV = () => {
           isFullWidth ? "right-[-490px] none" : "!right-0 block"
         } transition-all duration-500`}
       >
-        <CCTVSideBar setCollapse={setCollapse} cameraSetting={cameraSetting} setUpdateLastRecognition={setUpdateLastRecognition}/>
+        <CCTVSideBar setCollapse={setCollapse} cameraSetting={cameraDetailSettingData} setUpdateLastRecognition={setUpdateLastRecognition}/>
       </div>
       {/* Car Detect Dialog */}
       <Dialog open={isCarDetectOpen} onClose={() => setIsCarDetectOpen(false)} className="relative z-50">

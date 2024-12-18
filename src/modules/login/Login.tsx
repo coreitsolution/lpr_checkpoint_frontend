@@ -1,13 +1,32 @@
-import React from 'react'
-import LogoImage from '../../assets/img/Logo.jpg';
+import { useState } from 'react';
 import { motion } from 'framer-motion'
+import { RootState } from "../../app/store"
+import { useSelector } from "react-redux"
+import { useAppDispatch } from '../../app/hooks'
+
+// API
+import { login, clearError } from '../../features/auth/authSlice';
+
+// Image
+import LogoImage from '../../assets/img/Logo.jpg';
 
 const LoginPage = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const dispatch = useAppDispatch();
+  const { status, error } = useSelector((state: RootState) => state.auth);
+
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.9 },
     visible: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.9 },
   }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(clearError()); // Clear any previous errors
+    dispatch(login({ username, password }));
+  };
 
   return (
     <div id='login' className="flex items-center justify-center min-h-screen">
@@ -37,12 +56,13 @@ const LoginPage = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className='mb-[25px]'>
               <input
                 type="username"
                 className="w-full text-black px-4 py-2 border border-linkWater2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Username"
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className='mb-[25px]'>
@@ -50,16 +70,21 @@ const LoginPage = () => {
                 type="password"
                 className="w-full text-black px-4 py-2 border border-linkWater2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Password"
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <div className='mt-[50px] text-center w-full'>
               <motion.button
                 type="submit"
-                className="mr-[10px] h-[50px] w-full text-white bg-dodgerBlue rounded-lg shadow hover:bg-blue-700 transition"
+                className={`mr-[10px] h-[50px] w-full text-white rounded-lg shadow transition ${
+                  status === 'loading' ? 'bg-gray-400' : 'bg-dodgerBlue hover:bg-blue-700'
+                }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                disabled={status === 'loading'}
               >
-                <span className='text-[18px] text-center font-bold'>Login</span>
+                {status === 'loading' ? 'Logging in...' : 'Login'}
               </motion.button>
             </div>
           </form>

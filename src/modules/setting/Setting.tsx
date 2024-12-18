@@ -3,6 +3,7 @@ import {
   Select,
   MenuItem,
   Button,
+  SelectChangeEvent,
 } from "@mui/material"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
@@ -25,27 +26,30 @@ import Loading from "../../components/loading/Loading"
 // API
 import { 
   fetchCameraSettingsThunk,
-  putCameraDetailSettingsThunk,
-  deleteCameraSettingThunk
+  deleteCameraSettingThunk,
+  putCameraScreenSettingsThunk,
+  fetchCameraScreenSettingsThunk,
 } from "../../features/camera-settings/cameraSettingsSlice"
 
 // Types
-import { CameraSettings, CameraDetailSetting } from "../../features/camera-settings/cameraSettingsTypes"
+import { CameraDetailSettings, CameraScreenSettingDetail } from "../../features/camera-settings/cameraSettingsTypes"
 
 // Pop-up
 import PopupMessage from "../../utils/popupMessage"
 
 const Setting = () => {
   const dispatch: AppDispatch = useDispatch()
-  const { cameraSetting, status, error } = useSelector(
+  const { cameraSettings, cameraScreenSetting, status, error } = useSelector(
     (state: RootState) => state.cameraSettings
   )
   const { isOpen } = useHamburger()
   const [isCameraSettingOpen, setIsCameraSettingOpen] = useState(false)
   const [isSensorSettingOpen, setIsSensorSettingOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [cameraDetailSettingData, setCameraDetailSettingData] = useState<CameraDetailSetting | null>(null)
-  const [selectedRow, setSelectedRow] = useState<CameraSettings | null>(null)
+  const [cameraDetailSettingData, setCameraDetailSettingData] = useState<CameraDetailSettings[]>([])
+  const [selectedRow, setSelectedRow] = useState<CameraDetailSettings | null>(null)
+  const [cameraScreenSettingDetail, setCameraScreenSettingDetail] = useState<CameraScreenSettingDetail | null>(null)
+  const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
   const [cameraSettingSelect] = useState([
     {name: "แสดงผล 1 หน้าจอ", value: 1},
     {name: "แสดงผล 2 หน้าจอ", value: 2},
@@ -56,14 +60,37 @@ const Setting = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
+    setIsLoading(true)
     dispatch(fetchCameraSettingsThunk())
+    dispatch(fetchCameraScreenSettingsThunk("?filter=id:1"))
+
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+
+    const interval = setInterval(() => {
+      dispatch(fetchCameraSettingsThunk())
+    }, 5000)
+
+    return () => {
+      clearInterval(interval)
+    }
+
   }, [dispatch])
 
   useEffect(() => {
-    if (cameraSetting) {
-      setCameraDetailSettingData(cameraSetting)
+    if (cameraSettings && cameraSettings.data) {
+      setCameraDetailSettingData(cameraSettings.data)
     }
-  }, [cameraSetting])
+  }, [cameraSettings])
+
+  useEffect(() => {
+    if (cameraScreenSetting && cameraScreenSetting.data) {
+      setCameraScreenSettingDetail(cameraScreenSetting.data[0])
+      const numValue = Number(cameraScreenSetting.data[0].value) || 1
+      setSelectedScreenValue(numValue)
+    }
+  }, [cameraScreenSetting])
 
   const renderStatus = (status: number) => (
     <span className={`px-2 py-1 rounded inline-block w-[80px] text-[15px] ${
@@ -77,13 +104,13 @@ const Setting = () => {
     return new Intl.NumberFormat('en-US').format(price)
   }
 
-  const handleEditClick = (item: CameraSettings) => {
+  const handleEditClick = (item: CameraDetailSettings) => {
     setSelectedRow(item)
     setIsCameraSettingOpen(true)
     setIsEditMode(true)
   }
 
-  const handleSensorSettingClick = (item: CameraSettings) => {
+  const handleSensorSettingClick = (item: CameraDetailSettings) => {
     setSelectedRow(item)
     setIsSensorSettingOpen(true)
   }
@@ -99,23 +126,36 @@ const Setting = () => {
     PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
   }
 
-  const handleScreenSelect = async (value: number) => {
-    setCameraDetailSettingData((prev) => ({
-      ...prev,
-      screen: value,
-      id: prev?.id ?? 0,
-      cameraSettings: prev?.cameraSettings ?? [],
-    }))
-    if (cameraDetailSettingData) {
-      let updateData = cameraDetailSettingData
-      updateData = {
-        ...cameraDetailSettingData, 
-        screen: value,
-        id: cameraDetailSettingData?.id ?? 0,
-        cameraSettings: cameraDetailSettingData?.cameraSettings ?? [],
+  const handleSensorSettingScreenClose = async () => {
+    setIsSensorSettingOpen(false)
+    await dispatch(fetchCameraSettingsThunk())
+  }
+
+  const handleScreenSelect = async (event: SelectChangeEvent<number>) => {
+    const value = Number(event.target.value)
+
+    if (cameraDetailSettingData.length < value) {
+      PopupMessage("", "จำนวนกล้องน้อยกว่าจำนวนจอแสดงผล", "warning")
+      return
+    }
+
+    setSelectedScreenValue(value)
+
+    try {
+      if (cameraScreenSettingDetail) {
+        const updateData = { 
+          ...cameraScreenSettingDetail,
+          value: value.toString(),
+        };
+        await dispatch(
+          putCameraScreenSettingsThunk(updateData)
+        ).unwrap();
+
+        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
       }
-      await dispatch(putCameraDetailSettingsThunk(updateData))
-      PopupMessage("", "บันทึกข้อมูลสำเร็จ", 'success')
+    }
+    catch (error) {
+      console.error(error)
     }
   }
 
@@ -125,8 +165,8 @@ const Setting = () => {
       <div className='flex flex-col pt-10 mb-[30px]'>
         <label className='text-white mb-4'>ตั้งค่าหน้าจอแสดงผล</label>
         <Select
-          value={cameraDetailSettingData?.screen ? cameraDetailSettingData?.screen : 1}
-          onChange={(e) => handleScreenSelect(e.target.value as number)}
+          value={selectedScreenValue}
+          onChange={handleScreenSelect}
           style={{ backgroundColor: "#fff", color: "#000", width: "500px", height: "40px" }}
         >
           {cameraSettingSelect.map((option, index) => (
@@ -139,10 +179,10 @@ const Setting = () => {
       <div>
         <div className='flex justify-between'>
           <label className='text-[25px] text-white'>รายการกล้อง</label>
-          <div className={`${cameraSetting && cameraSetting.cameraSettings.length < 4 ? "bg-dodgerBlue" : "bg-nobel"} rounded-[5px]`}>
+          <div className={`${cameraDetailSettingData.length < 4 ? "bg-dodgerBlue" : "bg-nobel"} rounded-[5px]`}>
             <Button
               onClick={() => handleCameraButtonClick(true)}
-              disabled={cameraSetting && cameraSetting.cameraSettings.length >= 4 ? true : false}
+              disabled={cameraDetailSettingData.length >= 4 ? true : false}
             >
               <Icon icon={Plus} size={25} color="white" />
               <span className='ml-[5px] text-white text-[15px]'>กล้อง</span>
@@ -163,19 +203,19 @@ const Setting = () => {
               </tr>
             </thead>
             <tbody>
-              {cameraSetting?.cameraSettings.map((camera, index) => (
+              {cameraDetailSettingData.map((camera, index) => (
                 <tr key={camera.id} className="border-b h-[30px] text-[15px] text-white">
                   <td className="px-4 py-2 text-center bg-celtic">{index + 1}</td>
                   <td className="px-4 py-2 text-center bg-tuna">
-                    {renderStatus(camera.camera_status)}
+                    {renderStatus(camera.alive)}
                   </td>
-                  <td className="px-4 py-2 bg-celtic">{camera.checkpoint_id}</td>
-                  <td className="px-4 py-2 bg-tuna">{camera.latitude + ", " + camera.longtitude}</td>
+                  <td className="px-4 py-2 bg-celtic">{camera.cam_id}</td>
+                  <td className="px-4 py-2 bg-tuna">{camera.latitude + ", " + camera.longitude}</td>
                   <td className="px-4 py-2 text-end bg-celtic">{formatNumber(camera.number_of_detections)}</td>
                   <td className="px-4 py-2 bg-tuna flex justify-center">
                     <Button onClick={() => handleSensorSettingClick(camera)}>
                       <img 
-                        src={`/icons/sensor-setting${camera.sensor_setting ? "-green" : ""}.png`}
+                        src={`/icons/sensor-setting${camera.detection_area !== "" ? "-green" : ""}.png`}
                         style={{ height: "30px", width: "30px" }} 
                         alt="Sensor Setting" 
                       />
@@ -204,7 +244,7 @@ const Setting = () => {
         </div>
       </div>
       {/* Camera Setting Dialog */}
-      <Dialog open={isCameraSettingOpen} onClose={() => setIsCameraSettingOpen(false)} className="relative z-50">
+      <Dialog open={isCameraSettingOpen} onClose={() => {}} className="relative z-50">
         <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
           <DialogPanel 
           className="space-y-4 border p-5 bg-black text-white 
@@ -222,7 +262,7 @@ const Setting = () => {
         </div>
       </Dialog>
       {/* Sensor Setting Dialog */}
-      <Dialog open={isSensorSettingOpen} onClose={() => setIsSensorSettingOpen(false)} className="relative z-50">
+      <Dialog open={isSensorSettingOpen} onClose={() => {}} className="relative z-50">
         <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
           <DialogPanel 
           className="space-y-4 border bg-[var(--background-color)] p-5 bg-black text-white 
@@ -231,14 +271,14 @@ const Setting = () => {
             <div className="flex justify-between items-center">
               <DialogTitle className="text-[28px]">ตั้งค่าเซ็นเซอร์</DialogTitle>
               <button
-                onClick={() => setIsSensorSettingOpen(false)} 
+                onClick={handleSensorSettingScreenClose} 
                 className="text-white bg-transparent border-0 text-[28px]"
               >
                 &times;
               </button>
             </div>
             <SensorSetting 
-              closeDialog={() => setIsSensorSettingOpen(false)} 
+              closeDialog={handleSensorSettingScreenClose} 
               selectedRow={selectedRow}
             />
           </DialogPanel>

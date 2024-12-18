@@ -15,6 +15,7 @@ export default {
 			screens: {
 				'lt1008': { max: '1008px' },
 				'lt1443': { max: '1443px' },
+				'lt1300': { max: '1300px' },
         'lt1440': { max: '1440px' },
 				'lt1535': { max: '1535px' },
         'lt1832': { max: '1832px' },
@@ -46,6 +47,7 @@ export default {
 				nobel2: '#9E9E9E',
 				coralRed: '#EF4444',
 				gainsboro: '#D9D9D9',
+				darkCerulean: '#13476D',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

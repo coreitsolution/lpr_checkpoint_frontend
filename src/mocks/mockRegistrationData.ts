@@ -1,60 +1,138 @@
-import { SpecialRegistrationData } from "../features/registration-data/RegistrationDataTypes"
-import { FilesData } from "../features/api/types"
+import { SpecialPlatesRespondsDetail, SpecialPlatesData } from "../features/registration-data/RegistrationDataTypes"
 import dayjs from "dayjs";
 
-export const specialRegistrationdata: SpecialRegistrationData[] = [
+export const specialRegistrationdata: SpecialPlatesRespondsDetail[] = [
   {
     id: 1,
-    letter_category: "ขข",
-    car_registration: "999",
-    province_id: 1,
-    images: [
-      "/images/real-time-mock-image/car1.png",
-      "/images/real-time-mock-image/car1-plate.png"
+    plate_group: "VIP",
+    plate_number: "AB1234",
+    province_id: 10,
+    plate_class_id: 2,
+    case_number: "CASE-2024-001",
+    arrest_warrant_date: "2024-12-01",
+    arrest_warrant_expire_date: "2025-12-01",
+    behavior: "Suspicious activity reported near secure area.",
+    case_owner_name: "Officer John Doe",
+    case_owner_agency: "Metropolitan Police",
+    case_owner_phone: "+66-123-456-7890",
+    special_plate_images: [
+      {
+        id: 101,
+        special_plate_id: 1,
+        title: "Front Plate",
+        url: "https://example.com/images/front_plate.jpg",
+        notes: "Clear view of the front plate.",
+        createdAt: "2024-12-01T08:30:00Z",
+        updatedAt: "2024-12-01T08:30:00Z",
+      },
+      {
+        id: 102,
+        special_plate_id: 1,
+        title: "Rear Plate",
+        url: "https://example.com/images/rear_plate.jpg",
+        notes: "Slight scratch on the surface.",
+        createdAt: "2024-12-01T08:30:00Z",
+        updatedAt: "2024-12-01T08:30:00Z",
+      },
     ],
-    case_id: "7898878",
-    start_arrest_date: "10/01/2024",
-    end_arrest_date: "10/01/2024",
-    behavior1: "ลักลอบขนแรงงานต่างด้าว",
-    behavior2: "",
-    data_owner: "นายสุรพล พลวิวัฒน์",
-    phone: "081-111-1111",
-    registration_type_id: 1,
-    agency_id: 1,
-    status_id: 1,
-    created_at: "2024-11-20 16:38:07",
-    updated_at: "2024-11-20 16:38:07",
+    special_plate_files: [
+      {
+        id: 201,
+        special_plate_id: 1,
+        title: "Arrest Warrant Document",
+        url: "https://example.com/files/warrant.pdf",
+        notes: "Signed by the district judge.",
+        createdAt: "2024-12-01T08:30:00Z",
+        updatedAt: "2024-12-01T08:30:00Z",
+      },
+    ],
+    visible: 1,
+    active: 1,
+    createdAt: "2024-12-01T08:00:00Z",
+    updatedAt: "2024-12-01T08:00:00Z",
   },
   {
     id: 2,
-    letter_category: "ขพ",
-    car_registration: "9998",
-    province_id: 2,
-    images: [
-      "/images/real-time-mock-image/car2.png",
-      "/images/real-time-mock-image/car2-plate.png"
+    plate_group: "Black list",
+    plate_number: "CD5678",
+    province_id: 20,
+    plate_class_id: 3,
+    case_number: "CASE-2024-002",
+    arrest_warrant_date: "2024-12-10",
+    arrest_warrant_expire_date: "2025-12-10",
+    behavior: "Repeated traffic violations.",
+    case_owner_name: "Officer Jane Smith",
+    case_owner_agency: "Highway Patrol",
+    case_owner_phone: "+66-987-654-3210",
+    special_plate_images: [
+      {
+        id: 103,
+        special_plate_id: 2,
+        title: "Side View",
+        url: "https://example.com/images/side_view.jpg",
+        notes: "Captured by roadside camera.",
+        createdAt: "2024-12-10T12:00:00Z",
+        updatedAt: "2024-12-10T12:00:00Z",
+      },
     ],
-    case_id: "7898878",
-    start_arrest_date: "10/01/2024",
-    end_arrest_date: "10/01/2024",
-    behavior1: "ลักลอบขนแรงงานต่างด้าว",
-    behavior2: "",
-    data_owner: "นายสุรพล พลวิวัฒน์",
-    phone: "081-111-1111",
-    registration_type_id: 1,
-    agency_id: 1,
-    status_id: 1,
-    created_at: "2024-11-20 16:38:07",
-    updated_at: "2024-11-20 16:38:07",
-  }
-]
-
-export const filesData: FilesData[] = [
+    special_plate_files: [
+      {
+        id: 202,
+        special_plate_id: 2,
+        title: "Incident Report",
+        url: "https://example.com/files/incident_report.pdf",
+        notes: "Details of the reported incidents.",
+        createdAt: "2024-12-10T12:00:00Z",
+        updatedAt: "2024-12-10T12:00:00Z",
+      },
+    ],
+    visible: 0,
+    active: 1,
+    createdAt: "2024-12-10T12:00:00Z",
+    updatedAt: "2024-12-10T12:00:00Z",
+  },
   {
-    id: 1,
-    extra_registration_id: 1,
-    file_name: "file.pdf",
-    file_path: "blob:http://localhost:3000/1be680a6-39cd-4376-8ea4-0213a7fb40f5",
-    file_import_date: "2024-11-20 00:00:00",
-  }
-]
+    id: 3,
+    plate_group: "Member",
+    plate_number: "CD5678",
+    province_id: 20,
+    plate_class_id: 3,
+    case_number: "CASE-2024-002",
+    arrest_warrant_date: "2024-12-10",
+    arrest_warrant_expire_date: "2025-12-10",
+    behavior: "Repeated traffic violations.",
+    case_owner_name: "Officer Jane Smith",
+    case_owner_agency: "Highway Patrol",
+    case_owner_phone: "+66-987-654-3210",
+    special_plate_images: [
+      {
+        id: 104,
+        special_plate_id: 3,
+        title: "Side View",
+        url: "https://example.com/images/side_view.jpg",
+        notes: "Captured by roadside camera.",
+        createdAt: "2024-12-10T12:00:00Z",
+        updatedAt: "2024-12-10T12:00:00Z",
+      },
+    ],
+    special_plate_files: [
+      {
+        id: 203,
+        special_plate_id: 3,
+        title: "Incident Report",
+        url: "https://example.com/files/incident_report.pdf",
+        notes: "Details of the reported incidents.",
+        createdAt: "2024-12-10T12:00:00Z",
+        updatedAt: "2024-12-10T12:00:00Z",
+      },
+    ],
+    visible: 0,
+    active: 1,
+    createdAt: "2024-12-10T12:00:00Z",
+    updatedAt: "2024-12-10T12:00:00Z",
+  },
+];
+
+export const specialPlatesData: SpecialPlatesData = {
+  data: specialRegistrationdata
+}

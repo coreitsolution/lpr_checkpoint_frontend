@@ -1,20 +1,20 @@
-import { fetchClient } from "../../utils/fetchClient";
+import { API_URL } from '../../config/apiConfig';
+import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment";
 import { 
-  Province, 
-  Agencies, 
-  RegistrationTypesData, 
+  Provinces, 
+  RegistrationTypes, 
   DataStatusData,
   PoliceDivisions,
   Districts,
   SubDistricts,
-  NamePrefixes,
-  Positions
+  CommonTitles,
+  OfficerTitles,
+  OfficerPositions,
 } from "./dropdownTypes";
 import { provinces } from "../../mocks/mockProvinces";
 import { agenciesData } from "../../mocks/mockAgencies";
-import { dataStatusData } from "../../mocks/mockDataStatus";
-import { registrationTypesData } from "../../mocks/mockRegistrationTypes";
+import { registrationTypes } from "../../mocks/mockRegistrationTypes";
 import { policeDivisions } from "../../mocks/mockPoliceDivisions";
 import { districts } from "../../mocks/mockDistricts";
 import { subDistricts } from "../../mocks/mockSubDistricts";
@@ -22,90 +22,92 @@ import { namePrefixes } from "../../mocks/mockNamePrefixes";
 import { positions } from "../../mocks/mockPositions";
 
 
-export const fetchAgencies = async (): Promise<Agencies[]> => {
+export const fetchRegistrationTypes = async (param?: string): Promise<RegistrationTypes> => {
   if (isDevEnv) {
-    return Promise.resolve(agenciesData.sort((a, b) => (a.agency.localeCompare(b.agency))));
+    return Promise.resolve(registrationTypes);
   }
-  return await fetchClient<Agencies[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
-};
-
-export const fetchRegistrationTypes = async (): Promise<RegistrationTypesData[]> => {
-  if (isDevEnv) {
-    return Promise.resolve(registrationTypesData.sort((a, b) => (a.registration_type.localeCompare(b.registration_type))));
-  }
-  return await fetchClient<RegistrationTypesData[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const url = param ? `/plate-classes/get${param}` : "/plate-classes/get";
+  return await fetchClient<RegistrationTypes>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };
 
 export const fetchDataStatus = async (): Promise<DataStatusData[]> => {
-  if (isDevEnv) {
-    return Promise.resolve(dataStatusData.sort((a, b) => (a.status.localeCompare(b.status))));
-  }
-  return await fetchClient<DataStatusData[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const dataStatusDropdown = [
+    {id:1, status: "Active"},
+    {id:0, status: "Inactive"}
+  ]
+  return Promise.resolve(dataStatusDropdown);
 };
 
-export const fetchProvinces = async (): Promise<Province[]> => {
+export const fetchProvinces = async (param?: string): Promise<Provinces> => {
   if (isDevEnv) {
-    return Promise.resolve(provinces.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
+    return Promise.resolve(provinces);
   }
-  return await fetchClient<Province[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const url = param ? `/provinces/get${param}` : "/provinces/get";
+  return await fetchClient<Provinces>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };
 
-export const fetchPoliceDivisions = async (): Promise<PoliceDivisions[]> => {
+export const fetchPoliceDivisions = async (param?: string): Promise<PoliceDivisions> => {
   if (isDevEnv) {
-    return Promise.resolve(policeDivisions.sort((a, b) => (a.police_division.localeCompare(b.police_division, "th"))));
+    // return Promise.resolve(policeDivisions.sort((a, b) => (a.localeCompare(b.police_division, "th"))));
   }
-  return await fetchClient<PoliceDivisions[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const url = param ? `/police-regions/get${param}` : "/police-regions/get";
+  return await fetchClient<PoliceDivisions>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };
 
-export const fetchDistricts = async (): Promise<Districts[]> => {
+export const fetchDistricts = async (param?: string): Promise<Districts> => {
   if (isDevEnv) {
-    return Promise.resolve(districts.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
+    // return Promise.resolve(districts.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
-  return await fetchClient<Districts[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const url = param ? `/districts/get${param}` : "/districts/get";
+  return await fetchClient<Districts>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };
 
-export const fetchSubDistricts = async (districtId: number): Promise<SubDistricts[]> => {
+export const fetchSubDistricts = async (param?: string): Promise<SubDistricts> => {
   if (isDevEnv) {
-    return Promise.resolve(
-      subDistricts.filter((subDistrict) => subDistrict.district_id === districtId).sort((a, b) => (a.name_th.localeCompare(b.name_th, "th")))
-    );
+    // return Promise.resolve(subDistricts)
   }
 
-  // Fetch subdistricts from the API in non-development environments
-  const allSubDistricts = await fetchClient<SubDistricts[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
-
-  // Filter the fetched data by districtId
-  return allSubDistricts.filter((subDistrict) => subDistrict.district_id === districtId);
+  const url = param ? `/subdistricts/get${param}` : "/subdistricts/get";
+  return await fetchClient<SubDistricts>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };
 
-export const fetchNamePrefixes = async (): Promise<NamePrefixes[]> => {
+export const fetchCommonPrefixes = async (param?: string): Promise<CommonTitles> => {
   if (isDevEnv) {
-    return Promise.resolve(namePrefixes.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
+    // return Promise.resolve(namePrefixes.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
-  return await fetchClient<NamePrefixes[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const url = param ? `/common-titles/get${param}` : "/common-titles/get";
+  return await fetchClient<CommonTitles>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };
 
-export const fetchPositions = async (): Promise<Positions[]> => {
+export const fetchOfficerPrefixes = async (param?: string): Promise<OfficerTitles> => {
   if (isDevEnv) {
-    return Promise.resolve(positions.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
+    // return Promise.resolve(namePrefixes.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
   }
-  return await fetchClient<Positions[]>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  const url = param ? `/officer-titles/get${param}` : "/officer-titles/get";
+  return await fetchClient<OfficerTitles>(combineURL(API_URL, url), {
+    method: "GET",
+  });
+};
+
+export const fetchPositions = async (param?: string): Promise<OfficerPositions> => {
+  if (isDevEnv) {
+
+    // return Promise.resolve(positions.sort((a, b) => (a.name_th.localeCompare(b.name_th, "th"))));
+  }
+  const url = param ? `/officer-positions/get${param}` : "/officer-positions/get";
+  return await fetchClient<OfficerPositions>(combineURL(API_URL, url), {
+    method: "GET",
+  });
 };

@@ -1,17 +1,17 @@
 import React, { useRef, useEffect, useState } from "react"
 
 // Types
-import { CustomShape } from "./types"
+import { DetectionArea } from "./types"
 import {
-  CameraSettings
+  CameraDetailSettings
 } from '../../features/camera-settings/cameraSettingsTypes'
 
 interface DrawingCanvasProps {
   imgRef: HTMLImageElement
-  onShapeDrawn?: (shape: CustomShape) => void
+  onShapeDrawn?: (shape: DetectionArea) => void
   isDrawingEnabled: boolean
   clearCanvas: boolean
-  selectedRow: CameraSettings | null
+  selectedRow: CameraDetailSettings | null
 }
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
@@ -45,8 +45,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   }
 
   useEffect(() => {
-    if (selectedRow?.sensor_setting) {
-      setPoints(selectedRow.sensor_setting.coordinate)
+    if (selectedRow?.detection_area && selectedRow?.detection_area !== "") {
+      const detectionArea:DetectionArea  = JSON.parse(selectedRow?.detection_area)
+      setPoints(detectionArea.points)
     }
   }, [selectedRow])
 
@@ -112,9 +113,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   useEffect(() => {
     if (shapeClosed && points.length > 2 && onShapeDrawn) {
       onShapeDrawn({
-        coordinate: points,
-        fWidth: imgRef.width,
-        fHeight: imgRef.height,
+        points: points,
+        frame: {
+          width: imgRef.width,
+          height: imgRef.height,
+        }
       })
       setShapeClosed(false)
     }

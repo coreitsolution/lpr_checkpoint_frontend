@@ -1,225 +1,56 @@
-import { CameraSettings, CameraDetailSetting, StreamDetail } from "../features/camera-settings/cameraSettingsTypes";
+import { CameraScreenSettingDetail, CameraDetailSettings, StreamDetail } from "../features/camera-settings/cameraSettingsTypes";
 
-export const cameraSettingsData: CameraSettings[] = [
+export const cameraDetailSettingsData: CameraDetailSettings[] =
+Array.from({length:3}, (_, i) => (
   {
     id: 1,
-    camera_status: 1,
-    checkpoint_id: "CAM-102",
-    checkpoint: "Checkpoint A",
-    port: "9102",
-    latitude: "13.7563",
-    longtitude: "100.5018",
+    cam_id: "CAM-102",
+    cam_uid: "UID98765",
+    checkpoint_name: "Checkpoint A",
+    division_id: 101,
+    province_id: 10,
+    district_id: 20,
+    sub_district_id: 30,
     number_of_detections: 150,
-    police_division: "กองบัญชาการตำรวจภูธรภาค 1",
-    province: "เชียงใหม่",
-    district: "แม่ออน",
-    sub_district: "แม่ทา",
-    route: "Route 1",
-    rtsp_live_view: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
-    rtsp_process: "rtsp://192.168.1.10/process",
+    route: "Route 66",
+    latitude: "13.7563",
+    longitude: "100.5018",
+    rtsp_live_url: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
+    rtsp_process_url: "rtsp://192.168.1.10/process",
     stream_encode: "H.264",
-    api_server: "http://api.example.com",
-    pc_serial_number: "SN12345",
-    license: "Licensed",
-    api_server_status: 1,
-    sync_data_status: 1,
-    license_status: 1,
-    officer: {
-      prefix: "สิบโท",
-      name: "John",
-      surname: "Doe",
-      position: "พลตรี",
-      phone: "0812345678",
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    camera_status: 0,
-    checkpoint_id: "CP002",
-    checkpoint: "Checkpoint B",
-    port: "9106",
-    latitude: "14.0200",
-    longtitude: "100.7278",
-    number_of_detections: 75,
-    police_division: "กองบัญชาการตำรวจภูธรภาค 1",
-    province: "เชียงใหม่",
-    district: "แม่ออน",
-    sub_district: "ออนเหนือ",
-    route: "Route 2",
-    rtsp_live_view: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
-    rtsp_process: "rtsp://192.168.2.20/process",
-    stream_encode: "H.265",
-    api_server: "http://api.nonexistent.com",
-    pc_serial_number: "SN67890",
-    license: "Unlicensed",
-    api_server_status: 1,
-    sync_data_status: 0,
-    license_status: 0,
-    officer: {
-      prefix: "สิบเอก",
-      name: "Jane",
-      surname: "Smith",
-      position: "พลตรี",
-      phone: "0898765432",
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    camera_status: 1,
-    checkpoint_id: "CP003",
-    checkpoint: "Checkpoint B",
-    port: "9125",
-    latitude: "14.0200",
-    longtitude: "100.7278",
-    number_of_detections: 75,
-    police_division: "กองบัญชาการตำรวจภูธรภาค 1",
-    province: "เชียงใหม่",
-    district: "แม่ออน",
-    sub_district: "ออนเหนือ",
-    route: "Route 2",
-    rtsp_live_view: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
-    rtsp_process: "rtsp://192.168.2.20/process",
-    stream_encode: "H.265",
-    api_server: "http://api.nonexistent.com",
-    pc_serial_number: "SN67890",
-    license: "Unlicensed",
-    api_server_status: 1,
-    sync_data_status: 0,
-    license_status: 0,
-    officer: {
-      prefix: "สิบเอก",
-      name: "Jane",
-      surname: "Smith",
-      position: "พลตรี",
-      phone: "0898765432",
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    camera_status: 1,
-    checkpoint_id: "CP004",
-    checkpoint: "Checkpoint B",
-    port: "9125",
-    latitude: "14.0200",
-    longtitude: "100.7278",
-    number_of_detections: 75,
-    police_division: "กองบัญชาการตำรวจภูธรภาค 1",
-    province: "เชียงใหม่",
-    district: "แม่ออน",
-    sub_district: "ออนเหนือ",
-    route: "Route 2",
-    rtsp_live_view: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
-    rtsp_process: "rtsp://192.168.2.20/process",
-    stream_encode: "H.265",
-    api_server: "http://api.nonexistent.com",
-    pc_serial_number: "SN67890",
-    license: "Unlicensed",
-    api_server_status: 1,
-    sync_data_status: 0,
-    license_status: 0,
-    sensor_setting: {
-      "coordinate": [
-          {
-              "x": 185,
-              "y": 135.5
-          },
-          {
-              "x": 118,
-              "y": 57.5
-          },
-          {
-              "x": 346,
-              "y": 72.5
-          },
-          {
-              "x": 327,
-              "y": 107.5
-          },
-          {
-              "x": 431,
-              "y": 131.5
-          },
-          {
-              "x": 522,
-              "y": 63.5
-          },
-          {
-              "x": 627,
-              "y": 35.5
-          },
-          {
-              "x": 694,
-              "y": 80.5
-          },
-          {
-              "x": 636,
-              "y": 156.5
-          },
-          {
-              "x": 710,
-              "y": 188.5
-          },
-          {
-              "x": 684,
-              "y": 297.5
-          },
-          {
-              "x": 528,
-              "y": 346.5
-          },
-          {
-              "x": 297,
-              "y": 323.5
-          },
-          {
-              "x": 190,
-              "y": 292.5
-          },
-          {
-              "x": 128,
-              "y": 262.5
-          },
-          {
-              "x": 116,
-              "y": 181.5
-          },
-          {
-              "x": 189,
-              "y": 151.5
-          },
-          {
-              "x": 184,
-              "y": 131.5
-          }
-      ],
-      "fWidth": 850,
-      "fHeight": 450
-    },
-    officer: {
-      prefix: "สิบเอก",
-      name: "Jane",
-      surname: "Smith",
-      position: "พลตรี",
-      phone: "0898765432",
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
+    api_server_url: "https://api.server.url",
+    live_server_url: "https://live.server.url",
+    live_stream_url: "ws://58.136.154.95:10002",
+    wsport: 8080,
+    pc_serial_number: "PC123456789",
+    license_key: "LICENSE-XYZ-987",
+    officer_title_id: 1,
+    officer_firstname: "John",
+    officer_lastname: "Doe",
+    officer_position_id: 2,
+    officer_phone: "+1234567890",
+    detection_area: "{\"points\":[{\"x\":0,\"y\":93.5},{\"x\":845,\"y\":88.5},{\"x\":848,\"y\":363.5},{\"x\":0,\"y\":366.5},{\"x\":2,\"y\":91.5}],\"frame\":{\"width\":850,\"height\":450}}",
+    streaming: true,
+    visible: 1,
+    active: 1,
+    alive: 1,
+    last_online: "2024-12-17T14:35:00Z",
+    last_check: "2024-12-17T15:00:00Z",
+    createdAt: "2024-01-01T10:00:00Z",
+    updatedAt: "2024-12-17T16:00:00Z",
+  }
+))
 
-export const cameraDetailSettingsData: CameraDetailSetting[] = [
+export const cameraScreenSettingDetail: CameraScreenSettingDetail[] = [
   {
     id: 1,
-    screen: 3,
-    cameraSettings: cameraSettingsData
-  },
-];
+    name: "Live view",
+    value: "3",
+    description: "Live view",
+    created_at: "2024-12-17T14:35:00Z",
+    updated_at: "2024-12-17T14:35:00Z",
+  }
+]
 
 export const streamDetailData: StreamDetail[] = [
   {

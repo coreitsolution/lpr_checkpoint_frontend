@@ -90,16 +90,6 @@ export interface BenefitInformation {
   address: string;
 }
 
-export interface FilesData {
-  id: number | null
-  extra_registration_id: number | null
-  file_name: string
-  file_path: string
-  file_import_date: string
-}
-
-export type NewFilesData = Omit<FilesData, 'id'>
-
 export interface ExtraRegistrationData {
   id: number
   behavior1: string
@@ -164,8 +154,8 @@ export interface Officer {
 export interface FilterSpecialRegistration {
   letterCategory: string
   carRegistration: string
-  selectedProvince: string
-  selectedRegistrationType: string
-  selectedAgency: string
-  selectedStatus: string
+  selectedProvince: number | string
+  selectedRegistrationType: number | string
+  agency: string
+  selectedStatus: number | string
 }

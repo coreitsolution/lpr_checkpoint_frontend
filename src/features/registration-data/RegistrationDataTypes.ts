@@ -1,21 +1,71 @@
-export interface SpecialRegistrationData {
-  id: number
-  behavior1: string
-  behavior2: string
-  car_registration: string
-  case_id: string
-  created_at: string
-  data_owner: string
-  end_arrest_date: string
-  images: string[]
-  letter_category: string
-  phone: string
-  province_id: number
-  registration_type_id: number
-  start_arrest_date: string
-  agency_id: number
-  status_id: number
-  updated_at: string
+export interface FileData {
+  title: string
+  url: string
 }
 
-export type NewSpecialRegistrationData = Omit<SpecialRegistrationData, 'id'>
+export interface FileRespondsData {
+  createdAt: string;
+  id: number;
+  notes: string | null;
+  special_plate_id: number;
+  title: string;
+  updatedAt: string;
+  url: string;
+}
+
+export interface NewFileRespondsData {
+  createdAt: string;
+  title: string;
+  url: string;
+}
+
+export interface SpecialPlatesData {
+  message?: string
+  status?: string
+  success?: string
+  data?: SpecialPlatesRespondsDetail[]
+}
+
+export interface SpecialPlatesDetail {
+  id: number
+  plate_group: string
+  plate_number: string
+  province_id: number
+  plate_class_id: number
+  case_number: string
+  arrest_warrant_date: string
+  arrest_warrant_expire_date: string
+  behavior: string
+  case_owner_name: string
+  case_owner_agency: string
+  case_owner_phone: string
+  imagesData: FileData[]
+  filesData: FileData[]
+  visible: number
+  active: number
+  createdAt?: string,
+  updatedAt?: string,
+}
+
+export interface SpecialPlatesRespondsDetail {
+  id: number
+  plate_group: string
+  plate_number: string
+  province_id: number
+  plate_class_id: number
+  case_number: string
+  arrest_warrant_date: string
+  arrest_warrant_expire_date: string
+  behavior: string
+  case_owner_name: string
+  case_owner_agency: string
+  case_owner_phone: string
+  special_plate_images: FileRespondsData[]
+  special_plate_files: FileRespondsData[]
+  visible: number
+  active: number
+  createdAt?: string,
+  updatedAt?: string,
+}
+
+export type NewSpecialPlates = Omit<SpecialPlatesDetail, 'id'>

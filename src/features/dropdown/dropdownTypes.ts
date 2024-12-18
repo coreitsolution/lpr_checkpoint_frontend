@@ -1,40 +1,63 @@
-export interface Province {
-  id: number;
-  name_th: string;
-  name_en: string;
+export interface Provinces {
+  message?: string
+  status?: string
+  success?: string
+  data?: ProvincesDetail[]
 }
 
-export interface Agencies {
+export interface ProvincesDetail 
+{
   id: number
-  agency: string
-  phone: string
-  address: string
-  latitude: string
-  longitude: string
-  created_at: string
-  updated_at: string
+  country_id: number
+  province_code: string
+  name_en: string
+  name_th: string
+  police_region_id: number
+  remark: string
 }
 
-export interface RegistrationTypesData {
+export interface RegistrationTypesDetail {
   id: number
-  registration_type: string
-  created_at: string
-  updated_at: string
+  title_en: string
+  title_th: string
+  visible: number
+  active: number
+}
+
+export interface RegistrationTypes {
+  message?: string
+  status?: string
+  success?: string
+  data?: RegistrationTypesDetail[]
 }
 
 export interface DataStatusData {
   id: number
   status: string
-  created_at: string
-  updated_at: string
 }
 
 export interface PoliceDivisions {
+  message?: string
+  status?: string
+  success?: string
+  data?: PoliceDivisionsDetail[]
+}
+
+export interface PoliceDivisionsDetail {
   id: number
-  police_division: string
+  title_en: string
+  title_th: string
+  active: number
 }
 
 export interface Districts {
+  message?: string
+  status?: string
+  success?: string
+  data?: DistrictsDetail[]
+}
+
+export interface DistrictsDetail {
   id: number
   province_id: number
   name_th: string
@@ -42,6 +65,13 @@ export interface Districts {
 }
 
 export interface SubDistricts {
+  message?: string
+  status?: string
+  success?: string
+  data?: SubDistrictsDetail[]
+}
+
+export interface SubDistrictsDetail {
   id: number
   province_id: number
   district_id: number
@@ -49,14 +79,47 @@ export interface SubDistricts {
   name_en: string
 }
 
-export interface NamePrefixes {
-  id: number
-  name_th: string
-  name_en: string
+export interface CommonTitles {
+  message?: string
+  status?: string
+  success?: string
+  data?: CommonDetail[]
 }
 
-export interface Positions {
+export interface CommonDetail {
   id: number
-  name_th: string
-  name_en: string
+  title_en: string
+  title_th: string
+  visible: number
+  active: number
+}
+
+export interface OfficerTitles {
+  message?: string
+  status?: string
+  success?: string
+  data?: OfficerTitlesDetail[]
+}
+
+export interface OfficerTitlesDetail {
+  id: number
+  title_en: string
+  title_th: string
+  title_abbr_en: string
+  title_abbr_th: string
+  active: number
+}
+
+export interface OfficerPositions {
+  message?: string
+  status?: string
+  success?: string
+  data?: OfficerPositionsDetail[]
+}
+
+export interface OfficerPositionsDetail {
+  id: number
+  position_th: string
+  position_en: string
+  active: number
 }

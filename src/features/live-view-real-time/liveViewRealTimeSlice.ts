@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { fetchLastRecognitions, fetchVehicleCount, fetchConnection, fetchSystemStatus, dowloadFile } from "./liveViewRealTimeAPI"
-import { LastRecognitionResult, VehicleCountResult, ConnectionResult, SystemStatusResult } from "./liveViewRealTimeTypes"
+import { LastRecognitionResult, LastRecognitionData, VehicleCountResult, ConnectionResult, SystemStatusResult } from "./liveViewRealTimeTypes"
 import { Status } from "../../constants/statusEnum"
 
 interface LiveViewRealTimesState {
@@ -25,8 +25,8 @@ const initialState: LiveViewRealTimesState = {
 
 export const fetchLastRecognitionsThunk = createAsyncThunk(
   "liveViewRealTimes/fetchLastRecognitions",
-  async () => {
-    const response = await fetchLastRecognitions()
+  async (param?:string) => {
+    const response = await fetchLastRecognitions(param)
     return response
   }
 )
@@ -57,7 +57,7 @@ export const fetchVehicleCountThunk = createAsyncThunk(
 
 export const dowloadFileThunk = createAsyncThunk(
   "liveViewRealTimes/dowloadData",
-  async (dowloadData: LastRecognitionResult) => {
+  async (dowloadData: LastRecognitionData) => {
     const response = await dowloadFile(dowloadData)
     return response
   }

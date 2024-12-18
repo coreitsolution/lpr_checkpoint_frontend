@@ -1,22 +1,30 @@
-import { RegistrationTypesData } from "../features/registration-types/registrationTypesTypes";
-
-export const registrationTypesData: RegistrationTypesData[] = [
+import { RegistrationTypesDetail, RegistrationTypes } from "../features/dropdown/dropdownTypes";
+export const registrationTypesData: RegistrationTypesDetail[] = [
   {
-    id: 1,
-    registration_type: 'Black list',
-    created_at: new Date().toISOString(), 
-    updated_at: new Date().toISOString(), 
+    "id": 3,
+    "title_en": "Blacklist",
+    "title_th": "บุคคลเฝ้าระวัง",
+    "visible": 1,
+    "active": 1
   },
   {
-    id: 2,
-    registration_type: 'Member',
-    created_at: new Date().toISOString(), 
-    updated_at: new Date().toISOString(), 
+    "id": 2,
+    "title_en": "Member",
+    "title_th": "สมาชิก",
+    "visible": 1,
+    "active": 1
   },
   {
-    id: 3,
-    registration_type: 'VIP',
-    created_at: new Date().toISOString(), 
-    updated_at: new Date().toISOString(), 
-  },
+    "id": 1,
+    "title_en": "VIP",
+    "title_th": "บุคคลสำคัญ",
+    "visible": 1,
+    "active": 1
+  }
 ];
+
+export const registrationTypes: RegistrationTypes = 
+  {
+    data: registrationTypesData
+  };
+

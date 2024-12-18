@@ -1,6 +1,6 @@
-import { Province } from "../features/dropdown/dropdownTypes";
+import { Provinces, ProvincesDetail } from "../features/dropdown/dropdownTypes";
 
-export const provinces: Province[] = [
+export const provincesDetail: ProvincesDetail[] = [
   { id: 1, name_th: "กรุงเทพมหานคร", name_en: "Bangkok" },
   { id: 2, name_th: "สมุทรปราการ", name_en: "Samut Prakan" },
   { id: 3, name_th: "นนทบุรี", name_en: "Nonthaburi" },
@@ -79,3 +79,7 @@ export const provinces: Province[] = [
   { id: 76, name_th: "ยะลา", name_en: "Yala" },
   { id: 77, name_th: "นราธิวาส", name_en: "Narathiwat" },
 ];
+
+export const provinces: Provinces = {
+  data: provincesDetail
+}

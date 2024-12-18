@@ -7,6 +7,8 @@ import dropdownReducer from "../features/dropdown/dropdownSlice";
 import cameraSettingsReducer from "../features/camera-settings/cameraSettingsSlice";
 import liveViewRealTimeReducer from "../features/live-view-real-time/liveViewRealTimeSlice";
 import registrationDataReducer from "../features/registration-data/RegistrationDataSlice";
+import authReducer from "../features/auth/authSlice"
+import fileUploadReducer from "../features/file-upload/fileUploadSlice"
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +20,8 @@ export const store = configureStore({
     cameraSettings: cameraSettingsReducer,
     liveViewRealTimes: liveViewRealTimeReducer,
     registrationData: registrationDataReducer,
+    auth: authReducer,
+    fileUpdateData: fileUploadReducer,
   },
 });
 
