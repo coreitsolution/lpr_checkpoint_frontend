@@ -23,6 +23,7 @@ export interface SpecialPlatesData {
   message?: string
   status?: string
   success?: string
+  countAll?: number
   data?: SpecialPlatesRespondsDetail[]
 }
 
@@ -41,6 +42,27 @@ export interface SpecialPlatesDetail {
   case_owner_phone: string
   imagesData: FileData[]
   filesData: FileData[]
+  visible: number
+  active: number
+  createdAt?: string,
+  updatedAt?: string,
+}
+
+export interface ImportSpecialPlatesDetail {
+  id: number
+  plate_group: string
+  plate_number: string
+  province_id: number
+  plate_class_id: number
+  case_number: string
+  arrest_warrant_date: string
+  arrest_warrant_expire_date: string
+  behavior: string
+  case_owner_name: string
+  case_owner_agency: string
+  case_owner_phone: string
+  imagesData: string
+  filesData: string
   visible: number
   active: number
   createdAt?: string,

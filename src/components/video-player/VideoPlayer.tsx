@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 interface VideoPlayerProps {
   streamUrl: string | null
-  id: string
+  id: number
   customClass?: string
 }
 
@@ -34,7 +34,7 @@ export const VideoPlayer = ({ streamUrl, id, customClass }: VideoPlayerProps) =>
 
       // Create new canvas
       canvas = document.createElement('canvas')
-      canvas.id = id
+      canvas.id = id.toString()
       canvas.className = 'm-0 w-full h-full'
       containerRef.current.appendChild(canvas)
 

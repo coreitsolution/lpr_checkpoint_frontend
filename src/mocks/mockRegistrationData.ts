@@ -1,5 +1,4 @@
 import { SpecialPlatesRespondsDetail, SpecialPlatesData } from "../features/registration-data/RegistrationDataTypes"
-import dayjs from "dayjs";
 
 export const specialRegistrationdata: SpecialPlatesRespondsDetail[] = [
   {
@@ -134,5 +133,6 @@ export const specialRegistrationdata: SpecialPlatesRespondsDetail[] = [
 ];
 
 export const specialPlatesData: SpecialPlatesData = {
+  countAll: specialRegistrationdata.length,
   data: specialRegistrationdata
 }

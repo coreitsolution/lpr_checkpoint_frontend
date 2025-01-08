@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { SelectChangeEvent } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../../app/store";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
@@ -7,28 +6,23 @@ import { format } from "date-fns";
 
 // Types
 import {
-  CameraSettings,
-  CreateCameraSettings,
   CameraDetailSettings,
   NewCameraDetailSettings,
 } from "../../../features/camera-settings/cameraSettingsTypes";
 import { SearchResult } from "../../../types/index";
+import { StreamEncodesDetail } from "../../../features/dropdown/dropdownTypes"
 
 // Components
 import ToggleButton from "../../../components/toggle-button/ToggleButton";
 import TextBox from "../../../components/text-box/TextBox";
-import SelectBox from "../../../components/select-box/SelectBox";
 import Loading from "../../../components/loading/Loading";
+import AutoComplete from "../../../components/auto-complete/AutoComplete"
+import SelectBox from '../../../components/select-box/SelectBox'
 
 // API
 import {
-  fetchProvincesThunk,
-  fetchPoliceDivisionsThunk,
   fetchDistrictsThunk,
   fetchSubDistrictsThunk,
-  fetchCommonPrefixesThunk,
-  fetchOfficerPrefixesThunk,
-  fetchPositionThunk,
 } from "../../../features/dropdown/dropdownSlice";
 import {
   postCameraSettingThunk,
@@ -43,7 +37,11 @@ import { Save } from "lucide-react";
 import LocationSetting from "../location-setting/LocationSetting";
 
 // Pop-up
-import PopupMessage from "../../../utils/popupMessage";
+import { PopupMessage } from "../../../utils/popupMessage";
+
+// Constants
+import { DEFAULT_DETECTION_AREA } from "../../../constants/detectionArea";
+
 interface CameraSettingProps {
   closeDialog: () => void;
   selectedRow: CameraDetailSettings | null;
@@ -64,15 +62,16 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     isLoading: false,
     isLocationSettingOpen: false,
     isSensorSettingOpen: false,
-    provinceSelect: '',
-    policeDivisionsSelect: '',
-    districtsSelect: '',
-    subDistrictsSelect: '',
+    provinceSelect: 0 as number | '',
+    policeDivisionsSelect: -1,
+    districtsSelect:  0 as number | '',
+    subDistrictsSelect: 0,
     checkpoint: "",
     checkpointId: "",
     route: "",
     rtspLiveView: "",
-    streamEncode: "",
+    streamEncodeSelect: 0,
+    streamEncode: {} as StreamEncodesDetail,
     apiServer: "",
     rtspProcess: "",
     number_of_detections: 0,
@@ -83,11 +82,11 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       longitude: "",
     },
     officer: {
-      namePrefixesSelect: '',
+      namePrefixesSelect: 0,
       name: "",
       surname: "",
       phone: "",
-      positionsSelect: '',
+      positionsSelect: 0,
     },
     toggles: {
       startService: false,
@@ -105,6 +104,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     policeDivisions,
     officerPrefixes,
     positions,
+    streamEncodes
   } = useSelector((state: RootState) => state.dropdown);
   const [provincesOptions, setProvincesOptions] = useState<{ label: string; value: number }[]>([]);
   const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string; value: number }[]>([]);
@@ -112,21 +112,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   const [policeDivisionsOptions, setPoliceDivisionsOptions] = useState<{ label: string; value: number }[]>([]);
   const [officerPrefixesOptions, setOfficerPrefixesOptions] = useState<{ label: string; value: number }[]>([]);
   const [positionsOptions, setPositionsOptions] = useState<{ label: string; value: number }[]>([]);
-
-  const fetchData = async () => {
-    setState((prev) => ({ ...prev, isLoading: true }));
-    await Promise.all([
-      dispatch(fetchProvincesThunk("?orderBy=name_th")),
-      dispatch(fetchPoliceDivisionsThunk()),
-      dispatch(fetchOfficerPrefixesThunk()),
-      dispatch(fetchPositionThunk()),
-    ]);
-    setState((prev) => ({ ...prev, isLoading: false }));
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [dispatch]);
+  const [streamEncodesOptions, setStreamEncodesOptions] = useState<{ label: string; value: number }[]>([]);
 
   useEffect(() => {
     if (
@@ -144,14 +130,15 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
           isLoading: false,
           isLocationSettingOpen: false,
           isSensorSettingOpen: false,
-          provinceSelect: selectedRow.province_id.toString(),
-          districtsSelect: selectedRow.district_id.toString(),
-          subDistrictsSelect: selectedRow.sub_district_id.toString(),
-          policeDivisionsSelect: selectedRow.division_id.toString(),
+          provinceSelect: selectedRow.province_id,
+          districtsSelect: selectedRow.district_id,
+          subDistrictsSelect: selectedRow.sub_district_id,
+          policeDivisionsSelect: selectedRow.division_id,
           checkpoint: selectedRow.checkpoint_name,
           checkpointId: selectedRow.cam_id,
           route: selectedRow.route,
           rtspLiveView: selectedRow.rtsp_live_url,
+          streamEncodeSelect: selectedRow.stream_encode_id,
           streamEncode: selectedRow.stream_encode,
           apiServer: selectedRow.api_server_url,
           rtspProcess: selectedRow.rtsp_process_url,
@@ -163,11 +150,11 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
             longitude: selectedRow.longitude,
           },
           officer: {
-            namePrefixesSelect: selectedRow.officer_title_id.toString(),
+            namePrefixesSelect: selectedRow.officer_title_id,
             name: selectedRow.officer_firstname,
             surname: selectedRow.officer_lastname,
             phone: selectedRow.officer_phone,
-            positionsSelect: selectedRow.officer_position_id.toString(),
+            positionsSelect: selectedRow.officer_position_id,
           },
           toggles: {
             startService: false,
@@ -231,13 +218,16 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   
   useEffect(() => {
     const fetchData = async () => {
+      let query: Record<string, string> = {}
       if (state.provinceSelect) {
-        await dispatch(fetchDistrictsThunk(`?filter=province_id:${state.provinceSelect}`));
+        query["filter"] = `province_id:${state.provinceSelect}`
+        query["orderBy"] = `name_th`
+        await dispatch(fetchDistrictsThunk(query));
       }
       if (state.districtsSelect) {
-        await dispatch(
-          fetchSubDistrictsThunk(`?filter=district_id:${state.districtsSelect},province_id:${state.provinceSelect}`)
-        );
+        query["filter"] = `district_id:${state.districtsSelect},province_id:${state.provinceSelect}`
+        query["orderBy"] = `name_th`
+        await dispatch(fetchSubDistrictsThunk(query));
       }
     };
     fetchData();
@@ -303,20 +293,18 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     }
   }, [positions]);
 
-  const createCameraSettings = (): NewCameraDetailSettings | null => {
-    const defaultDetectionArea = {
-      frame: {
-        width: 850,
-        height: 450,
-      },
-      points: [
-        { x: 0, y:100 },
-        { x: 850, y:100 },
-        { x: 850, y:350 },
-        { x: 0, y:350 },
-        { x: 0, y:100 }
-      ]
+  useEffect(() => {
+    if (streamEncodes && streamEncodes.data) {
+      const options = streamEncodes.data.map((row) => ({
+        label: row.name,
+        value: row.id,
+      }));
+      setStreamEncodesOptions(options);
     }
+  }, [streamEncodes]);
+
+  const createCameraSettings = (): NewCameraDetailSettings | null => {
+    const defaultDetectionArea = DEFAULT_DETECTION_AREA
 
     const cameraSettings: NewCameraDetailSettings = {
       cam_id: state.checkpointId,
@@ -330,7 +318,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       route: state.route,
       rtsp_live_url: state.rtspLiveView,
       rtsp_process_url: state.rtspProcess,
-      stream_encode: state.streamEncode,
+      stream_encode_id: state.streamEncodeSelect,
       api_server_url: state.apiServer,
       pc_serial_number: state.pcSerialNumber,
       license_key: state.license,
@@ -375,17 +363,19 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       id: selectedRow.id,
       cam_id: state.checkpointId,
       cam_uid: selectedRow.cam_uid,
+      alpr_cam_id: selectedRow.alpr_cam_id,
       checkpoint_name: state.checkpoint,
-      division_id: Number(state.policeDivisionsSelect),
-      province_id: Number(state.provinceSelect),
-      district_id: Number(state.districtsSelect),
-      sub_district_id: Number(state.subDistrictsSelect),
-      number_of_detections: 0,
+      division_id: state.policeDivisionsSelect,
+      province_id: state.provinceSelect ? state.provinceSelect : 0,
+      district_id: state.districtsSelect ? state.districtsSelect : 0,
+      sub_district_id: state.subDistrictsSelect,
+      detecion_count: selectedRow.detecion_count,
       route: state.route,
       latitude: state.location.latitude,
       longitude: state.location.longitude,
       rtsp_live_url: state.rtspLiveView,
       rtsp_process_url: state.rtspProcess,
+      stream_encode_id: state.streamEncodeSelect,
       stream_encode: state.streamEncode,
       api_server_url: state.apiServer,
       live_server_url: selectedRow.live_server_url,
@@ -393,10 +383,10 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       wsport: selectedRow.wsport,
       pc_serial_number: state.pcSerialNumber,
       license_key: state.license,
-      officer_title_id: Number(state.officer.namePrefixesSelect),
+      officer_title_id: state.officer.namePrefixesSelect,
       officer_firstname: state.officer.name,
       officer_lastname: state.officer.surname,
-      officer_position_id: Number(state.officer.positionsSelect),
+      officer_position_id: state.officer.positionsSelect,
       officer_phone: state.officer.phone,
       detection_area: selectedRow.detection_area,
       streaming: selectedRow.streaming,
@@ -406,14 +396,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       last_online: selectedRow.last_online,
       last_check: selectedRow.last_check,
       createdAt: selectedRow.createdAt,
-      updatedAt: format(new Date(), "yyyy-MM-dd hh:mm:ss"),
+      updatedAt: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
     }
 
     const isValid = Object.entries(cameraSettings).every(([key, value]) => {
       if (key === "last_online" || key === "last_check") {
         return true
       }
-      if (value == null || value === "") {
+      if (value == null || value === "" || value === 0) {
         console.error(`Invalid or empty field: ${key}`, value);
         return false
       }
@@ -421,7 +411,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     });
 
     if (!isValid) {
-      console.error("Camera settings data is invalid.");
+      PopupMessage("พบข้อผิดพลาด", "ข้อมูลการตั้งค่ากล้องไม่ถูกต้อง", "error");
       return null
     }
 
@@ -491,6 +481,67 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     }));
   };
 
+  const handlePoliceDivisionChange = (
+    event: React.SyntheticEvent,
+    value: { value: any; label: string } | null
+  ) => {
+    event.preventDefault()
+    handleDropdownChange("policeDivisionsSelect", value ? value.value : null);
+  };
+
+  const handleProvinceChange = (
+    event: React.SyntheticEvent,
+    value: { value: any; label: string } | null
+  ) => {
+    event.preventDefault()
+    if (value) {
+      handleDropdownChange("provinceSelect", value.value);
+    }
+    else {
+      handleDropdownChange("provinceSelect", '');
+      handleDropdownChange("districtsSelect", '');
+      handleDropdownChange("subDistrictsSelect", '');
+    }
+  };
+
+  const handleDistrictChange = (
+    event: React.SyntheticEvent,
+    value: { value: any; label: string } | null
+  ) => {
+    event.preventDefault()
+    if (value) {
+      handleDropdownChange("districtsSelect", value.value);
+    }
+    else {
+      handleDropdownChange("districtsSelect", '');
+      handleDropdownChange("subDistrictsSelect", '');
+    }
+  };
+
+  const handleSubDistrictChange = (
+    event: React.SyntheticEvent,
+    value: { value: any; label: string } | null
+  ) => {
+    event.preventDefault()
+    handleDropdownChange("subDistrictsSelect", value ? value.value : '');
+  };
+
+  const handleNamePrefixChange = (
+    event: React.SyntheticEvent,
+    value: { value: any; label: string } | null
+  ) => {
+    event.preventDefault()
+    handleDropdownOfficerChange("namePrefixesSelect", value ? value.value : '');
+  };
+
+  const handlePositionsChange = (
+    event: React.SyntheticEvent,
+    value: { value: any; label: string } | null
+  ) => {
+    event.preventDefault()
+    handleDropdownOfficerChange("positionsSelect", value ? value.value : '');
+  };
+
   return (
     <div id="camera-setting">
       <div className="bg-black text-white p-[30px] border-[1px] border-dodgerBlue w-full">
@@ -523,30 +574,23 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                 />
               </div>
               <div className="grid grid-cols-2 gap-5 my-[10px]">
-                <SelectBox
-                  sx={{ marginTop: "15px" }}
-                  id="police-divisions"
-                  className="w-full"
+                <AutoComplete 
+                  id="police-division-select"
+                  sx={{ marginTop: "15px"}}
                   value={state.policeDivisionsSelect}
-                  onChange={(event: SelectChangeEvent<any>) =>
-                    handleDropdownChange(
-                      "policeDivisionsSelect",
-                      event.target.value
-                    )
-                  }
+                  onChange={handlePoliceDivisionChange}
                   options={policeDivisionsOptions}
-                  label="Police Division (ภาค)"
+                  label="Police Division (ภาค)*"
+                  labelFontSize="16px"
                 />
-                <SelectBox
-                  sx={{ marginTop: "15px" }}
-                  id="province"
-                  className="w-full"
+                <AutoComplete 
+                  id="provice-select"
+                  sx={{ marginTop: "15px"}}
                   value={state.provinceSelect}
-                  onChange={(event: SelectChangeEvent<any>) =>
-                    handleDropdownChange("provinceSelect", event.target.value)
-                  }
+                  onChange={handleProvinceChange}
                   options={provincesOptions}
                   label="Province (จังหวัด)"
+                  labelFontSize="16px"
                 />
               </div>
               <div className="my-[10px]">
@@ -574,15 +618,21 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                 />
               </div>
               <div className="grid grid-cols-2 gap-5 my-[10px]">
-                <TextBox
-                  id="stream-encode"
-                  label="Steam Encode"
-                  placeHolder=""
-                  className="w-full"
-                  value={state.streamEncode}
+                <SelectBox
+                  sx={{ marginTop: "15px"}}
+                  id="stream-encode-select"
+                  label="Stream Encode"
+                  value={state.streamEncodeSelect}
                   onChange={(event) =>
-                    handleTextChange("streamEncode", event.target.value)
+                    {
+                      handleDropdownChange("streamEncodeSelect", event.target.value)
+                      const selectedStreamEncode = streamEncodes?.data?.find((item) => item.id === Number(event.target.value))
+                      if (selectedStreamEncode) {
+                        setState((prev) => ({ ...prev, streamEncode: selectedStreamEncode }))
+                      }
+                    }
                   }
+                  options={streamEncodesOptions}
                 />
                 <TextBox
                   id="api-server"
@@ -631,32 +681,25 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                 />
               </div>
               <div className="grid grid-cols-2 gap-5 my-[10px]">
-                <SelectBox
-                  sx={{ marginTop: "15px" }}
-                  id="district"
-                  className="w-full"
+                <AutoComplete 
+                  id="district-select"
+                  sx={{ marginTop: "15px"}}
                   value={state.districtsSelect}
-                  onChange={(event: SelectChangeEvent<any>) =>
-                    handleDropdownChange("districtsSelect", event.target.value)
-                  }
+                  onChange={handleDistrictChange}
                   options={districtsOptions}
                   label="District (อำเภอ)"
-                  disabled={state.provinceSelect === '' ? true : false}
+                  labelFontSize="16px"
+                  disabled={state.provinceSelect === 0 || state.provinceSelect === "" ? true : false}
                 />
-                <SelectBox
-                  sx={{ marginTop: "15px" }}
-                  id="sub-district"
-                  className="w-full"
+                <AutoComplete 
+                  id="sub-district-select"
+                  sx={{ marginTop: "15px"}}
                   value={state.subDistrictsSelect}
-                  onChange={(event: SelectChangeEvent<any>) =>
-                    handleDropdownChange(
-                      "subDistrictsSelect",
-                      event.target.value
-                    )
-                  }
+                  onChange={handleSubDistrictChange}
                   options={subDistrictsOptions}
                   label="Sub District (ตำบล)"
-                  disabled={state.districtsSelect === '' ? true : false}
+                  labelFontSize="16px"
+                  disabled={state.districtsSelect === 0 || state.districtsSelect === "" ? true : false}
                 />
               </div>
               <div className="grid grid-cols-[auto_auto_50px] gap-5 my-[10px]">
@@ -753,19 +796,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
             {/* First Column */}
             <div>
               <div className="grid grid-cols-2 gap-5 my-[10px]">
-                <SelectBox
-                  sx={{ marginTop: "15px" }}
-                  id="name-prefix"
-                  className="w-full"
+                <AutoComplete 
+                  id="name-prefix-select"
+                  sx={{ marginTop: "15px"}}
                   value={state.officer.namePrefixesSelect}
-                  onChange={(event: SelectChangeEvent<any>) =>
-                    handleDropdownOfficerChange(
-                      "namePrefixesSelect",
-                      event.target.value
-                    )
-                  }
+                  onChange={handleNamePrefixChange}
                   options={officerPrefixesOptions}
                   label="คำนำหน้า"
+                  labelFontSize="16px"
                 />
                 <TextBox
                   id="name"
@@ -804,19 +842,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                     handleTextOfficerChange("surname", event.target.value)
                   }
                 />
-                <SelectBox
-                  sx={{ marginTop: "15px" }}
-                  id="position"
-                  className="w-full"
+                <AutoComplete 
+                  id="position-select"
+                  sx={{ marginTop: "15px"}}
                   value={state.officer.positionsSelect}
-                  onChange={(event: SelectChangeEvent<any>) =>
-                    handleDropdownOfficerChange(
-                      "positionsSelect",
-                      event.target.value
-                    )
-                  }
+                  onChange={handlePositionsChange}
                   options={positionsOptions}
-                  label="ตำแหน่ง"
+                  label="คำนำหน้า"
+                  labelFontSize="16px"
                 />
               </div>
             </div>
@@ -860,6 +893,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                 handleButtonClick("isLocationSettingOpen", false)
               }
               comfirmPoint={comfirmPoint}
+              location={state.location}
             />
           </DialogPanel>
         </div>

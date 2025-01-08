@@ -7,6 +7,7 @@ import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { HamburgerProvider } from "./context/HamburgerContext.tsx";
+import { StyledEngineProvider } from '@mui/material/styles';
 
 // Create a dark theme
 const darkTheme = createTheme({
@@ -22,9 +23,11 @@ createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <ThemeProvider theme={darkTheme}>
         <Router>
-          <HamburgerProvider>
-            <App />
-          </HamburgerProvider>
+          <StyledEngineProvider injectFirst>
+            <HamburgerProvider>
+              <App />
+            </HamburgerProvider>
+          </StyledEngineProvider>
         </Router>
       </ThemeProvider>
     </Provider>

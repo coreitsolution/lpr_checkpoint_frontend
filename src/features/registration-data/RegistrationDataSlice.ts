@@ -5,13 +5,13 @@ import {
   putSpecialPlateData,
   postSpecialRegistrationData,
 } from "./RegistrationDataAPI";
-import { SpecialPlatesDetail, SpecialPlatesData, NewSpecialPlates } from "./RegistrationDataTypes";
+import { SpecialPlatesRespondsDetail, SpecialPlatesData, NewSpecialPlates, SpecialPlatesDetail } from "./RegistrationDataTypes";
 import { Status } from "../../constants/statusEnum";
 
 // State interface
 interface RegistrationDataState {
   specialPlatesData: SpecialPlatesData | null;
-  specialPlatesDetail: SpecialPlatesDetail[];
+  specialPlatesDetail: SpecialPlatesRespondsDetail[];
   status: Status;
   error: string | null;
 }
@@ -27,7 +27,7 @@ const initialState: RegistrationDataState = {
 // Async thunks
 export const fetchSpecialPlateDataThunk = createAsyncThunk(
   "registrationData/fetchSpecialPlateData",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     return await fetchSpecialPlatesData(param);
   }
 );

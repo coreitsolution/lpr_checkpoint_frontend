@@ -6,35 +6,39 @@ import {
   VehicleCountResult,
   ConnectionResult,
   SystemStatusResult,
-  LastRecognitionData,
+  ZipDowload,
 } from "./liveViewRealTimeTypes";
 import {
   lastRecognitionData,
-  vehicleCountData,
+  vehicleCountListFullData,
   connectionData,
-  systemStatusData,
+  systemStatusListFullData,
 } from "../../mocks/mockLiveViewRealTimes";
 
 export const fetchLastRecognitions = async (
-  param?: string
+  param?: Record<string, string>
 ): Promise<LastRecognitionResult> => {
   if (isDevEnv) {
     const data = { data: lastRecognitionData}
     return Promise.resolve(data);
   }
-  const url = param ? `/lpr-data/get${param}` : "/lpr-data/get";
-  return await fetchClient<LastRecognitionResult>(combineURL(API_URL, url), {
+  return await fetchClient<LastRecognitionResult>(combineURL(API_URL, "/lpr-data/get"), {
     method: "GET",
+    queryParams: param,
   });
 };
 
-export const fetchVehicleCount = async (): Promise<VehicleCountResult> => {
+export const fetchVehicleCount = async (param?: Record<string, string>): Promise<VehicleCountResult> => {
   if (isDevEnv) {
-    return Promise.resolve(vehicleCountData);
+    const data = {
+      data: vehicleCountListFullData
+    }
+    return Promise.resolve(data);
   }
-  return await fetchClient<VehicleCountResult>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  return await fetchClient<VehicleCountResult>(combineURL(API_URL, "/lpr-data/get-vehicle-count"), {
+    method: "GET",
+    queryParams: param,
+  });
 };
 
 export const fetchConnection = async (): Promise<ConnectionResult> => {
@@ -46,22 +50,32 @@ export const fetchConnection = async (): Promise<ConnectionResult> => {
   );
 };
 
-export const fetchSystemStatus = async (): Promise<SystemStatusResult> => {
+export const fetchSystemStatus = async (param?: Record<string, string>): Promise<SystemStatusResult> => {
   if (isDevEnv) {
-    return Promise.resolve(systemStatusData);
+    const data = {
+      data: systemStatusListFullData
+    }
+    return Promise.resolve(data);
   }
-  return await fetchClient<SystemStatusResult>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  return await fetchClient<SystemStatusResult>(combineURL(API_URL, "/logs/get"), {
+    method: "GET",
+    queryParams: param,
+  });
 };
 
 export const dowloadFile = async (
-  dowloadData: LastRecognitionData
-): Promise<string> => {
+  param?: Record<string, string>
+): Promise<ZipDowload> => {
   if (isDevEnv) {
-    return Promise.resolve("/zip/example.zip");
+    const data: ZipDowload = {
+      data: {
+        zipUrl: "/zip/example.zip"
+      }
+    }
+    return Promise.resolve(data);
   }
-  return await fetchClient<string>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  return await fetchClient<ZipDowload>(combineURL(API_URL, "/lpr-data/get-zipped-images-url"), {
+    method: "GET",
+    queryParams: param,
+  });
 };

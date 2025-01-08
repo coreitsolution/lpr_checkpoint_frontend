@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Select,
   MenuItem,
@@ -27,20 +27,25 @@ import Loading from "../../components/loading/Loading"
 import { 
   fetchCameraSettingsThunk,
   deleteCameraSettingThunk,
-  putCameraScreenSettingsThunk,
-  fetchCameraScreenSettingsThunk,
 } from "../../features/camera-settings/cameraSettingsSlice"
+import { 
+  fetchSettingsThunk,
+  putSettingsThunk
+} from "../../features/settings/settingsSlice"
 
 // Types
 import { CameraDetailSettings, CameraScreenSettingDetail } from "../../features/camera-settings/cameraSettingsTypes"
 
 // Pop-up
-import PopupMessage from "../../utils/popupMessage"
+import { PopupMessage } from "../../utils/popupMessage"
 
 const Setting = () => {
   const dispatch: AppDispatch = useDispatch()
-  const { cameraSettings, cameraScreenSetting, status, error } = useSelector(
+  const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
+  )
+  const { settingData } = useSelector(
+    (state: RootState) => state.settingsData
   )
   const { isOpen } = useHamburger()
   const [isCameraSettingOpen, setIsCameraSettingOpen] = useState(false)
@@ -62,35 +67,28 @@ const Setting = () => {
   useEffect(() => {
     setIsLoading(true)
     dispatch(fetchCameraSettingsThunk())
-    dispatch(fetchCameraScreenSettingsThunk("?filter=id:1"))
-
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
-
-    const interval = setInterval(() => {
-      dispatch(fetchCameraSettingsThunk())
-    }, 5000)
-
-    return () => {
-      clearInterval(interval)
-    }
-
+    dispatch(fetchSettingsThunk({
+      "filter": "id:1"
+    }))
   }, [dispatch])
 
   useEffect(() => {
     if (cameraSettings && cameraSettings.data) {
       setCameraDetailSettingData(cameraSettings.data)
+      setTimeout(() => {
+        setIsLoading(false)
+      }, 500)
     }
   }, [cameraSettings])
 
   useEffect(() => {
-    if (cameraScreenSetting && cameraScreenSetting.data) {
-      setCameraScreenSettingDetail(cameraScreenSetting.data[0])
-      const numValue = Number(cameraScreenSetting.data[0].value) || 1
+    if (settingData && settingData.data) {
+      setCameraScreenSettingDetail(settingData.data[0])
+      const numValue = Number(settingData.data[0].value) || 1
       setSelectedScreenValue(numValue)
     }
-  }, [cameraScreenSetting])
+  }, [settingData])
+  
 
   const renderStatus = (status: number) => (
     <span className={`px-2 py-1 rounded inline-block w-[80px] text-[15px] ${
@@ -124,11 +122,17 @@ const Setting = () => {
   const handleDeleteClick = async (id: number) => {
     await dispatch(deleteCameraSettingThunk(id))
     PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
+    await fetchCameraSetting()
   }
 
   const handleSensorSettingScreenClose = async () => {
     setIsSensorSettingOpen(false)
-    await dispatch(fetchCameraSettingsThunk())
+    await fetchCameraSetting()
+  }
+
+  const handleCameraSettingScreenClose = async () => {
+    setIsCameraSettingOpen(false)
+    await fetchCameraSetting()
   }
 
   const handleScreenSelect = async (event: SelectChangeEvent<number>) => {
@@ -148,15 +152,24 @@ const Setting = () => {
           value: value.toString(),
         };
         await dispatch(
-          putCameraScreenSettingsThunk(updateData)
+          putSettingsThunk(updateData)
         ).unwrap();
 
         PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
       }
     }
     catch (error) {
-      console.error(error)
+      PopupMessage("บันทึกข้อมูลไม่สำเร็จ", error instanceof Error ? error.message : String(error), "error")
     }
+    await fetchCameraSetting()
+  }
+
+  const fetchCameraSetting = async () => {
+    setIsLoading(true)
+    await dispatch(fetchCameraSettingsThunk())
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
   }
 
   return (
@@ -211,7 +224,7 @@ const Setting = () => {
                   </td>
                   <td className="px-4 py-2 bg-celtic">{camera.cam_id}</td>
                   <td className="px-4 py-2 bg-tuna">{camera.latitude + ", " + camera.longitude}</td>
-                  <td className="px-4 py-2 text-end bg-celtic">{formatNumber(camera.number_of_detections)}</td>
+                  <td className="px-4 py-2 text-end bg-celtic">{formatNumber(camera.detecion_count)}</td>
                   <td className="px-4 py-2 bg-tuna flex justify-center">
                     <Button onClick={() => handleSensorSettingClick(camera)}>
                       <img 
@@ -254,7 +267,7 @@ const Setting = () => {
               <DialogTitle className="text-[28px]">ตั้งค่ากล้อง</DialogTitle>
             </div>
             <CameraSetting 
-              closeDialog={() => setIsCameraSettingOpen(false)} 
+              closeDialog={handleCameraSettingScreenClose} 
               selectedRow={selectedRow}
               isEditMode={isEditMode}
             />

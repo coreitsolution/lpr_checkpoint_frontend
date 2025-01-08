@@ -1,7 +1,7 @@
 import React, {useState, useRef, useCallback, useEffect} from 'react'
 import { AppDispatch } from "../../../app/store"
 import { useDispatch } from "react-redux"
-import { IMAGE_URL } from '@/config/apiConfig'
+import { FILE_URL } from '../../../config/apiConfig'
 // Types
 import {
   CameraDetailSettings
@@ -17,7 +17,7 @@ import { Icon } from '../../../components/icons/Icon'
 import { Save } from 'lucide-react'
 
 // Pop-up
-import PopupMessage from "../../../utils/popupMessage"
+import { PopupMessage } from "../../../utils/popupMessage"
 
 // API
 import { 
@@ -134,12 +134,12 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
         <div className='p-5 border-[1px] border-dodgerBlue mb-[30px]'>
           <div className='relative mb-[10px]'>
             <img
-              src={selectedRow?.url ? `${IMAGE_URL}${selectedRow.url}` : undefined}
+              src={selectedRow?.sample_image_url ? `${FILE_URL}${selectedRow.sample_image_url}` : undefined}
               alt="Sensor Image"
-              className={`w-full h-[450px] ${!selectedRow?.url ? "bg-white" : ""}`}
+              className={`w-full h-[450px] ${!selectedRow?.sample_image_url ? "bg-white" : ""}`}
               ref={imgRef}
             />
-            { !selectedRow?.url && (
+            { !selectedRow?.sample_image_url && (
               <label className='absolute inset-0 flex items-center justify-center text-black'>กล้องยังไม่สามารถจับภาพได้</label>
             ) }
             {imgRef.current && (

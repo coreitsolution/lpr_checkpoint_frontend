@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react'
+import React, {useState, useCallback, useEffect} from 'react'
 
 // Components
 import TextBox from '../../../components/text-box/TextBox'
@@ -12,13 +12,17 @@ import { useMapSearch } from "../../../hooks/useGoogleMapSearch"
 import { SearchResult } from '../../../types/index'
 
 // Popup
-import PopupMessage from "../../../utils/popupMessage"
+import { PopupMessage } from "../../../utils/popupMessage"
 
 interface LocationSettingProps {
   closeDialog: () => void
   comfirmPoint: (result: SearchResult) => void
+  location?: {
+    latitude: string,
+    longitude: string,
+  }
 }
-const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPoint}) => {
+const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPoint, location}) => {
   const [searchText, setSearchText] = useState("")
   const [map, setMap] = useState<google.maps.Map | null>(null)
 
@@ -58,6 +62,14 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPo
       PopupMessage("", "โปรดเลือกสถานที่", "warning")
     }
   }
+
+  useEffect(() => {
+    if (location && location.latitude && location.longitude && searchResults.length === 0 && !isSearching) {
+      const latLng = `${location.latitude}, ${location.longitude}`
+      setSearchText(latLng)
+      searchPlace(latLng)
+    }
+  }, [location, searchPlace, searchResults, isSearching])
 
   return (
     <div id='location-setting'>

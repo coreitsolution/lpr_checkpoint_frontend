@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -16,6 +16,7 @@ export default function Multiselect({ options, onChange }: MultiselectProps) {
     event: any,
     newValue: CheckPointViewModel[]
   ) => {
+    event.preventDefault()
     setValue(newValue);
     const selectedIds = newValue.map((option) => option.id);
     onChange(selectedIds); // Pass selected checkpoint IDs to the parent

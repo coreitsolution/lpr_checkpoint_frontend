@@ -42,6 +42,6 @@ export const mockService = {
     }
     return simulateFetch([]);
   },
-  patch: <T>(endpoint: string, data: T) => simulateFetch(data),
-  delete: (endpoint: string) => simulateFetch(null),
+  // patch: <T>(endpoint: string, data: T) => simulateFetch(data),
+  // delete: (endpoint: string) => simulateFetch(null),
 };

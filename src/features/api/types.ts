@@ -159,3 +159,77 @@ export interface FilterSpecialRegistration {
   agency: string
   selectedStatus: number | string
 }
+
+export interface FilterSpecialPeople {
+  selectedNamePrefix: number | string
+  firstname: string
+  lastname: string
+  selectedSex: number | string
+  selectedRegistrationType: number | string
+  agency: string
+  selectedStatus: number | string
+}
+
+export interface FilterSpecialPlates {
+  letterCategory: string
+  carRegistration: string
+  selectedProvince: string
+  selectedCarType: string
+  selectedCarBrand: string
+  selectedCarModel: string
+  selectedCarColor: string
+  selectedCarLane: string
+  plateConfidence: number
+  selectedStartDate: Date | null
+  selectedEndDate: Date | null
+  selectedCheckpoint: string
+  selectedRegistrationType: string
+}
+
+export interface FilterSpecialSuspectPeople {
+  namePrefix: number
+  firstname: string
+  lastname: string
+  faceConfidence: number
+  selectedStartDate: Date | null
+  selectedEndDate: Date | null
+  checkpoint: string
+  selectedRegistrationType: string
+}
+
+export interface DetactSpecialPlate {
+  logo_text: string
+  title_header: string
+  title_check_point: string
+  table_columns: DetactSpecialPlateColumns
+  table_rows: DetactSpecialPlateRows[]
+}
+
+export interface DetactSpecialPlateColumns {
+  plate_header: string
+  image_header: string
+  checkPoint_header: string
+  vehicleType_header: string
+  vehicleDetail_header: string
+  accuracy_header: string
+  registrationGroup_header: string
+  dateTime_header: string
+  lane_header: string
+}
+
+export interface DetactSpecialPlateRows {
+  plate_data: string
+  image_data: ImagesData
+  checkPoint_data: string
+  vehicleType_data: string
+  vehicleDetail_data: string[]
+  accuracy_data: string
+  registrationGroup_data: string
+  dateTime_data: string
+  lane_data: string
+}
+
+export interface ImagesData {
+  vehicle_image: string
+  plate_image: string
+}

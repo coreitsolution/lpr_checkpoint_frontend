@@ -1,4 +1,4 @@
-import { LastRecognitionData, VehicleCountResult, SystemStatusResult, ConnectionResult } from "../features/live-view-real-time/liveViewRealTimeTypes"
+import { LastRecognitionData, VehicleCountData, SystemStatusData, ConnectionResult } from "../features/live-view-real-time/liveViewRealTimeTypes"
 
 export const lastRecognitionData: LastRecognitionData[] = 
 [{
@@ -22,6 +22,13 @@ export const lastRecognitionData: LastRecognitionData[] =
   "plate_confidence": "94.24",
   "country": "th",
   "region": "th-10",
+  "region_info": {
+    id: 1,
+    code: "1",
+    name: "BKK",
+    name_th: "กรุงเทพ",
+    remark: ""
+  },
   "region_confidence": "99.00",
   "vehicle_body_type": "motorcycle",
   "vehicle_body_type_confidence": "98.96",
@@ -41,12 +48,12 @@ export const lastRecognitionData: LastRecognitionData[] =
   "overview_image": "/example.jpg",
   "overview_image_width": 560,
   "overview_image_height": 315,
-  "vehicle_image": "/example.jpg",
+  "vehicle_image": "/lpr_images/2024-12-06/vehicle_images/20241206-135555.8IhJ9lKGAUWbggPO_vehicle.jpg",
   "vehicle_region_x": 695,
   "vehicle_region_y": 363,
   "vehicle_region_width": 324,
   "vehicle_region_height": 338,
-  "plate_image": "/example.jpg",
+  "plate_image": "/lpr_images/2024-12-06/plate_images/20241206-135555.8IhJ9lKGAUWbggPO_plate.jpg",
   "plate_x1": 731,
   "plate_x2": 826,
   "plate_x3": 814,
@@ -64,41 +71,46 @@ export const lastRecognitionData: LastRecognitionData[] =
   "user_data": "Test"
 }]
 
-export const vehicleCountData: VehicleCountResult = 
+export const vehicleCountData: VehicleCountData = 
 { 
-  id: 0, 
-  startTime: "28/06/2024 (07:00)", 
-  endTime: "28/06/2024 (08:00)", 
-  vehicle: 0,
-  watchOutVehicle: 0,
-  summary: 0,
+  start_time: "28/06/2024 (07:00)", 
+  end_time: "28/06/2024 (08:00)", 
+  lpr_count: 0,
+  special_plates_count: 0,
+  total_count: 0,
 }
 
-export const vehicleCountListFullData: VehicleCountResult[] = Array.from(
-  {length: 10}, 
+export const vehicleCountListFullData: VehicleCountData[] = Array.from(
+  {length: 30}, 
   (_, index) => ({ 
     id: index + 1, 
-    startTime: "28/06/2024 (07:00)", 
-    endTime: "28/06/2024 (08:00)", 
-    vehicle: 0,
-    watchOutVehicle: index,
-    summary: index,
+    start_time: "28/06/2024 (07:00)", 
+    end_time: "28/06/2024 (08:00)", 
+    lpr_count: 0,
+    special_plates_count: index,
+    total_count: index,
   }
 ))
 
-export const systemStatusData: SystemStatusResult = 
+export const systemStatusData: SystemStatusData = 
 { 
-  id: 1, 
-  time: "07:20:28", 
-  message: "cdsFeedData: Field’facelist_id_alert’ not found", 
+  "id": 1,
+  "category": "event",
+  "title": "Plate detected",
+  "details": "New plate found: ชอ368 กรุงเทพมหานคร 99.00%",
+  "createdAt": "2024-12-23T14:36:57.000Z",
+  "updatedAt": "2024-12-23T14:36:57.000Z"
 }
 
-export const systemStatusListFullData: SystemStatusResult[] = Array.from(
+export const systemStatusListFullData: SystemStatusData[] = Array.from(
   {length: 10}, 
   (_, index) => ({ 
-    id: index + 1, 
-    time: "07:20:28", 
-    message: "cdsFeedData: Field’facelist_id_alert’ not found", 
+    "id": index + 1,
+    "category": "event",
+    "title": "Plate detected",
+    "details": "New plate found: ชอ368 กรุงเทพมหานคร 99.00%",
+    "createdAt": "2024-12-23T14:36:57.000Z",
+    "updatedAt": "2024-12-23T14:36:57.000Z" 
   }
 ))
 

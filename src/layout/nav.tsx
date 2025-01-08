@@ -3,10 +3,18 @@ import "./nav.scss";
 import { useCallback, useEffect, useState } from "react";
 import MenuIcon from "./menu-icon/menuicon";
 import { NavLink } from "react-router-dom";
-import dayjs from "dayjs";
 import RiArrowDownSFill from "~icons/ri/arrow-down-s-fill";
 import RiArrowUpSFill from "~icons/ri/arrow-up-s-fill";
 import clsx from 'clsx';
+import { fetchClient, combineURL } from "../utils/fetchClient"
+
+// Types
+import {
+  SettingData,
+} from "../features/settings/settingsTypes"
+
+// Config
+import { API_URL } from '../config/apiConfig';
 
 // SVG
 import LOGO from "../assets/svg/sm-logo.svg"
@@ -18,6 +26,7 @@ function Nav() {
   const [languageSelected, setLanguageSelect] = useState("th");
   const [sidePosition, setSidePosition] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>("")
+  const [checkpoint, setCheckpoint] = useState<string>("")
   const { isOpen, toggleMenu } = useHamburger()
 
   const formatDate = (date: Date) => {
@@ -28,6 +37,17 @@ function Nav() {
   }
 
   useEffect(() => {
+    const fetchCheckpoint = async () => {
+      const response = await fetchClient<SettingData>(combineURL(API_URL, "/settings/get"), {
+        method: "GET",
+        queryParams: {"filter": "id:2"}
+      })
+
+      if (response && response.data) {
+        setCheckpoint(`ด่าน: ${response.data[0].value}`)
+      }
+    }
+    fetchCheckpoint()
     const interval = setInterval(() => {
       setCurrentTime(formatDate(new Date()))
     }, 1000)
@@ -50,9 +70,9 @@ function Nav() {
 
   const navItems = [
     { path: "/checkpoint/cctv", icon: "cctv", label: "cctv" },
-    { path: "/checkpoint/search", icon: "search-nav", label: "search" },
+    { path: "/checkpoint/special-registration-detected", icon: "search-nav", label: "search" },
     {
-      path: "/checkpoint/search-condition",
+      path: "/checkpoint/suspect-people-detected",
       icon: "magnifying-glass",
       label: "magnifying-glass",
     },
@@ -62,18 +82,18 @@ function Nav() {
       label: "special-plate",
     },
     {
-      path: "/checkpoint/order-detect-person",
+      path: "/checkpoint/special-suspect-person",
       icon: "order-detect-person",
-      label: "order-detect-person",
+      label: "special-suspect-person",
     },
     { path: "/checkpoint/settings", icon: "settings", label: "settings" },
     { path: "/checkpoint/user-manage", icon: "add-user", label: "add-user" },
-    { path: "/chart", icon: "bar-chart", label: "bar-chart" },
+    { path: "/checkpoint/chart", icon: "bar-chart", label: "bar-chart" },
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 min-w-[950px]">
-      <div className="flex justify-between items-center">
+    <nav className="fixed top-0 left-0 right-0 z-50 min-w-[1300px]">
+      <div className="flex justify-between items-center bg-black">
         {/* Status Section */}
         <div 
           className="flex-1 bg-blue-500 text-white"
@@ -111,7 +131,7 @@ function Nav() {
                 </span>
               </div>
               <div className="grid grid-cols-[150px] mb-[4px]">
-                <p className="text-[20px] text-center">ด่าน</p>
+                <p className="text-[20px] text-center">{checkpoint}</p>
                 <p className="text-[15px] h-[25px] text-cyan-300">
                   {currentTime}
                 </p>

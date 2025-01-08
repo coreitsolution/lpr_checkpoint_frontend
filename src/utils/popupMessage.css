@@ -1,0 +1,18 @@
+.custom-confirm-button {
+  color: white;
+  background-color: #2B9BED; /*Dodger Blue*/
+}
+
+.custom-cancel-button {
+  border: 1px solid #2B9BED;/*Dodger Blue*/
+  color: #2B9BED; /*Dodger Blue*/
+  background-color: white;
+}
+
+.custom-confirm-button:hover {
+  background-color: #2563eb;
+}
+
+.custom-cancel-button:hover {
+  background-color: #F1F5F9;
+}

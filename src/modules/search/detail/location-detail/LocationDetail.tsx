@@ -1,11 +1,9 @@
-import * as React from "react";
 import Button from "@mui/material/Button";
-import Dialog, { DialogProps } from "@mui/material/Dialog";
+import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { SelectChangeEvent } from "@mui/material/Select";
 import Map from "../../../../components/map/map";
 import DOTInform from "../dot-inform/DotInform";
 import { Typography } from "@mui/material";
@@ -19,6 +17,7 @@ interface LocationDialog {
   isCompare: boolean;
   closeText?:string;
   closeButtonCss?:string;
+  isLiveView?: boolean;
 }
 
 export default function LocationDetailDialog({
@@ -29,9 +28,8 @@ export default function LocationDetailDialog({
   isCompare = false,
   closeText,
   closeButtonCss,
+  isLiveView = false,
 }: LocationDialog) {
-  const [fullWidth, setFullWidth] = React.useState(true);
-  const [maxWidth, setMaxWidth] = React.useState<DialogProps["maxWidth"]>("sm");
 
   const vehicleInfo = {
     pathImage: data?.vehicle.imgPlate || "",
@@ -49,24 +47,14 @@ export default function LocationDetailDialog({
     rightsHolderAddress: data?.ownerPerson.address || "",
   }
 
-  const handleMaxWidthChange = (event: SelectChangeEvent<typeof maxWidth>) => {
-    setMaxWidth(event.target.value as DialogProps["maxWidth"]);
-  };
-
-  const handleFullWidthChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFullWidth(event.target.checked);
-  };
-
   const handleClose = () => {
     close();
   };
 
   return (
     <Dialog
-      fullWidth={fullWidth}
-      maxWidth={"xl"}
+      fullWidth={ isLiveView ? true : false}
+      maxWidth="xl"
       open={open}
       onClose={handleClose} // Use the `close` function from props
     >
@@ -111,33 +99,36 @@ export default function LocationDetailDialog({
                 </svg>
               </p>
             </div>
-            <div className="">
-              <p style={{ fontSize: "12px", lineHeight: "1.5" }}>
-                ภายในเว็บไซต์ Thailpr ไปเผยแพร่
-                เนื่องจากเป็นข้อมูลความลับของทางราชการ
-                ไม่อนุญาตให้นำข้อมูลดังกล่าวไปเผยแพร่ในทุกช่องทาง
-                ก่อนได้รับอนุญาต
-              </p>
-              <p style={{ fontSize: "12px", lineHeight: "1.5" }}>
-                *<u>หากผู้ใดนำข้อมูลไปเผยแพร่และก่อให้เกิดความเสียหาย</u>*
-                แก่ทางราชการหรือก่อให้เกิดความเสียหายกับบุคคลอื่น
-                อาจเข้าข่ายเป็นความผิดตาม พ.ร.บ.คอมพิวเตอร์
-                เจ้าของรหัสจะถูกตัดสิทธิ์การใช้งานระบบ LPR
-                และถูกดำเนินการทางวินัย *
-              </p>
-            </div>
+            {
+              isLiveView ? 
+              (
+                ""
+              ) :
+              (
+                <div className="">
+                  <p style={{ fontSize: "12px", lineHeight: "1.5" }}>
+                    ภายในเว็บไซต์ Thailpr ไปเผยแพร่
+                    เนื่องจากเป็นข้อมูลความลับของทางราชการ
+                    ไม่อนุญาตให้นำข้อมูลดังกล่าวไปเผยแพร่ในทุกช่องทาง
+                    ก่อนได้รับอนุญาต
+                  </p>
+                  <p style={{ fontSize: "12px", lineHeight: "1.5" }}>
+                    *<u>หากผู้ใดนำข้อมูลไปเผยแพร่และก่อให้เกิดความเสียหาย</u>*
+                    แก่ทางราชการหรือก่อให้เกิดความเสียหายกับบุคคลอื่น
+                    อาจเข้าข่ายเป็นความผิดตาม พ.ร.บ.คอมพิวเตอร์
+                    เจ้าของรหัสจะถูกตัดสิทธิ์การใช้งานระบบ LPR
+                    และถูกดำเนินการทางวินัย *
+                  </p>
+                </div>
+              )
+            }
           </div>
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            <div className="flex flex-2">
+            <div className={`flex flex-2 ${isLiveView ? "w-full" : ""}`}>
               <div
-                className="flex-initial w-[90%]"
-                style={{
-                  height: "800px",
-                  margin: "-24px",
-                  position: "relative",
-                }}
+                className={` flex-initial w-[90%] ${isLiveView ? "h-[60vh]" : "h-[800px]"} m-[-24px] relative`}
               >
                 <Map
                   coordinates={data?.map}
@@ -152,7 +143,7 @@ export default function LocationDetailDialog({
                   <p
                     style={{
                       color: "white",
-                      fontSize: "16px",
+                      fontSize: isLiveView ? "0.8vw" : "16px",
                       padding: "10px",
                     }}
                   >

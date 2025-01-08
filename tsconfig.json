@@ -13,7 +13,7 @@
       "esnext"
     ],
     "module": "esnext",
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "types": [
       "unplugin-icons/types/react"
@@ -28,7 +28,7 @@
     "skipLibCheck": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "~icons/*": ["node_modules/unplugin-icons/icons/*"]
     },
   },
 }

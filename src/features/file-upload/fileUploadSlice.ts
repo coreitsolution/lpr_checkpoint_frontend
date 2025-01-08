@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { postFilesData, deleteFilesData } from "./fileUploadAPI"
-import { FileUpload, MultipartRequestData, DeleteRequestData } from "./fileUploadTypes"
+import { FileUpload, DeleteRequestData } from "./fileUploadTypes"
 import { Status } from "../../constants/statusEnum"
 
 interface FileUploadState {

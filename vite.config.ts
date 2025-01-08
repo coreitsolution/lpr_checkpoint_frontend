@@ -14,9 +14,7 @@ export default defineConfig({
     }),
     Icons({
       compiler: 'jsx',
-      jsx: 'react',
-      autoInstall: true
-    })
+    }),
   ],
   resolve: {
     alias: {

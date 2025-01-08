@@ -9,6 +9,10 @@ import liveViewRealTimeReducer from "../features/live-view-real-time/liveViewRea
 import registrationDataReducer from "../features/registration-data/RegistrationDataSlice";
 import authReducer from "../features/auth/authSlice"
 import fileUploadReducer from "../features/file-upload/fileUploadSlice"
+import telegramReducer from "../features/telegram/TelegramSlice";
+import searchDataReducer from "../features/search-data/SearchDataSlice";
+import suspectPeopleDataReducer from "../features/suspect-people/SuspectPeopleDataSlice";
+import settingsReducer from "@/features/settings/settingsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +26,10 @@ export const store = configureStore({
     registrationData: registrationDataReducer,
     auth: authReducer,
     fileUpdateData: fileUploadReducer,
+    telegram: telegramReducer,
+    searchData: searchDataReducer,
+    suspectPeopleData: suspectPeopleDataReducer,
+    settingsData: settingsReducer,
   },
 });
 

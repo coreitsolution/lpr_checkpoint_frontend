@@ -1,6 +1,18 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { fetchLastRecognitions, fetchVehicleCount, fetchConnection, fetchSystemStatus, dowloadFile } from "./liveViewRealTimeAPI"
-import { LastRecognitionResult, LastRecognitionData, VehicleCountResult, ConnectionResult, SystemStatusResult } from "./liveViewRealTimeTypes"
+import {
+  fetchLastRecognitions,
+  fetchVehicleCount,
+  fetchConnection,
+  fetchSystemStatus,
+  dowloadFile,
+} from "./liveViewRealTimeAPI"
+import {
+  LastRecognitionResult,
+  ZipDowload,
+  VehicleCountResult,
+  ConnectionResult,
+  SystemStatusResult,
+} from "./liveViewRealTimeTypes"
 import { Status } from "../../constants/statusEnum"
 
 interface LiveViewRealTimesState {
@@ -8,7 +20,7 @@ interface LiveViewRealTimesState {
   vehicleCountData: VehicleCountResult | null
   connectionData: ConnectionResult | null
   systemStatusData: SystemStatusResult | null
-  dowloadPath: string
+  dowloadPath: ZipDowload | null
   status: Status
   error: string | null
 }
@@ -18,14 +30,14 @@ const initialState: LiveViewRealTimesState = {
   vehicleCountData: null,
   connectionData: null,
   systemStatusData: null,
-  dowloadPath: "",
+  dowloadPath: null,
   status: Status.IDLE,
   error: null,
 }
 
 export const fetchLastRecognitionsThunk = createAsyncThunk(
   "liveViewRealTimes/fetchLastRecognitions",
-  async (param?:string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchLastRecognitions(param)
     return response
   }
@@ -41,24 +53,24 @@ export const fetchConnectionThunk = createAsyncThunk(
 
 export const fetchSystemStatusThunk = createAsyncThunk(
   "liveViewRealTimes/fetchSystemStatus",
-  async () => {
-    const response = await fetchSystemStatus()
+  async (param?: Record<string, string>) => {
+    const response = await fetchSystemStatus(param)
     return response
   }
 )
 
 export const fetchVehicleCountThunk = createAsyncThunk(
   "liveViewRealTimes/fetchVehicleCount",
-  async () => {
-    const response = await fetchVehicleCount()
+  async (param?: Record<string, string>) => {
+    const response = await fetchVehicleCount(param)
     return response
   }
 )
 
 export const dowloadFileThunk = createAsyncThunk(
   "liveViewRealTimes/dowloadData",
-  async (dowloadData: LastRecognitionData) => {
-    const response = await dowloadFile(dowloadData)
+  async (param?: Record<string, string>) => {
+    const response = await dowloadFile(param)
     return response
   }
 )
@@ -79,7 +91,8 @@ const liveViewRealTimesSlice = createSlice({
       })
       .addCase(fetchLastRecognitionsThunk.rejected, (state, action) => {
         state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch liveViewRealTime"
+        state.error =
+          action.error.message || "Failed to fetch liveViewRealTime"
       })
 
       .addCase(fetchVehicleCountThunk.pending, (state) => {
@@ -92,7 +105,8 @@ const liveViewRealTimesSlice = createSlice({
       })
       .addCase(fetchVehicleCountThunk.rejected, (state, action) => {
         state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch vehicleCountData"
+        state.error =
+          action.error.message || "Failed to fetch vehicleCountData"
       })
 
       .addCase(fetchConnectionThunk.pending, (state) => {
@@ -118,7 +132,8 @@ const liveViewRealTimesSlice = createSlice({
       })
       .addCase(fetchSystemStatusThunk.rejected, (state, action) => {
         state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch systemStatusData"
+        state.error =
+          action.error.message || "Failed to fetch systemStatusData"
       })
 
       // Dowload file
@@ -134,7 +149,6 @@ const liveViewRealTimesSlice = createSlice({
         state.status = Status.FAILED
         state.error = action.error.message || "Failed to fetch dowloadPath"
       })
-
   },
 })
 

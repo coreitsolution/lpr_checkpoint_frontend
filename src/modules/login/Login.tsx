@@ -24,7 +24,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(clearError()); // Clear any previous errors
+    dispatch(clearError());
     dispatch(login({ username, password }));
   };
 

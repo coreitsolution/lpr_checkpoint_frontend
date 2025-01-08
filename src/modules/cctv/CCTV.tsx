@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
@@ -10,9 +10,10 @@ import {
 
 // Components
 import { VideoPlayer } from '../../components/video-player/VideoPlayer.js'
+import Loading from "../../components/loading/Loading"
 
 // Modules
-import CCTVSideBar from '../cctv-side-bar/CCTVSideBar'
+import CCTVSideBar from './cctv-side-bar/CCTVSideBar.js'
 import CarDetectDialog from './car-detect-dialog/CarDetectDialog'
 
 // Image
@@ -25,17 +26,25 @@ import { useHamburger } from "../../context/HamburgerContext"
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
-import { CircleAlert, RotateCw } from 'lucide-react'
+import { CircleAlert } from 'lucide-react'
 import ReplayCircleFilledIcon from '@mui/icons-material/ReplayCircleFilled';
 
 // API
 import { 
   fetchCameraSettingsThunk,
-  fetchCameraScreenSettingsThunk,
   postStartStreamThunk,
   postStopStreamThunk,
   postRestartStreamThunk,
 } from "../../features/camera-settings/cameraSettingsSlice"
+import { 
+  fetchSpecialPlateDataThunk,
+} from "../../features/registration-data/RegistrationDataSlice"
+import { 
+  sendMessageThunk,
+} from "../../features/telegram/TelegramSlice"
+import { 
+  fetchSettingsThunk,
+} from "../../features/settings/settingsSlice"
 
 // Types
 import { 
@@ -44,26 +53,37 @@ import {
 } from "../../features/camera-settings/cameraSettingsTypes"
 import { LastRecognitionData } from "../../features/live-view-real-time/liveViewRealTimeTypes"
 
-const spinAnimation = keyframes`
-  0% {
-    transform: scaleX(-1) rotate(0deg);
-  }
-  100% {
-    transform: scaleX(-1) rotate(-360deg);
-  }
-`;
+// Utils
+import { capitalizeFirstLetter } from "../../utils/comonFunction"
+
+// Config
+import { IMAGE_URL, TELEGRAM_CHAT_ID } from '../../config/apiConfig'
 
 const CCTV = () => {
   const dispatch: AppDispatch = useDispatch()
-  const { cameraSettings, cameraScreenSetting, status, error } = useSelector(
+  const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
   )
+
+  const { specialPlatesData } = useSelector(
+    (state: RootState) => state.registrationData
+  )
+
+  const { registrationTypes, provinces } = useSelector(
+    (state: RootState) => state.dropdown
+  )
+
+  const { settingData } = useSelector(
+    (state: RootState) => state.settingsData
+  )
+
   const [isFullWidth, setIsFullWidth] = useState(false)
   const { isOpen } = useHamburger()
 
   const setCollapse = (status: boolean) =>  {
     setIsFullWidth(status)
   }
+  const [isLoading, setIsLoading] = useState(true)
   const [cameraDetailSettingData, setCameraDetailSettingData] = useState<CameraDetailSettings[]>([])
   const [cameraSettingDropdown, setCameraSettingDropdown] = useState<{ id: number, name: string }[]>([])
   const [dropdownVisible, setDropdownVisible] = useState<number | null>(null)
@@ -72,32 +92,87 @@ const CCTV = () => {
   const stopButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const restartButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const [activeStreamUrls, setActiveStreamUrls] = useState<Record<number, { id: string, url: string, name:string}>>({})
+  const [activeStreamUrls, setActiveStreamUrls] = useState<Record<number, { id: number, url: string, name:string}>>({})
   const [streamLPRMapping, setStreamLPRMapping] = useState<Record<string, LastRecognitionData>>({})
   const [streamLPRData, setStreamLPRData] = useState<LastRecognitionData | null>(null)
+  const [alertLPRData, setAlertLPRData] = useState<LastRecognitionData | null>(null)
   const [isCarDetectOpen, setIsCarDetectOpen] = useState(false)
   const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
   const [isRestartStreamDisabled, setIsRestartStreamDisabled] = useState(false);
   const [isRestartStreamAnimating, setIsRestartStreamAnimating] = useState(false);
-  const setUpdateLastRecognition = (update: LastRecognitionData | null) => {
-    if (update) {
-      setStreamLPRMapping((prevMapping) => ({
-        ...prevMapping,
-        [update.camera_id]: update,
-      }))
-      setStreamLPRData(update)
-      setIsCarDetectOpen(true)
+
+  const spinAnimation = keyframes`
+    0% {
+      transform: scaleX(-1) rotate(0deg);
+    }
+    100% {
+      transform: scaleX(-1) rotate(-360deg);
+    }
+  `;
+
+  useLayoutEffect(() => {
+    setIsLoading(false)
+  }, [])
+
+  const checkSpecialPlates = useCallback((lastRecognition:LastRecognitionData): LastRecognitionData | null => {
+    if (specialPlatesData && registrationTypes && provinces) {
+      const matchedPlate = specialPlatesData.data?.find((spPlate) => {
+        const provice = provinces.data?.find((row) => row.id === spPlate.province_id)?.name_th
+        const plate = `${spPlate.plate_group}${spPlate.plate_number}${provice}`
+        const lastRecognitionPlate = `${lastRecognition.plate}${lastRecognition.region_info.name_th}`
+        return plate === lastRecognitionPlate && spPlate.active === 1
+      })
+
+      if (matchedPlate) {
+        const registrationType = registrationTypes.data?.find((row) => row.id === matchedPlate.plate_class_id)?.title_en
+        const data: LastRecognitionData = { 
+          ...lastRecognition, 
+          registration_type: registrationType,
+          case_owner_name: matchedPlate.case_owner_name,
+          case_owner_agency: matchedPlate.case_owner_agency,
+        }
+        return data
+      }
+      else {
+        return null
+      }
     }
     else {
-      setStreamLPRData(null)
-      setIsCarDetectOpen(false)
+      return null
     }
-  }
+  }, [specialPlatesData, registrationTypes, provinces])
+
+  const setUpdateLastRecognition = useCallback(
+    async (update: LastRecognitionData | null) => {
+      if (update) {
+        const data = checkSpecialPlates(update)
+        if (data) {
+          setIsCarDetectOpen(true)
+          setAlertLPRData(data)
+          await dispatch(sendMessageThunk({ 
+            chatId: TELEGRAM_CHAT_ID, 
+            message: `Special Plate found: ${data.plate} ${data.region_info.name_th} ${data.plate_confidence}% Type: ${data.registration_type}` 
+          }))
+        }
+        else {
+          setStreamLPRData(update)
+        }
+        setStreamLPRMapping((prevMapping) => ({
+          ...prevMapping,
+          [update.camera_id]: update,
+        }))
+        
+      }
+      else {
+        setStreamLPRData(null)
+        setIsCarDetectOpen(false)
+      }
+    }, [dispatch]
+  )
 
   const checkRegistrationTypeColor = (): string => {
-    // const type = streamLPRData?.registration_type.toLocaleLowerCase()
-    const type = streamLPRData?.plate
-    if (type === "black list") {
+    const type = alertLPRData?.registration_type?.toLocaleLowerCase()
+    if (type === "blacklist") {
       return "bg-cinnabar"
     }
     else if (type === "vip") {
@@ -175,15 +250,23 @@ const CCTV = () => {
     if (selectedCamera) {
       setActiveStreamUrls((prevUrls) => ({
         ...prevUrls,
-        [cameraIndex]: { id: `CCTV-${selectedCamera.cam_id}`, url: selectedCamera.live_stream_url, name: selectedCamera.cam_id},
+        [cameraIndex]: { id: selectedCamera.alpr_cam_id, url: selectedCamera.live_stream_url, name: selectedCamera.cam_id},
       }));
     }
     setDropdownVisible(null);
   };
 
   useEffect(() => {
+    dispatch(fetchSpecialPlateDataThunk({
+      "filter": "deleted:0"
+    }))
+  }, [dispatch])
+
+  useEffect(() => {
     dispatch(fetchCameraSettingsThunk())
-    dispatch(fetchCameraScreenSettingsThunk())
+    dispatch(fetchSettingsThunk({
+      "filter": "id:1"
+    }))
   }, [dispatch])
 
   useEffect(() => {
@@ -203,38 +286,39 @@ const CCTV = () => {
   }, [cameraSettings])
 
   useEffect(() => {
-    if (cameraScreenSetting && cameraScreenSetting.data) {
-      const numValue = Number(cameraScreenSetting.data[0].value) || 1
+    if (settingData && settingData.data) {
+      const numValue = Number(settingData.data[0].value) || 1
       setSelectedScreenValue(numValue)
     }
-  }, [cameraScreenSetting])
+  }, [settingData])
 
   return (
-    <div className={`main-content pe-1 min-w-[950px] ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>
+    <div className={`main-content pe-1 ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>
+      {isLoading && <Loading />}
       <div 
         id="cctv" 
         className={`flex h-full ${
-          isFullWidth ? "w-full" : `${isOpen ? "w-[70%]" : "w-[72%]"}`
-        } transition-all duration-500`}
+          isFullWidth ? "w-full" : `${isOpen ? "w-[calc(100%-525px)]" : "w-[calc(100%-520px)]"}`
+        } transition-all duration-500 lt1200:w-full`}
       >
-        <div className="w-full h-[88vh] pl-[10px] pr-[20px] py-[15px] mt-[22px] border-[1px] border-dodgerBlue rounded-[10px]">
-          <div className={`w-full ${selectedScreenValue > 1 ? "grid grid-cols-2 lt1535:grid-cols-1" : "grid grid-cols-1"} h-[85vh] gap-5 overflow-y-auto`}>
+        <div className="w-full h-full pl-[10px] pr-[20px] pt-[15px] pb-2 border-[1px] border-dodgerBlue rounded-[10px]">
+          <div className={`w-full ${selectedScreenValue > 1 ? "grid grid-cols-2 lt1535:grid-cols-1" : "grid grid-cols-1 h-[98%]"} h-full gap-5 overflow-y-auto`}>
           {
             cameraDetailSettingData.slice(0, selectedScreenValue).map((live, index) => (
               <div key={live.cam_id} id={`CCTV${index + 1}`} className="flex relative">
                 {/* CCTV Stream */}
                 <div
-                  className="flex float-left justify-center items-center w-full bg-geyser"
+                  className="flex float-left justify-center items-center w-full bg-geyser p-[2px]"
                   style={{
-                    shapeOutside: "polygon(0% 0%, 129px 0%, 149px 35px, 100% 35px, 100% 100%, 0% 100%)",
-                    clipPath: "polygon(0% 0%, 129px 0%, 149px 35px, 100% 35px, 100% 100%, 0% 100%)",
+                    shapeOutside: "polygon(0% 0%, 130px 0%, 150px 35px, 100% 35px, 100% 100%, 0% 100%)",
+                    clipPath: "polygon(0% 0%, 130px 0%, 150px 35px, 100% 35px, 100% 100%, 0% 100%)",
                   }}
                 >
                   <div
-                    className="w-[99.5%] h-[99.5%] bg-black"
+                    className="h-full w-full bg-black"
                     style={{
-                      shapeOutside: "polygon(0% 0%, 125px 0%, 145px 36px, 100% 36px, 100% 100%, 0% 100%)",
-                      clipPath: "polygon(0% 0%, 125px 0%, 145px 36px, 100% 36px, 100% 100%, 0% 100%)",
+                      shapeOutside: "polygon(0% 0%, 125px 0%, 145px 35px, 100% 35px, 100% 100%, 0% 100%)",
+                      clipPath: "polygon(0% 0%, 125px 0%, 145px 35px, 100% 35px, 100% 100%, 0% 100%)",
                     }}
                   >
                     <div>
@@ -247,11 +331,11 @@ const CCTV = () => {
                         <label className="text-white">Live View</label>
                       </div>
                     </div>
-                    <div className="pb-2">
+                    <div className="pb-2 h-[92%]">
                       <VideoPlayer
                         streamUrl={(activeStreamUrls[index] && activeStreamUrls[index].url) || live.live_stream_url}
-                        id={(activeStreamUrls[index] && activeStreamUrls[index].id) || `CCTV-${live.cam_id}`}
-                        customClass={`${selectedScreenValue > 1 ? "h-[33vh]" : "h-full"} w-full`}
+                        id={(activeStreamUrls[index] && activeStreamUrls[index].id) || live.alpr_cam_id}
+                        customClass={`${selectedScreenValue > 1 ? "h-[33vh]" : "h-[80vh]"} w-full`}
                       />
                     </div>
                   </div>
@@ -365,7 +449,7 @@ const CCTV = () => {
                 const liveViewWithLPR = cameraDetailSettingData
                   .slice(0, selectedScreenValue)
                   .map((live, index) => ({
-                    lprData: streamLPRMapping[live.cam_id] || null,
+                    lprData: (activeStreamUrls[index] && activeStreamUrls[index].id && streamLPRMapping[activeStreamUrls[index].id]) || streamLPRMapping[live.alpr_cam_id] || null,
                     isLPRIncluded: index < lprCount,
                   }));
 
@@ -373,17 +457,17 @@ const CCTV = () => {
                   <div key={`LPR-${index}`} id={`LPR-${index + 1}`} className="flex relative">
                     {isLPRIncluded && (
                       <div
-                        className="flex float-left justify-center items-center w-full bg-geyser"
+                        className="flex float-left justify-center items-center w-full bg-geyser p-[2px]"
                         style={{
-                          shapeOutside: "polygon(0% 0%, 129px 0%, 149px 35px, 100% 35px, 100% 100%, 0% 100%)",
-                          clipPath: "polygon(0% 0%, 129px 0%, 149px 35px, 100% 35px, 100% 100%, 0% 100%)",
+                          shapeOutside: "polygon(0% 0%, 130px 0%, 150px 35px, 100% 35px, 100% 100%, 0% 100%)",
+                          clipPath: "polygon(0% 0%, 130px 0%, 150px 35px, 100% 35px, 100% 100%, 0% 100%)",
                         }}
                       >
                         <div
-                          className="w-[99.5%] h-[99.5%] bg-black pb-1"
+                          className="h-full w-full bg-black pb-1"
                           style={{
-                            shapeOutside: "polygon(0% 0%, 125px 0%, 145px 36px, 100% 36px, 100% 100%, 0% 100%)",
-                            clipPath: "polygon(0% 0%, 125px 0%, 145px 36px, 100% 36px, 100% 100%, 0% 100%)",
+                            shapeOutside: "polygon(0% 0%, 125px 0%, 145px 35px, 100% 35px, 100% 100%, 0% 100%)",
+                            clipPath: "polygon(0% 0%, 125px 0%, 145px 35px, 100% 35px, 100% 100%, 0% 100%)",
                           }}
                         >
                           <div>
@@ -399,31 +483,35 @@ const CCTV = () => {
                           <div className="px-4 pb-2 w-full h-[33.5vh] py-[0.3rem] overflow-y-auto">
                             {lprData && selectedScreenValue !== 3 ? (
                               <div className="flex flex-1 flex-col">
-                                <div className={`flex items-center justify-center align-middle h-[19vh] w-full`}>
-                                  <div className={`inline-flex items-center justify-center w-[564px] h-[276px]`}>
+                                <div className={`flex items-center justify-center align-middle h-[190px] w-full
+                                  ${ isFullWidth || !isOpen ? "bg-celti" : "" }
+                                  `}>
+                                  <div className={`flex items-center justify-center w-[564px] h-full
+                                    ${ isFullWidth || !isOpen ? "bg-celti" : "" }
+                                    `}>
                                     <img
                                       className="h-full w-[50%]"
-                                      src={streamLPRData?.vehicle_image}
+                                      src={`${IMAGE_URL}${lprData?.vehicle_image}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                     <img
-                                      className="h-[50%] w-[50%]"
-                                      src={streamLPRData?.plate_image}
+                                      className="h-[60%] w-[50%]"
+                                      src={`${IMAGE_URL}${lprData?.plate_image}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                   </div>
                                 </div>
-                                <div className="flex flex-col h-[12vh] text-center bg-tuna">
-                                  <p className="text-white text-[24px] font-medium">{lprData.plate}</p>
+                                <div className="flex flex-col h-[114px] text-center bg-tuna">
+                                  <p className="text-white text-[24px] font-medium">{`${lprData.plate} ${lprData.region_info.name_th}`}</p>
                                   <p className='border-b-[2px] border-gainsboro mx-[25px] mt-[10px]'></p>
                                   <div className="grid grid-cols-2 text-white text-[18px] font-light p-2">
                                     <div className='border-r-[1px] border-gainsboro'>
-                                      <p>{lprData.vehicle_make} {lprData.vehicle_make_model}</p>
-                                      <p>{lprData.vehicle_color}</p>
+                                      <p>{capitalizeFirstLetter(lprData.vehicle_make)} {capitalizeFirstLetter(lprData.vehicle_make_model)}</p>
+                                      <p>{capitalizeFirstLetter(lprData.vehicle_color)}</p>
                                     </div>
                                     <div>
                                       <p>{format(new Date(lprData.epoch_start), "dd/MM/yyyy")}</p>
-                                      <p>{format(new Date(lprData.epoch_start), "hh:mm:ss")}</p>
+                                      <p>{format(new Date(lprData.epoch_start), "HH:mm:ss")}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -431,31 +519,35 @@ const CCTV = () => {
                             ) : ""}
                             {streamLPRData && selectedScreenValue === 3 ? (
                               <div className="flex flex-1 flex-col">
-                                <div className={`flex items-center justify-center align-middle h-[19vh] w-full`}>
-                                  <div className={`inline-flex items-center justify-center w-[564px] h-[276px]`}>
+                                <div className={`flex items-center justify-center align-middle h-[190px] w-full
+                                  ${ isFullWidth || !isOpen ? "bg-celti" : "" }
+                                  `}>
+                                  <div className={`flex items-center justify-center w-[564px] h-full
+                                    ${ isFullWidth || !isOpen ? "bg-celti" : "" }
+                                    `}>
                                     <img
                                       className="h-full w-[50%]"
-                                      src={streamLPRData?.vehicle_image}
+                                      src={`${IMAGE_URL}${streamLPRData?.vehicle_image}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                     <img
-                                      className="h-[50%] w-[50%]"
-                                      src={streamLPRData?.plate_image}
+                                      className="h-[60%] w-[50%]"
+                                      src={`${IMAGE_URL}${streamLPRData?.plate_image}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                   </div>
                                 </div>
-                                <div className="flex flex-col h-[12vh] text-center bg-tuna">
-                                  <p className="text-white text-[24px] font-medium">{streamLPRData?.plate}</p>
+                                <div className="flex flex-col h-[114px] text-center bg-tuna">
+                                  <p className="text-white text-[24px] font-medium">{`${streamLPRData?.plate} ${streamLPRData?.region_info.name_th}`}</p>
                                   <p className='border-b-[2px] border-gainsboro mx-[25px] mt-[10px]'></p>
                                   <div className="grid grid-cols-2 text-white text-[18px] font-light p-2">
                                     <div className='border-r-[1px] border-gainsboro'>
-                                      <p>{lprData.vehicle_make} {lprData.vehicle_make_model}</p>
-                                      <p>{lprData.vehicle_color}</p>
+                                      <p>{capitalizeFirstLetter(streamLPRData.vehicle_make)} {capitalizeFirstLetter(streamLPRData.vehicle_make_model)}</p>
+                                      <p>{capitalizeFirstLetter(streamLPRData.vehicle_color)}</p>
                                     </div>
                                     <div>
-                                      <p>{format(new Date(lprData.epoch_start), "dd/MM/yyyy")}</p>
-                                      <p>{format(new Date(lprData.epoch_start), "hh:mm:ss")}</p>
+                                      <p>{format(new Date(streamLPRData.epoch_start), "dd/MM/yyyy")}</p>
+                                      <p>{format(new Date(streamLPRData.epoch_start), "HH:mm:ss")}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -474,14 +566,14 @@ const CCTV = () => {
       </div>
       <div
         id="detail-form"
-        className={`w-[27%] fixed right-0 top-0 pt-[60px] overflow-auto ${
+        className={`w-[515px] fixed right-0 top-[80px] overflow-auto ${
           isFullWidth ? "right-[-490px] none" : "!right-0 block"
-        } transition-all duration-500`}
+        } transition-all duration-500 lt1200:right-[-490px] lt1200:hidden`}
       >
         <CCTVSideBar setCollapse={setCollapse} cameraSetting={cameraDetailSettingData} setUpdateLastRecognition={setUpdateLastRecognition}/>
       </div>
       {/* Car Detect Dialog */}
-      <Dialog open={isCarDetectOpen} onClose={() => setIsCarDetectOpen(false)} className="relative z-50">
+      <Dialog open={isCarDetectOpen} onClose={() => {}} className="relative z-50">
         <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
           <DialogPanel 
           className="bg-black 
@@ -495,7 +587,7 @@ const CCTV = () => {
             </DialogTitle>
             <CarDetectDialog 
               closeDialog={() => setIsCarDetectOpen(false)} 
-              lastRecognitionResult={streamLPRData}
+              lastRecognitionResult={alertLPRData}
             />
           </DialogPanel>
         </div>

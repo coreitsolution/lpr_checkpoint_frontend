@@ -1,3 +1,19 @@
+export interface Regions {
+  message?: string
+  status?: string
+  success?: string
+  data?: RegionsDetail[]
+}
+
+export interface RegionsDetail 
+{
+  id: number
+  code: string
+  name: string
+  name_th: string
+  remark: string | null
+}
+
 export interface Provinces {
   message?: string
   status?: string
@@ -10,10 +26,12 @@ export interface ProvincesDetail
   id: number
   country_id: number
   province_code: string
-  name_en: string
+  police_region_id: number,
   name_th: string
-  police_region_id: number
-  remark: string
+  name_en: string
+  remark: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface RegistrationTypesDetail {
@@ -62,6 +80,11 @@ export interface DistrictsDetail {
   province_id: number
   name_th: string
   name_en: string
+  district_code: string
+  zipcode: string
+  remark: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface SubDistricts {
@@ -77,6 +100,11 @@ export interface SubDistrictsDetail {
   district_id: number
   name_th: string
   name_en: string
+  subdistrict_code: string
+  zipcode: string
+  remark: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CommonTitles {
@@ -122,4 +150,20 @@ export interface OfficerPositionsDetail {
   position_th: string
   position_en: string
   active: number
+}
+
+export interface StreamEncodes {
+  message?: string
+  status?: string
+  success?: string
+  data?: StreamEncodesDetail[]
+}
+
+export interface StreamEncodesDetail 
+{
+  id: number
+  name: string
+  gstreamer_format: string
+  visible: boolean
+  active: boolean
 }

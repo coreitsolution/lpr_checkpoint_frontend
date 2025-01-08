@@ -14,7 +14,7 @@ const VehicleDisplay: React.FC<VehicleDisplayProps> = ({
 }) => {
   return (
     <div className="bg-black w-90 flex flex-col items-center overflow-hidden">
-      <div style={{ width: "280px", height: "200px", position: "relative" }}>
+      <div style={{ width: "280px", height: "9vw", position: "relative" }}>
         <img
           src={pathImageVehicle}
           alt="Vehicle"
@@ -30,7 +30,7 @@ const VehicleDisplay: React.FC<VehicleDisplayProps> = ({
           src={pathImage}
           alt="License Plate"
           style={{
-            width: "110px",
+            width: "5vw",
             position: "absolute",
             bottom: "10px",
             left: "10px",
@@ -47,7 +47,7 @@ const VehicleDisplay: React.FC<VehicleDisplayProps> = ({
             zIndex: 2,
           }}
         >
-          <Typography color="white">{desc}</Typography>
+          <Typography color="white" fontSize={"0.8vw"}>{desc}</Typography>
         </div>
       )}
     </div>

@@ -9,7 +9,9 @@ import {
   fetchSubDistricts,
   fetchCommonPrefixes,
   fetchOfficerPrefixes,
-  fetchPositions
+  fetchPositions,
+  fetchRegions,
+  fetchStreamEncodes,
 } from "./dropdownAPI";
 import { 
   Provinces,
@@ -20,7 +22,9 @@ import {
   SubDistricts,
   OfficerPositions,
   OfficerTitles,
-  CommonTitles
+  CommonTitles,
+  Regions,
+  StreamEncodes,
 } from "./dropdownTypes";
 
 interface DropdownState {
@@ -33,6 +37,8 @@ interface DropdownState {
   commonPrefixes: CommonTitles | null;
   officerPrefixes: OfficerTitles | null;
   positions: OfficerPositions | null;
+  regions: Regions | null;
+  streamEncodes: StreamEncodes | null;
   status: Status;
   error: string | null;
 }
@@ -47,6 +53,8 @@ const initialState: DropdownState = {
   commonPrefixes: null,
   officerPrefixes: null,
   positions: null,
+  regions: null,
+  streamEncodes: null,
   status: Status.IDLE,
   error: null,
 };
@@ -59,10 +67,9 @@ export const fetchDataStatusThunk = createAsyncThunk(
   }
 );
 
-
 export const fetchProvincesThunk = createAsyncThunk(
   "provinces/fetchProvinces",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchProvinces(param);
     return response;
   }
@@ -70,7 +77,7 @@ export const fetchProvincesThunk = createAsyncThunk(
 
 export const fetchRegistrationTypesThunk = createAsyncThunk(
   "registrationTypes/fetchRegistrationTypes",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchRegistrationTypes(param);
     return response;
   }
@@ -78,7 +85,7 @@ export const fetchRegistrationTypesThunk = createAsyncThunk(
 
 export const fetchPoliceDivisionsThunk = createAsyncThunk(
   "policeDivisions/fetchPoliceDivisions",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchPoliceDivisions(param);
     return response;
   }
@@ -86,7 +93,7 @@ export const fetchPoliceDivisionsThunk = createAsyncThunk(
 
 export const fetchDistrictsThunk = createAsyncThunk(
   "districts/fetchDistricts",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchDistricts(param);
     return response;
   }
@@ -94,7 +101,7 @@ export const fetchDistrictsThunk = createAsyncThunk(
 
 export const fetchSubDistrictsThunk = createAsyncThunk(
   "subDistricts/fetchSubDistricts",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchSubDistricts(param);
     return response;
   }
@@ -102,7 +109,7 @@ export const fetchSubDistrictsThunk = createAsyncThunk(
 
 export const fetchCommonPrefixesThunk = createAsyncThunk(
   "namePrefixes/fetchCommonPrefixes",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchCommonPrefixes(param);
     return response;
   }
@@ -110,7 +117,7 @@ export const fetchCommonPrefixesThunk = createAsyncThunk(
 
 export const fetchOfficerPrefixesThunk = createAsyncThunk(
   "namePrefixes/fetchOfficerPrefixes",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchOfficerPrefixes(param);
     return response;
   }
@@ -118,11 +125,28 @@ export const fetchOfficerPrefixesThunk = createAsyncThunk(
 
 export const fetchPositionThunk = createAsyncThunk(
   "position/fetchPositions",
-  async (param?: string) => {
+  async (param?: Record<string, string>) => {
     const response = await fetchPositions(param);
     return response;
   }
 );
+
+export const fetchRegionsThunk = createAsyncThunk(
+  "regions/fetchRegions",
+  async () => {
+    const response = await fetchRegions();
+    return response;
+  }
+);
+
+export const fetchStreamEncodesThunk = createAsyncThunk(
+  "streamEncodes/fetchStreamEncodes",
+  async () => {
+    const response = await fetchStreamEncodes();
+    return response;
+  }
+);
+
 
 const dropdownSlice = createSlice({
   name: "dropdown",
@@ -253,6 +277,34 @@ const dropdownSlice = createSlice({
       .addCase(fetchPositionThunk.rejected, (state, action) => {
         state.status = Status.FAILED;
         state.error = action.error.message || "Failed to fetch positions";
+      });
+
+    builder
+      .addCase(fetchRegionsThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchRegionsThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.regions = action.payload;
+      })
+      .addCase(fetchRegionsThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch regions";
+      });
+
+    builder
+      .addCase(fetchStreamEncodesThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchStreamEncodesThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.streamEncodes = action.payload;
+      })
+      .addCase(fetchStreamEncodesThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch stream encodes";
       });
   },
 });

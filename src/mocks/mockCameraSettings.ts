@@ -3,10 +3,10 @@ import { CameraScreenSettingDetail, CameraDetailSettings, StreamDetail } from ".
 export const cameraDetailSettingsData: CameraDetailSettings[] =
 Array.from({length:3}, (_, i) => (
   {
-    id: 1,
+    id: i + 1,
     cam_id: "CAM-102",
     cam_uid: "UID98765",
-    checkpoint_name: "Checkpoint A",
+    checkpoint_name:  (i + 1) % 2 === 0 ? "Checkpoint A" : (i + 1) % 3 === 0 ? "Checkpoint C" : "Checkpoint B",
     division_id: 101,
     province_id: 10,
     district_id: 20,
@@ -17,7 +17,14 @@ Array.from({length:3}, (_, i) => (
     longitude: "100.5018",
     rtsp_live_url: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
     rtsp_process_url: "rtsp://192.168.1.10/process",
-    stream_encode: "H.264",
+    stream_encode_id: 1,
+    stream_encode: {
+      "id": 1,
+      "name": "H264",
+      "gstreamer_format": "",
+      "visible": true,
+      "active": true
+    },
     api_server_url: "https://api.server.url",
     live_server_url: "https://live.server.url",
     live_stream_url: "ws://58.136.154.95:10002",
@@ -34,6 +41,8 @@ Array.from({length:3}, (_, i) => (
     visible: 1,
     active: 1,
     alive: 1,
+    alpr_cam_id: 111,
+    detecion_count: 0,
     last_online: "2024-12-17T14:35:00Z",
     last_check: "2024-12-17T15:00:00Z",
     createdAt: "2024-01-01T10:00:00Z",
@@ -45,7 +54,7 @@ export const cameraScreenSettingDetail: CameraScreenSettingDetail[] = [
   {
     id: 1,
     name: "Live view",
-    value: "3",
+    value: "1",
     description: "Live view",
     created_at: "2024-12-17T14:35:00Z",
     updated_at: "2024-12-17T14:35:00Z",

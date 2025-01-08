@@ -4,19 +4,15 @@ import {
   postCameraSetting,
   putCameraSetting,
   deleteCameraSetting,
-  fetchCameraScreenSettings,
-  putCameraScreenSettings,
   startStream,
   stopStream,
   restartStream,
 } from "./cameraSettingsAPI";
 import {
   CameraSettings,
-  CameraScreenSettingDetail,
   NewCameraDetailSettings,
   CameraDetailSettings,
   StreamDetail,
-  CameraScreenSetting,
   StartStopStream,
 } from "./cameraSettingsTypes";
 import { Status } from "../../constants/statusEnum";
@@ -24,8 +20,6 @@ import { Status } from "../../constants/statusEnum";
 interface CameraSettingsState {
   cameraDetailSetting: CameraDetailSettings[];
   cameraSettings: CameraSettings | null;
-  cameraScreenSetting: CameraScreenSetting | null;
-  cameraScreenSettingDetail: CameraScreenSettingDetail | null;
   streamDetail: StreamDetail[];
   status: Status;
   error: string | null;
@@ -34,25 +28,15 @@ interface CameraSettingsState {
 const initialState: CameraSettingsState = {
   cameraSettings: null,
   cameraDetailSetting: [],
-  cameraScreenSetting: null,
-  cameraScreenSettingDetail: null,
   streamDetail: [],
   status: Status.IDLE,
   error: null,
 };
 
-// export const postStartStreamThunk = createAsyncThunk(
-//   "cameraSettings/postStartStream",
-//   async (reqStream: ReqStream[]) => {
-//     const response = await postStartStream(reqStream);
-//     return response as StreamDetail[];
-//   }
-// );
-
 export const fetchCameraSettingsThunk = createAsyncThunk(
   "cameraSettings/fetchCameraSettings",
-  async () => {
-    const response = await fetchCameraSettings();
+  async (param?: Record<string, string>) => {
+    const response = await fetchCameraSettings(param);
     return response;
   }
 );
@@ -78,22 +62,6 @@ export const deleteCameraSettingThunk = createAsyncThunk(
   async (id: number) => {
     await deleteCameraSetting(id);
     return id;
-  }
-);
-
-export const fetchCameraScreenSettingsThunk = createAsyncThunk(
-  "cameraSettings/fetchCameraScreenSettings",
-  async (param?:string) => {
-    const response = await fetchCameraScreenSettings(param);
-    return response;
-  }
-);
-
-export const putCameraScreenSettingsThunk = createAsyncThunk(
-  "cameraSettings/putCameraScreenSettings",
-  async (updateSetting: CameraScreenSettingDetail) => {
-    const response = await putCameraScreenSettings(updateSetting);
-    return response;
   }
 );
 
@@ -199,37 +167,6 @@ const cameraSettingsSlice = createSlice({
       //   state.status = Status.FAILED;
       //   state.error = action.error.message || "Failed to post camera setting";
       // })
-      // Camera Setting
-      .addCase(fetchCameraScreenSettingsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
-      })
-      .addCase(fetchCameraScreenSettingsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
-        state.cameraScreenSetting = action.payload;
-      })
-      .addCase(fetchCameraScreenSettingsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch cameraScreenSetting";
-      })
-      .addCase(putCameraScreenSettingsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
-      })
-      .addCase(putCameraScreenSettingsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
-        const index = state.cameraDetailSetting.findIndex(
-          (setting) => setting.id === action.payload.id
-        );
-        if (index !== -1) {
-          state.cameraScreenSettingDetail = action.payload;
-        }
-      })
-      .addCase(putCameraScreenSettingsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to put camera setting";
-      })
-
       // Stream
       .addCase(postStartStreamThunk.pending, (state) => {
         state.status = Status.LOADING;
