@@ -21,7 +21,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
 
   const [firstname, setFirstname] = useState("")
   const [lastname, setLastname] = useState("")
-  const [selectedRegistrationType, setSelectedRegistrationType] = useState<number | ''>('')
+  const [selectedPersonType, setSelectedPersonType] = useState<number | ''>('')
   const [selectedNamePrefix, setSelectedNamePrefix] = useState<string>("")
   const [selectedSex, setSelectedSex] = useState<string>("")
   const [agencyText, setAgencyText] = useState<string>("")
@@ -29,14 +29,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string; value: number; }[]>([])
   const [dataStatusOptions, setDataStatusOptions] = useState<{ label: string; value: number; }[]>([])
   const [namePrefixOptions, setNamePrefixOptions] = useState<{ label: string; value: number; }[]>([])
-  const [sexOptions, setSexOptions] = useState<{ label: string; value: number; }[]>([])
+  const [sexOptions] = useState<{ label: string; value: number; }[]>([])
 
   const filterData: FilterSpecialPeople = {
     selectedNamePrefix: selectedNamePrefix,
     firstname: firstname,
     lastname: lastname,
     selectedSex: selectedSex,
-    selectedRegistrationType: selectedRegistrationType,
+    selectedRegistrationType: selectedPersonType,
     agency: agencyText,
     selectedStatus: selectedStatus,
   }
@@ -80,12 +80,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setSelectedStatus(2)
     }
     if (registrationTypesOptions && registrationTypesOptions.length > 0) {
-      setSelectedRegistrationType(0)
+      setSelectedPersonType(0)
     }
   }, [dataStatusOptions, registrationTypesOptions])
 
   const handleReset = () => {
-    setSelectedRegistrationType("")
+    setSelectedPersonType("")
     setAgencyText("")
     setSelectedStatus(2)
     setFirstname("")
@@ -197,8 +197,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
                   id="select-registrations-type"
                   className="w-full"
-                  value={selectedRegistrationType}
-                  onChange={(event: SelectChangeEvent<any>) => setSelectedRegistrationType(event.target.value)}
+                  value={selectedPersonType}
+                  onChange={(event: SelectChangeEvent<any>) => setSelectedPersonType(event.target.value)}
                   options={registrationTypesOptions}
                   label="ประเภทบุคคล"
                   labelFontSize="15px"

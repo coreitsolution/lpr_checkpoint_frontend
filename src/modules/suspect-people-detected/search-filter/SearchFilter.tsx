@@ -31,14 +31,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [lastname, setLastname] = useState("")
   const [plateConfidence, setPlateConfidence] = useState("")
   const [selectedNamePrefix, setNamePrefix] = useState<string>('')
-  const [selectedCarType, setSelectedCarType] = useState<string>('')
-  const [selectedCarBrand, setSelectedCarBrand] = useState<string>('')
-  const [selectedCarModel, setSelectedCarModel] = useState<string>('')
-  const [selectedCarColor, setSelectedCarColor] = useState<string>('')
-  const [selectedCarLane, setSelectedCarLane] = useState<string>('')
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<string>('')
   const [checkedPlateConfidence, setCheckedPlateConfidence] = useState<number>(0)
-  const [selectedRegistrationType, setSelectedRegistrationType] = useState<number>(0)
+  const [selectedPersonType, setSelectedPersonType] = useState<number | ''>('')
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null)
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null)
   const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string, value: number }[]>([])
@@ -64,7 +59,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     selectedStartDate: selectedStartDate,
     selectedEndDate: selectedEndDate,
     checkpoint: selectedCheckpoint,
-    selectedRegistrationType: registrationTypes?.data?.find((row) => row.id === selectedRegistrationType)?.title_en || 'all',
+    selectedRegistrationType: registrationTypes?.data?.find((row) => row.id === selectedPersonType)?.title_en || 'all',
   }
 
   useEffect(() => {
@@ -97,17 +92,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     }
   }, [commonPrefixes])
 
+  useEffect(() => {
+    if (registrationTypesOptions && registrationTypesOptions.length > 0) {
+      setSelectedPersonType(0)
+    }
+  }, [registrationTypesOptions])
+
   const handleReset = () => {
     setFirstname("")
     setLastname("")
     setNamePrefix('')
-    setSelectedRegistrationType(0)
+    setSelectedPersonType(0)
     setPlateConfidence("")
-    setSelectedCarType('')
-    setSelectedCarBrand('')
-    setSelectedCarModel('')
-    setSelectedCarColor('')
-    setSelectedCarLane('')
     setCheckedPlateConfidence(0)
     setSelectedStartDate(null)
     setSelectedEndDate(null)
@@ -281,8 +277,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
                 id="select-people-type"
                 className="w-full"
-                value={selectedRegistrationType}
-                onChange={(event: SelectChangeEvent<any>) => setSelectedRegistrationType(event.target.value)}
+                value={selectedPersonType}
+                onChange={(event: SelectChangeEvent<any>) => setSelectedPersonType(event.target.value)}
                 options={registrationTypesOptions}
                 label="กลุ่มบุคคล"
                 labelFontSize="15px"

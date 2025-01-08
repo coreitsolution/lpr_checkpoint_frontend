@@ -36,7 +36,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [selectedCarLane, setSelectedCarLane] = useState<string>('')
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<string>('')
   const [checkedPlateConfidence, setCheckedPlateConfidence] = useState<number>(0)
-  const [selectedRegistrationType, setSelectedRegistrationType] = useState<number>(0)
+  const [selectedRegistrationType, setSelectedRegistrationType] = useState<number | ''>('')
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null)
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null)
   const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string, value: number }[]>([])
@@ -103,6 +103,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setCheckpointOptions(options.sort((a, b) => { return a.label.localeCompare(b.label) }))
     }
   }, [cameraSettings])
+
+  useEffect(() => {
+    if (registrationTypesOptions && registrationTypesOptions.length > 0) {
+      setSelectedRegistrationType(0)
+    }
+  }, [registrationTypesOptions])
 
   const handleReset = () => {
     setLetterCategory("")

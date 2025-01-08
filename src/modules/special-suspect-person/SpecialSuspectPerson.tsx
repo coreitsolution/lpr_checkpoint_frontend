@@ -5,8 +5,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { FILE_URL } from '../../config/apiConfig'
 import * as XLSX from "xlsx"
-import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent } from '@mui/material/Select'
+import { SelectChangeEvent } from '@mui/material/Select'
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
@@ -43,7 +42,6 @@ import Loading from "../../components/loading/Loading"
 import SearchFilter from "./search-filter/SearchFilter"
 import ManageSpecialSuspectPerson from "./manage-special-suspect-person/ManageSpecialSuspectPerson"
 import PaginationComponent from "../../components/pagination/Pagination"
-import SelectBox from "../../components/select-box/SelectBox"
 
 dayjs.locale('th');
 

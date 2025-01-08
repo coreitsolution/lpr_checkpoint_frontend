@@ -16,10 +16,10 @@ import PaginationComponent from "../../components/pagination/Pagination"
 import SearchFilter from "./search-filter/SearchFilter"
 
 // API
-import { fetchSpecialSuspectPeopleSearchDataThunk, dowloadPdfSpecialPlateThunk } from "../../features/search-data/SearchDataSlice"
+import { fetchSpecialSuspectPeopleSearchDataThunk } from "../../features/search-data/SearchDataSlice"
 
 // Types
-import { FilterSpecialSuspectPeople, DetactSpecialPlate } from "../../features/api/types"
+import { FilterSpecialSuspectPeople } from "../../features/api/types"
 import { SpecialPlateSearchData } from "../../features/search-data/SearchDataTypes"
 
 // Utils
@@ -44,10 +44,6 @@ const SuspectPeopleDetected = () => {
   const dispatch: AppDispatch = useDispatch()
   const { specialSuspectPeopleSearchData } = useSelector(
     (state: RootState) => state.searchData
-  )
-
-  const { regions } = useSelector(
-    (state: RootState) => state.dropdown
   )
 
   useEffect(() => {
@@ -171,58 +167,58 @@ const SuspectPeopleDetected = () => {
     }))
   ]
 
-  const handleGeneratePdf = async () => {
-    setIsLoading(true)
-    const pdfContent: DetactSpecialPlate = {
-      logo_text: "Plate Recognition",
-      title_header: "รายการทะเบียนรถที่ตรวจอ่านได้",
-      title_check_point: "ด่าน : ปิงโค้ง",
-      table_columns: {
-        plate_header: "ทะเบียน",
-        image_header: "รูป",
-        checkPoint_header: "จุดตรวจ",
-        vehicleType_header: "ประเภทรถ",
-        vehicleDetail_header: "รายละเอียดรถยนต์",
-        accuracy_header: "ความแม่นยำ (%)",
-        registrationGroup_header: "กลุ่มทะเบียน",
-        dateTime_header: "วัน-เวลา ที่บันทึก",
-        lane_header: "เลน",
-      },
-      table_rows: specialSuspectPeopleSearchDataList.map((data) => ({
-        plate_data: data.plate,
-        image_data: {
-          plate_image: data.plate_image,
-          vehicle_image: data.vehicle_image,
-        },
-        checkPoint_data: data.site_name,
-        vehicleType_data: data.vehicle_body_type,
-        vehicleDetail_data: [data.vehicle_make_model, data.vehicle_make, data.vehicle_color],
-        accuracy_data: data.plate_confidence,
-        registrationGroup_data: data.registration_type,
-        dateTime_data: format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)"),
-        lane_data: data.lane,
-      })),
-    }
+  // const handleGeneratePdf = async () => {
+  //   setIsLoading(true)
+  //   const pdfContent: DetactSpecialPlate = {
+  //     logo_text: "Plate Recognition",
+  //     title_header: "รายการทะเบียนรถที่ตรวจอ่านได้",
+  //     title_check_point: "ด่าน : ปิงโค้ง",
+  //     table_columns: {
+  //       plate_header: "ทะเบียน",
+  //       image_header: "รูป",
+  //       checkPoint_header: "จุดตรวจ",
+  //       vehicleType_header: "ประเภทรถ",
+  //       vehicleDetail_header: "รายละเอียดรถยนต์",
+  //       accuracy_header: "ความแม่นยำ (%)",
+  //       registrationGroup_header: "กลุ่มทะเบียน",
+  //       dateTime_header: "วัน-เวลา ที่บันทึก",
+  //       lane_header: "เลน",
+  //     },
+  //     table_rows: specialSuspectPeopleSearchDataList.map((data) => ({
+  //       plate_data: data.plate,
+  //       image_data: {
+  //         plate_image: data.plate_image,
+  //         vehicle_image: data.vehicle_image,
+  //       },
+  //       checkPoint_data: data.site_name,
+  //       vehicleType_data: data.vehicle_body_type,
+  //       vehicleDetail_data: [data.vehicle_make_model, data.vehicle_make, data.vehicle_color],
+  //       accuracy_data: data.plate_confidence,
+  //       registrationGroup_data: data.registration_type,
+  //       dateTime_data: format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)"),
+  //       lane_data: data.lane,
+  //     })),
+  //   }
 
-    try {
-      const result = await dispatch(dowloadPdfSpecialPlateThunk(pdfContent)).unwrap()
+  //   try {
+  //     const result = await dispatch(dowloadPdfSpecialPlateThunk(pdfContent)).unwrap()
       
-      if (result && result.data) {
-        if (result.data.pdfUrl) {
-          const fullUrl = `${FILE_URL}${result.data.pdfUrl}`
-          window.open(fullUrl, '_blank')
-          return
-        }
-      }
-    } 
-    catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      PopupMessage("การดาวน์โหลดล้มเหลว", errorMessage, 'error')
-    }
-    finally {
-      setIsLoading(false)
-    }
-  }
+  //     if (result && result.data) {
+  //       if (result.data.pdfUrl) {
+  //         const fullUrl = `${FILE_URL}${result.data.pdfUrl}`
+  //         window.open(fullUrl, '_blank')
+  //         return
+  //       }
+  //     }
+  //   } 
+  //   catch (error: unknown) {
+  //     const errorMessage = error instanceof Error ? error.message : String(error)
+  //     PopupMessage("การดาวน์โหลดล้มเหลว", errorMessage, 'error')
+  //   }
+  //   finally {
+  //     setIsLoading(false)
+  //   }
+  // }
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
     event.preventDefault()

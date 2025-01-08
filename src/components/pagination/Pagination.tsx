@@ -83,7 +83,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           <SelectBox
             id="select-page"
             label=""
-            value={page}
+            value={totalPages > 0 ? page : ''}
             onChange={(event) => setPage(event.target.value)}
             options={Array.from({length: totalPages}).map((_, i) => ({value: i + 1, label: (i + 1).toString()}))}
           />
