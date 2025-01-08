@@ -8,14 +8,12 @@ export const fetchClient = async <T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> => {
-  const { queryParams } = options;
-  // const { queryParams, ...fetchOptions } = options;
-  // const token = localStorage.getItem('token');
+  const { queryParams, ...fetchOptions } = options;
+  const token = localStorage.getItem('token');
 
   const headers: HeadersInit = {
     ...(options.isFormData ? {} : { 'Content-Type': 'application/json' }),
-    // ...(token && !options.skipAuth ? { Authorization: `Bearer ${token}` } : {}),
-    ...({ Authorization: `Bearer eb1b94cfd6971df4a73991580e1664cfbd8d830c5bd784e92ead3d7de9a9c874` }),
+    ...(token && !options.skipAuth ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
