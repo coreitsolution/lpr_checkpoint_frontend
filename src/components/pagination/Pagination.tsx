@@ -4,7 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select'
 
 // Component
-import SelectBox from "../../components/select-box/SelectBox"
+import TextBox from '../../components/text-box/TextBox'
 
 interface PaginationProps {
   page: number;
@@ -13,7 +13,10 @@ interface PaginationProps {
   rowsPerPageOptions: number[];
   handleRowsPerPageChange: (event: SelectChangeEvent) => void;
   totalPages: number;
-  setPage: (value: number) => void;
+  pageInput: string;
+  handlePageInputKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  handlePageInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  textFieldFontSize?: string
 }
 
 const PaginationComponent: React.FC<PaginationProps> = ({
@@ -23,7 +26,10 @@ const PaginationComponent: React.FC<PaginationProps> = ({
   rowsPerPageOptions,
   handleRowsPerPageChange,
   totalPages,
-  setPage,
+  pageInput,
+  handlePageInputKeyDown,
+  handlePageInputChange,
+  textFieldFontSize,
 }) => {
   return (
     <div className='flex items-center justify-between w-full'>
@@ -80,12 +86,19 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           <p className="text-white text-[16px]">
             หน้า
           </p>
-          <SelectBox
-            id="select-page"
+          <TextBox
+            id="input-page"
             label=""
-            value={totalPages > 0 ? page : ''}
-            onChange={(event) => setPage(event.target.value)}
-            options={Array.from({length: totalPages}).map((_, i) => ({value: i + 1, label: (i + 1).toString()}))}
+            placeHolder=""
+            className="w-[200px]"
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+            textFieldFontSize={textFieldFontSize}
+            value={pageInput}
+            onKeyDown={handlePageInputKeyDown}
+            onChange={handlePageInputChange}
           />
         </div>
       </div>

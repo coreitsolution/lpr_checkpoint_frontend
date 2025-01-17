@@ -3,14 +3,14 @@ import { motion } from "framer-motion"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { CSVLink } from "react-csv"
-import { SelectChangeEvent } from '@mui/material/Select'
+// import { SelectChangeEvent } from '@mui/material/Select'
 
 // Context
 import { useHamburger } from "../../context/HamburgerContext"
 
 // Component
 import Loading from "../../components/loading/Loading"
-import PaginationComponent from "../../components/pagination/Pagination"
+// import PaginationComponent from "../../components/pagination/Pagination"
 
 // Modules
 import SearchFilter from "./search-filter/SearchFilter"
@@ -20,11 +20,11 @@ import { fetchSpecialSuspectPeopleSearchDataThunk } from "../../features/search-
 
 // Types
 import { FilterSpecialSuspectPeople } from "../../features/api/types"
-import { SpecialPlateSearchData } from "../../features/search-data/SearchDataTypes"
+import { SpecialSuspectPeopleSearchData } from "../../features/search-data/SearchDataTypes"
 
 // Utils
 import { PopupMessage } from "../../utils/popupMessage"
-import { capitalizeFirstLetter } from "../../utils/comonFunction"
+import { reformatString } from "../../utils/comonFunction"
 
 // Config
 import { FILE_URL } from '../../config/apiConfig'
@@ -36,11 +36,11 @@ import { SEPECIAL_SUSPECT_PEOPLE_FILE_NAME } from "../../constants/filename"
 const SuspectPeopleDetected = () => {
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(100)
-  const [specialSuspectPeopleSearchDataList, setSpecialSuspectPeopleSearchDataList] = useState<SpecialPlateSearchData[]>([])
-  const [rowsPerPageOptions] = useState([20, 50, 100])
+  // const [page, setPage] = useState(1)
+  // const [totalPages, setTotalPages] = useState(0)
+  // const [rowsPerPage, setRowsPerPage] = useState(100)
+  const [specialSuspectPeopleSearchDataList, setSpecialSuspectPeopleSearchDataList] = useState<SpecialSuspectPeopleSearchData[]>([])
+  // const [rowsPerPageOptions] = useState([20, 50, 100])
   const dispatch: AppDispatch = useDispatch()
   const { specialSuspectPeopleSearchData } = useSelector(
     (state: RootState) => state.searchData
@@ -61,7 +61,7 @@ const SuspectPeopleDetected = () => {
       faceConfidence,
       selectedStartDate,
       selectedEndDate,
-      checkpoint,
+      selectedCheckpoint,
       selectedRegistrationType,
     } = filterData
 
@@ -72,7 +72,7 @@ const SuspectPeopleDetected = () => {
       !faceConfidence &&
       !selectedStartDate &&
       !selectedEndDate &&
-      !checkpoint &&
+      !selectedCheckpoint &&
       !selectedRegistrationType
     ) {
       PopupMessage("", "กรุณาใส่เงื่อนไขการค้นหาอย่างน้อย 1 อย่าง", "warning")
@@ -101,8 +101,8 @@ const SuspectPeopleDetected = () => {
       if (filterData.faceConfidence) {
         filter.push(`faceConfidence:${filterData.faceConfidence}`)
       }
-      if (filterData.checkpoint) {
-        filter.push(`checkpoint:${filterData.checkpoint}`)
+      if (filterData.selectedCheckpoint) {
+        filter.push(`checkpoint:${filterData.selectedCheckpoint}`)
       }
       if (filterData.selectedStartDate) {
         filter.push(`epoch_start:${filterData.selectedStartDate.toISOString()}`)
@@ -113,16 +113,18 @@ const SuspectPeopleDetected = () => {
       const query: Record<string, string> = {
         "filter": filter.join(","),
         "page": "1",
-        "limit": rowsPerPage.toString(),
+        // "limit": rowsPerPage.toString(),
       }
       const response = await dispatch(fetchSpecialSuspectPeopleSearchDataThunk(query)).unwrap()
       
       if (response && response.data) {
+        // setPage(1)
+        // setPageInput(1)
         setSpecialSuspectPeopleSearchDataList(response.data)
         setIsLoading(false)
-        if (response.countAll) {
-          setTotalPages(Math.ceil(response.countAll / rowsPerPage))
-        }
+        // if (response.countAll) {
+        //   setTotalPages(Math.ceil(response.countAll / rowsPerPage))
+        // }
       }
     } 
     catch (error) {
@@ -158,9 +160,9 @@ const SuspectPeopleDetected = () => {
       title: data.plate,
       firstname: data.region_info.name_th,
       lastname: data.vehicle_body_type,
-      checkpoint: capitalizeFirstLetter(data.vehicle_make_model),
-      behavior: capitalizeFirstLetter(data.vehicle_make),
-      confidence: `${data.plate_confidence}`,
+      checkpoint: reformatString(data.vehicle_make_model),
+      behavior: reformatString(data.vehicle_make),
+      confidence: `${parseInt(data.plate_confidence.replace("%", "")).toFixed(2)}`,
       registration_type: "Blacklist",
       date: format(new Date(data.epoch_start), "dd/MM/yyyy"),
       time: format(new Date(data.epoch_start), "HH:mm:ss"),
@@ -220,39 +222,39 @@ const SuspectPeopleDetected = () => {
   //   }
   // }
 
-  const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
-    event.preventDefault()
-    setIsLoading(true)
-    setPage(value)
-    const query: Record<string, string> = {
-      "page": value.toString(),
-      "limit": rowsPerPage.toString(),
-    }
-    const response = await dispatch(fetchSpecialSuspectPeopleSearchDataThunk(query)).unwrap()
+  // const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
+  //   event.preventDefault()
+  //   setIsLoading(true)
+  //   setPage(value)
+  //   const query: Record<string, string> = {
+  //     "page": value.toString(),
+  //     "limit": rowsPerPage.toString(),
+  //   }
+  //   const response = await dispatch(fetchSpecialSuspectPeopleSearchDataThunk(query)).unwrap()
     
-    if (response && response.data) {
-      setSpecialSuspectPeopleSearchDataList(response.data)
-      setIsLoading(false)
-    }
-  }
+  //   if (response && response.data) {
+  //     setSpecialSuspectPeopleSearchDataList(response.data)
+  //     setIsLoading(false)
+  //   }
+  // }
 
-  const handleRowsPerPageChange = async (event: SelectChangeEvent) => {
-    setIsLoading(true)
-    setRowsPerPage(parseInt(event.target.value))
-    const query: Record<string, string> = {
-      "page": page.toString(),
-      "limit": event.target.value,
-    }
-    const response = await dispatch(fetchSpecialSuspectPeopleSearchDataThunk(query)).unwrap()
+  // const handleRowsPerPageChange = async (event: SelectChangeEvent) => {
+  //   setIsLoading(true)
+  //   setRowsPerPage(parseInt(event.target.value))
+  //   const query: Record<string, string> = {
+  //     "page": page.toString(),
+  //     "limit": event.target.value,
+  //   }
+  //   const response = await dispatch(fetchSpecialSuspectPeopleSearchDataThunk(query)).unwrap()
     
-    if (response && response.data) {
-      setSpecialSuspectPeopleSearchDataList(response.data)
-      setIsLoading(false)
-      if (response.countAll) {
-        setTotalPages(Math.ceil(response.countAll / Number(event.target.value)))
-      }
-    }
-  }
+  //   if (response && response.data) {
+  //     setSpecialSuspectPeopleSearchDataList(response.data)
+  //     setIsLoading(false)
+  //     if (response.countAll) {
+  //       setTotalPages(Math.ceil(response.countAll / Number(event.target.value)))
+  //     }
+  //   }
+  // }
 
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
@@ -311,6 +313,7 @@ const SuspectPeopleDetected = () => {
                       <th className="text-center text-white w-[12%]">จุดตรวจ</th>
                       <th className="text-center text-white w-[10%]">กลุ่มบุคคล</th>
                       <th className="text-center text-white w-[15%]">พฤติการ</th>
+                      <th className="text-center text-white w-[8%]">ความแม่นยำ (%)</th>
                       <th className="text-center text-white w-[10%]">วัน-เวลาที่บันทึก</th>
                       </tr>
                     </thead>
@@ -334,7 +337,8 @@ const SuspectPeopleDetected = () => {
                           <td className="pl-5 text-start text-white bg-tuna">{data.vehicle_body_type}</td>
                           <td className="text-center text-white bg-celtic">{data.vehicle_make_model}</td>
                           <td className="text-center text-white bg-tuna">{data.vehicle_make}</td>
-                          <td className="text-center text-white bg-celtic">{format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)")}</td>
+                          <td className="pr-5 text-end text-white bg-celtic">{parseInt(data.plate_confidence.replace("%", "")).toFixed(2)}</td>
+                          <td className="text-center text-white bg-tuna">{format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -343,15 +347,14 @@ const SuspectPeopleDetected = () => {
               </div>
             </div>
             <div className={`${specialSuspectPeopleSearchDataList.length > 0 ? "flex" : "hidden"} items-center justify-between bg-[var(--background-color)] py-3 px-1 sticky bottom-0`}>
-              <PaginationComponent 
+              {/* <PaginationComponent 
                 page={page} 
                 onChange={handlePageChange}
                 rowsPerPage={rowsPerPage}
                 rowsPerPageOptions={rowsPerPageOptions}
                 handleRowsPerPageChange={handleRowsPerPageChange}
                 totalPages={totalPages}
-                setPage={setPage}
-              />
+              /> */}
             </div>
           </div>
         </div>

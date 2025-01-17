@@ -73,7 +73,7 @@ export interface MapPosition {
 }
 
 export interface DirectionDetail {
-  color: string;
+  color?: string;
   direction: string;
   dateTime: string;
 }
@@ -170,21 +170,26 @@ export interface FilterSpecialPeople {
   selectedStatus: number | string
 }
 
-export interface FilterSpecialPlates {
-  letterCategory: string
-  carRegistration: string
-  selectedProvince: string
-  selectedCarType: string
-  selectedCarBrand: string
-  selectedCarModel: string
-  selectedCarColor: string
-  selectedCarLane: string
-  plateConfidence: number
-  selectedStartDate: Date | null
-  selectedEndDate: Date | null
-  selectedCheckpoint: string
-  selectedRegistrationType: string
+export interface FilterSpecialPlatesBody {
+  plateGroup: string
+  plateNumber: string
+  regionCode: string
+  vehicleBodyTypeTH: string
+  vehicleMake: string
+  vehicleModel: string
+  vehicleColor: string
+  startDate: string
+  endDate: string
+  camIdList: string[]
+  plateTypeId: number
+  page: Number,
+  limit: Number,
+  orderBy?: string,
+  reverseOrder?: boolean,
+  includesVehicleInfo?: Number,
 }
+
+export type FilterSpecialPlates = Omit<FilterSpecialPlatesBody, "page" | "limit">
 
 export interface FilterSpecialSuspectPeople {
   namePrefix: number
@@ -193,7 +198,7 @@ export interface FilterSpecialSuspectPeople {
   faceConfidence: number
   selectedStartDate: Date | null
   selectedEndDate: Date | null
-  checkpoint: string
+  selectedCheckpoint: string[]
   selectedRegistrationType: string
 }
 
@@ -232,4 +237,19 @@ export interface DetactSpecialPlateRows {
 export interface ImagesData {
   vehicle_image: string
   plate_image: string
+}
+
+export interface DocumentElementWithFullscreen extends HTMLElement {
+  msRequestFullscreen?: () => Promise<void>
+  mozRequestFullScreen?: () => Promise<void>
+  webkitRequestFullscreen?: () => Promise<void>
+}
+
+export interface DocumentWithFullscreen extends Document {
+  mozFullScreenElement?: Element
+  msFullscreenElement?: Element
+  webkitFullscreenElement?: Element
+  msExitFullscreen?: () => Promise<void>
+  mozCancelFullScreen?: () => Promise<void>
+  webkitExitFullscreen?: () => Promise<void>
 }

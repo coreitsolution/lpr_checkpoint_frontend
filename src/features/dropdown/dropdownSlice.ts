@@ -12,6 +12,11 @@ import {
   fetchPositions,
   fetchRegions,
   fetchStreamEncodes,
+  fetchVehicleBodyTypes,
+  fetchVehicleBodyTypesTh,
+  fetchVehicleColors,
+  fetchVehicleMakes,
+  fetchVehicleModels,
 } from "./dropdownAPI";
 import { 
   Provinces,
@@ -25,6 +30,11 @@ import {
   CommonTitles,
   Regions,
   StreamEncodes,
+  VehicleBodyTypes,
+  VehicleBodyTypesTh,
+  VehicleColors,
+  VehicleMakes,
+  VehicleModels,
 } from "./dropdownTypes";
 
 interface DropdownState {
@@ -39,6 +49,11 @@ interface DropdownState {
   positions: OfficerPositions | null;
   regions: Regions | null;
   streamEncodes: StreamEncodes | null;
+  vehicleBodyTypes: VehicleBodyTypes | null;
+  vehicleBodyTypesTh: VehicleBodyTypesTh | null;
+  vehicleColors: VehicleColors | null;
+  vehicleMakes: VehicleMakes | null;
+  vehicleModels: VehicleModels | null;
   status: Status;
   error: string | null;
 }
@@ -55,6 +70,11 @@ const initialState: DropdownState = {
   positions: null,
   regions: null,
   streamEncodes: null,
+  vehicleBodyTypes: null,
+  vehicleBodyTypesTh: null,
+  vehicleColors: null,
+  vehicleMakes: null,
+  vehicleModels: null,
   status: Status.IDLE,
   error: null,
 };
@@ -147,6 +167,45 @@ export const fetchStreamEncodesThunk = createAsyncThunk(
   }
 );
 
+export const fetchVehicleBodyTypesThunk = createAsyncThunk(
+  "vehicleBodyTypes/fetchVehicleBodyTypes",
+  async (param?: Record<string, string>) => {
+    const response = await fetchVehicleBodyTypes(param);
+    return response;
+  }
+);
+
+export const fetchVehicleBodyTypesThThunk = createAsyncThunk(
+  "vehicleBodyTypes/fetchVehicleBodyTypesTh",
+  async (param?: Record<string, string>) => {
+    const response = await fetchVehicleBodyTypesTh(param);
+    return response;
+  }
+);
+
+export const fetchVehicleColorsThunk = createAsyncThunk(
+  "vehicleColors/fetchVehicleColors",
+  async (param?: Record<string, string>) => {
+    const response = await fetchVehicleColors(param);
+    return response;
+  }
+);
+
+export const fetchVehicleMakesThunk = createAsyncThunk(
+  "vehicleMakes/fetchVehicleMakes",
+  async (param?: Record<string, string>) => {
+    const response = await fetchVehicleMakes(param);
+    return response;
+  }
+);
+
+export const fetchVehicleModelsThunk = createAsyncThunk(
+  "vehicleModels/fetchVehicleModels",
+  async (param?: Record<string, string>) => {
+    const response = await fetchVehicleModels(param);
+    return response;
+  }
+);
 
 const dropdownSlice = createSlice({
   name: "dropdown",
@@ -305,6 +364,76 @@ const dropdownSlice = createSlice({
       .addCase(fetchStreamEncodesThunk.rejected, (state, action) => {
         state.status = Status.FAILED;
         state.error = action.error.message || "Failed to fetch stream encodes";
+      });
+
+    builder
+      .addCase(fetchVehicleBodyTypesThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchVehicleBodyTypesThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.vehicleBodyTypes = action.payload;
+      })
+      .addCase(fetchVehicleBodyTypesThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch vehicle body types";
+      });
+
+    builder
+      .addCase(fetchVehicleBodyTypesThThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchVehicleBodyTypesThThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.vehicleBodyTypesTh = action.payload;
+      })
+      .addCase(fetchVehicleBodyTypesThThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch vehicle body types only Thai";
+      });
+
+    builder
+      .addCase(fetchVehicleColorsThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchVehicleColorsThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.vehicleColors = action.payload;
+      })
+      .addCase(fetchVehicleColorsThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch vehicle colors";
+      });
+
+    builder
+      .addCase(fetchVehicleMakesThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchVehicleMakesThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.vehicleMakes = action.payload;
+      })
+      .addCase(fetchVehicleMakesThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch vehicle makes";
+      });
+
+    builder
+      .addCase(fetchVehicleModelsThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchVehicleModelsThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.vehicleModels = action.payload;
+      })
+      .addCase(fetchVehicleModelsThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch vehicle models";
       });
   },
 });

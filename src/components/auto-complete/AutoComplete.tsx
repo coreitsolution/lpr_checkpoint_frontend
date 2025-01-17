@@ -2,7 +2,7 @@ import React from "react";
 import { TextField, Autocomplete } from "@mui/material";
 import { Typography } from '@mui/material';
 
-type OptionType = {
+export type OptionType = {
   value: any;
   label: string;
 };
@@ -17,6 +17,7 @@ type AutoCompleteProps = {
   labelFontSize?: string;
   sx?: object;
   disabled?: boolean;
+  title?: string;
 };
 
 const AutoComplete: React.FC<AutoCompleteProps> = ({
@@ -29,6 +30,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = ({
   labelFontSize = "15px",
   sx,
   disabled,
+  title,
   ...props
 }) => {
   return (
@@ -71,6 +73,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = ({
           />
         )}
         disabled={disabled ? disabled : false}
+        title={ title ? title : ""}
         {...props}
       />
     </div>

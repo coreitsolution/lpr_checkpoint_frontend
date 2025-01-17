@@ -12,7 +12,7 @@ import fileUploadReducer from "../features/file-upload/fileUploadSlice"
 import telegramReducer from "../features/telegram/TelegramSlice";
 import searchDataReducer from "../features/search-data/SearchDataSlice";
 import suspectPeopleDataReducer from "../features/suspect-people/SuspectPeopleDataSlice";
-import settingsReducer from "@/features/settings/settingsSlice";
+import settingsReducer from "../features/settings/settingsSlice";
 
 export const store = configureStore({
   reducer: {

@@ -5,6 +5,7 @@ import {
 export const mockSettings: SettingDetail[] = [
   {
     id: 1,
+    key: "live_view_count",
     name: "Live view",
     value: "3",
     description: "Live view",
@@ -13,8 +14,9 @@ export const mockSettings: SettingDetail[] = [
   },
   {
     id: 2,
+    key: "checkpoint_name",
     name: "Checkpoint name",
-    value: "Officw",
+    value: "Office",
     description: "Checkpoint name",
     created_at: "2024-12-17T14:35:00Z",
     updated_at: "2024-12-17T14:35:00Z",

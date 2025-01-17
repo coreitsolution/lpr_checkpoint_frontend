@@ -62,6 +62,9 @@ export default {
 				pictonBlue3: '#629BD2',
 				danube2: '#508ABC',
 				lightSteelBlue2: '#98B8DF',
+				tangerineYellow: "#FDCC0A",
+				darkRed: "#9F0C0C",
+				charade: "#384043",
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				card: {

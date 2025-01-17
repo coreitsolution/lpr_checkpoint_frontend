@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
 import ManageExtraRegistration from "./manage-extra-registration/ManageExtraRegistration"
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { FILE_URL } from '../../config/apiConfig'
 import * as XLSX from "xlsx"
-import { SelectChangeEvent } from '@mui/material/Select'
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
+import {
+  SelectChangeEvent,
+  Dialog,
+  DialogTitle
+} from "@mui/material"
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
@@ -51,7 +54,6 @@ function SpecialRegistration() {
 
   const [isAddRegistationOpen, setIsAddRegistationOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [originalData, setOriginalData] = useState<SpecialPlatesRespondsDetail[]>([])
   const [specialRegistrationsList, setSpecialRegistrationsList] = useState<SpecialPlatesRespondsDetail[]>([])
   const [selectedRow, setSelectedRow] = useState<SpecialPlatesRespondsDetail | null>(null)
   const { isOpen } = useHamburger()
@@ -59,6 +61,7 @@ function SpecialRegistration() {
   const [fileImportError, setFileImportError] = useState<string>("")
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [page, setPage] = useState(1)
+  const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(100)
   const [rowsPerPageOptions] = useState([20, 50, 100])
@@ -126,7 +129,7 @@ function SpecialRegistration() {
     }
   }
 
-  const setFilterData = (filterData: FilterSpecialRegistration) => {
+  const setFilterData = async (filterData: FilterSpecialRegistration) => {
     setIsLoading(true)
     const {
       letterCategory,
@@ -145,32 +148,37 @@ function SpecialRegistration() {
       !agency &&
       (selectedStatus === undefined || selectedStatus === 2)
     ) {
-      setSpecialRegistrationsList(originalData)
-      setIsLoading(false)
+      await fetchSpecialPlateData('1', rowsPerPage.toString())
       return
     }
   
-    const filteredData = originalData.filter((row) => {
-      const isProvinceMatch = !selectedProvince || row.province_id === selectedProvince
-      const isStatusMatch =
-      selectedStatus === undefined || selectedStatus === 2
-        ? true
-        : row.active === selectedStatus
-      const isAgencyMatch = !agency || row.case_owner_agency.includes(agency)
-      const isPlateClassMatch = !selectedRegistrationType || row.plate_class_id === selectedRegistrationType
-      const isLetterCategoryMatch = !letterCategory || row.plate_group.includes(letterCategory)
-      const isCarRegistrationMatch = !carRegistration || row.plate_number.includes(carRegistration)
-  
-      return isProvinceMatch && isStatusMatch && isAgencyMatch && isPlateClassMatch && isLetterCategoryMatch && isCarRegistrationMatch
-    })
-  
-    setSpecialRegistrationsList(filteredData)
-    setIsLoading(false)
+    let filter = []
+
+    if (selectedProvince) {
+      filter.push(`province_id:${selectedProvince}`)
+    }
+    if (selectedStatus !== undefined && selectedStatus !== 2) {
+      filter.push(`active:${selectedStatus}`)
+    }
+    if (agency) {
+      filter.push(`case_owner_agency:${agency}`)
+    }
+    if (selectedRegistrationType) {
+      filter.push(`plate_class_id:${selectedRegistrationType}`)
+    }
+    if (letterCategory) {
+      filter.push(`plate_group:${letterCategory}`)
+    }
+    if (carRegistration) {
+      filter.push(`plate_number:${carRegistration}`)
+    }
+    await fetchSpecialPlateData('1', rowsPerPage.toString(), filter)
   }
 
-  const fetchSpecialPlateData = useCallback(async (page: string, limit: string) => {
+  const fetchSpecialPlateData = useCallback(async (page: string, limit: string, filter?:string[]) => {
+    const allFilter = filter ? ["deleted:0", ...filter] : ["deleted:0"]
     const query: Record<string, string> = {
-      "filter": "deleted:0",
+      "filter": allFilter.join(","),
       "page": page,
       "limit": limit,
     }
@@ -196,15 +204,14 @@ function SpecialRegistration() {
   useEffect(() => {
     if (specialPlatesData && specialPlatesData.data) {
       setSpecialRegistrationsList(specialPlatesData.data)
-      setOriginalData(specialPlatesData.data)
       if (specialPlatesData.countAll) {
         setTotalPages(Math.ceil(specialPlatesData.countAll / rowsPerPage))
       }
     }
     else {
       setSpecialRegistrationsList([])
-      setOriginalData([])
     }
+    setIsLoading(false)
   }, [specialPlatesData])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -407,6 +414,33 @@ function SpecialRegistration() {
     await fetchSpecialPlateData(page.toString(), event.target.value)
   }
 
+  const handlePageInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target.value
+    const cleaned = input.replace(/\D/g, '')
+
+    if (cleaned) {
+      const numberInput = Number(cleaned);
+      if (numberInput > 0 && numberInput <= totalPages) {
+        setPageInput(numberInput)
+      }
+    }
+    else if (cleaned === "") {
+      setPageInput(1)
+    }
+    return cleaned
+  }
+
+  const handlePageInputKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+  
+      setIsLoading(true)
+      setPage(pageInput)
+  
+      await fetchSpecialPlateData(pageInput.toString(), rowsPerPage.toString())
+    }
+  }
+
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
@@ -546,7 +580,10 @@ function SpecialRegistration() {
               rowsPerPageOptions={rowsPerPageOptions}
               handleRowsPerPageChange={handleRowsPerPageChange}
               totalPages={totalPages}
-              setPage={setPage}
+              textFieldFontSize="15px"
+              pageInput={pageInput.toString()}
+              handlePageInputKeyDown={handlePageInputKeyDown}
+              handlePageInputChange={handlePageInputChange}
             />
           </div>
         </div>
@@ -555,18 +592,18 @@ function SpecialRegistration() {
             setFilterData={setFilterData}
           />
         </div>
-        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="relative z-50">
-          <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
-            <DialogPanel className="space-y-4 border bg-[var(--background-color)] p-5 max-w-[80%] bg-black text-white w-[80vw]">
-              <div className="flex justify-between">
-                <DialogTitle className="text-[28px]">จัดการทะเบียนพิเศษ</DialogTitle>
+        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="absolute z-30">
+          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] bg-black text-white w-[80vw]">
+              <DialogTitle className="text-[28px]">จัดการทะเบียนพิเศษ</DialogTitle>
+              <div className="px-5 pb-5">
+                <ManageExtraRegistration 
+                  closeDialog={() => setIsAddRegistationOpen(false)} 
+                  selectedRow={selectedRow}
+                  isEditMode={isEditMode}
+                />
               </div>
-              <ManageExtraRegistration 
-                closeDialog={() => setIsAddRegistationOpen(false)} 
-                selectedRow={selectedRow}
-                isEditMode={isEditMode}
-              />
-            </DialogPanel>
+            </div>
           </div>
         </Dialog>
       </div>

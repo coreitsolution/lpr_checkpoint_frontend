@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { CSVLink } from "react-csv"
-import { SelectChangeEvent } from '@mui/material/Select'
+import { format } from "date-fns"
+import {
+  Dialog,
+  SelectChangeEvent
+} from "@mui/material"
 
 // Context
 import { useHamburger } from "../../context/HamburgerContext"
@@ -11,24 +15,23 @@ import { useHamburger } from "../../context/HamburgerContext"
 // Component
 import Loading from "../../components/loading/Loading"
 import PaginationComponent from "../../components/pagination/Pagination"
+import ImagesCarousel from "../../components/images-carousel/ImagesCarousel"
 
 // Modules
 import SearchFilter from "./search-filter/SearchFilter"
 
 // API
-import { fetchSpecialPlateSearchDataThunk, dowloadPdfSpecialPlateThunk } from "../../features/search-data/SearchDataSlice"
+import { postSpecialPlateSearchDataThunk } from "../../features/search-data/SearchDataSlice"
 
 // Types
-import { FilterSpecialPlates, DetactSpecialPlate } from "../../features/api/types"
-import { SpecialPlateSearchData } from "../../features/search-data/SearchDataTypes"
+import { FilterSpecialPlates, FilterSpecialPlatesBody } from "../../features/api/types"
+import { LastRecognitionData } from "../../features/live-view-real-time/liveViewRealTimeTypes"
 
 // Utils
-import { PopupMessage } from "../../utils/popupMessage"
-import { capitalizeFirstLetter } from "../../utils/comonFunction"
+import { reformatString } from "../../utils/comonFunction"
 
 // Config
 import { FILE_URL } from '../../config/apiConfig'
-import { format } from "date-fns"
 
 // Constant
 import { SEPECIAL_PLATE_FILE_NAME } from "../../constants/filename"
@@ -36,18 +39,20 @@ import { SEPECIAL_PLATE_FILE_NAME } from "../../constants/filename"
 const SpecialRegistrationDetected = () => {
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
+  const [isImageCardShow, setIsImageCardShow] = useState(false)
   const [page, setPage] = useState(1)
+  const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(100)
-  const [specialPlateSearchDataList, setSpecialPlateSearchDataList] = useState<SpecialPlateSearchData[]>([])
-  const [rowsPerPageOptions] = useState([20, 50, 100])
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [specialPlateSearchDataList, setSpecialPlateSearchDataList] = useState<LastRecognitionData[]>([])
+  const [rowsPerPageOptions] = useState([10, 20, 50, 100])
+  const [filterSpecialPlatesData, setFilterSpecialPlatesData] = useState<FilterSpecialPlates | null>(null)
+  const tdRefs = useRef<(HTMLTableCellElement | null)[]>([])
+  const [carouselData, setCarouselData] = useState<{plate: string, vehicleImage: string, plateImage: string} | null>(null)
+  
   const dispatch: AppDispatch = useDispatch()
   const { specialPlateSearchData } = useSelector(
     (state: RootState) => state.searchData
-  )
-
-  const { regions } = useSelector(
-    (state: RootState) => state.dropdown
   )
 
   useEffect(() => {
@@ -58,97 +63,37 @@ const SpecialRegistrationDetected = () => {
 
   const setFilterData = async (filterData: FilterSpecialPlates) => {
     setIsLoading(true)
-    const {
-      letterCategory,
-      carRegistration,
-      selectedProvince,
-      selectedCarType,
-      selectedCarBrand,
-      selectedCarModel,
-      selectedCarColor,
-      selectedCarLane,
-      plateConfidence,
-      selectedStartDate,
-      selectedEndDate,
-      selectedCheckpoint,
-      selectedRegistrationType,
-    } = filterData
+    await fetchSpecialPlateData(filterData)
+  }
 
-    if (
-      !letterCategory &&
-      !carRegistration &&
-      !selectedProvince &&
-      !selectedCarType &&
-      !selectedCarBrand &&
-      !selectedCarModel &&
-      !selectedCarColor &&
-      !selectedCarLane &&
-      !plateConfidence &&
-      !selectedStartDate &&
-      !selectedEndDate &&
-      !selectedCheckpoint &&
-      !selectedRegistrationType
-    ) {
-      PopupMessage("", "กรุณาใส่เงื่อนไขการค้นหาอย่างน้อย 1 อย่าง", "warning")
-      setIsLoading(false)
-      return
+  const postSpecialPlateSearchData = async (data: FilterSpecialPlates, page: number, limit: number,) => {
+    const update: FilterSpecialPlatesBody = {
+      ...data,
+      page: page,
+      limit: limit,
+      orderBy: "id",
+      reverseOrder: true,
+      includesVehicleInfo: 1,
     }
 
-    await fetchSpecialPlateData(filterData)
+    const response = await dispatch(postSpecialPlateSearchDataThunk(update)).unwrap()
+
+    return response
   }
 
   const fetchSpecialPlateData = async (filterData: FilterSpecialPlates) => {
     try {
-      let filter: string[] = []
-      if (filterData.letterCategory || filterData.carRegistration) {
-        filter.push(`plate:${filterData.letterCategory}${filterData.carRegistration}`)
-      }
-      if (filterData.selectedProvince) {
-        const regionName = regions?.data?.find((region) => region.name_th === filterData.selectedProvince)?.code
-        filter.push(`region:${regionName}`)
-      }
-      if (filterData.selectedRegistrationType && filterData.selectedRegistrationType !== "all") {
-        filter.push(`registration_type:${filterData.selectedRegistrationType}`)
-      }
-      if (filterData.selectedCarType) {
-        filter.push(`vehicle_body_type:${filterData.selectedCarType}`)
-      }
-      if (filterData.selectedCarBrand) {
-        filter.push(`vehicle_make:${filterData.selectedCarBrand}`)
-      }
-      if (filterData.selectedCarModel) {
-        filter.push(`vehicle_make_model:${filterData.selectedCarModel}`)
-      }
-      if (filterData.selectedCarColor) {
-        filter.push(`vehicle_color:${filterData.selectedCarColor}`)
-      }
-      if (filterData.selectedCarLane) {
-        filter.push(`lane:${filterData.selectedCarLane}`)
-      }
-      if (filterData.plateConfidence) {
-        filter.push(`plate_confidence:${filterData.plateConfidence}`)
-      }
-      if (filterData.selectedCheckpoint) {
-        filter.push(`checkpoint:${filterData.selectedCheckpoint}`)
-      }
-      if (filterData.selectedStartDate) {
-        filter.push(`epoch_start:${filterData.selectedStartDate.toISOString()}`)
-      }
-      if (filterData.selectedEndDate) {
-        filter.push(`epoch_end:${filterData.selectedEndDate.toISOString()}`)
-      }
-      const query: Record<string, string> = {
-        "filter": filter.join(","),
-        "page": "1",
-        "limit": rowsPerPage.toString(),
-      }
-      const response = await dispatch(fetchSpecialPlateSearchDataThunk(query)).unwrap()
+      setFilterSpecialPlatesData(filterData)
+
+      const response = await postSpecialPlateSearchData(filterData, 1, rowsPerPage)
       
       if (response && response.data) {
         setSpecialPlateSearchDataList(response.data)
+        setPage(1)
+        setPageInput(1)
         setIsLoading(false)
-        if (response.countAll) {
-          setTotalPages(Math.ceil(response.countAll / rowsPerPage))
+        if (response.filteredCount) {
+          setTotalPages(Math.ceil(response.filteredCount / rowsPerPage))
         }
       }
     } 
@@ -160,108 +105,104 @@ const SpecialRegistrationDetected = () => {
   const headers = [
     { label: SEPECIAL_PLATE_FILE_NAME, key: "title" },
     { label: "", key: "province" },
+    { label: "", key: "check_point" },
     { label: "", key: "vehicle_type" },
     { label: "", key: "model" },
     { label: "", key: "brand" },
     { label: "", key: "color" },
-    { label: "", key: "confidence" },
     { label: "", key: "registration_type" },
     { label: "", key: "date" },
     { label: "", key: "time" },
-    { label: "", key: "lane" },
   ]
   
   const csvData = [
     { 
       title: "ทะเบียน",
       province: "หมวดจังหวัด",
+      check_point: "จุดตรวจ",
       vehicle_type: "ประเภทรถ",
       model: "รุ่นรถ",
       brand: "ยี่ห้อรถ",
       color: "สี",
-      confidence: "ความแม่นยำ (%)",
       registration_type: "กลุ่มทะเบียน",
       date: "วันที่บันทึก",
       time: "เวลาที่บันทึก",
-      lane: "เลน"
     },
     ...specialPlateSearchDataList.map((data) => ({
       title: data.plate,
       province: data.region_info.name_th,
-      vehicle_type: data.vehicle_body_type,
-      model: capitalizeFirstLetter(data.vehicle_make_model),
-      brand: capitalizeFirstLetter(data.vehicle_make),
-      color: data.vehicle_color,
-      confidence: `${data.plate_confidence}`,
-      registration_type: "Blacklist",
+      check_point: data.camera_info ? data.camera_info.cam_id : "",
+      vehicle_type: data.vehicle_body_type_info ? data.vehicle_body_type_info.body_type_th : reformatString(data.vehicle_body_type),
+      model: data.vehicle_model_info ? data.vehicle_model_info.model_en : reformatString(data.vehicle_body_type),
+      brand: data.vehicle_make_info ? data.vehicle_make_info.make_en : reformatString(data.vehicle_make),
+      color: data.vehicle_color_info ? data.vehicle_color_info.color_th : reformatString(data.vehicle_color),
+      registration_type: data.special_plate && data.special_plate.plate_class.title_en || "",
       date: format(new Date(data.epoch_start), "dd/MM/yyyy"),
       time: format(new Date(data.epoch_start), "HH:mm:ss"),
-      lane: `${data.lane}`
     }))
   ]
 
   const handleGeneratePdf = async () => {
-    setIsLoading(true)
-    const pdfContent: DetactSpecialPlate = {
-      logo_text: "Plate Recognition",
-      title_header: "รายการทะเบียนรถที่ตรวจอ่านได้",
-      title_check_point: "ด่าน : ปิงโค้ง",
-      table_columns: {
-        plate_header: "ทะเบียน",
-        image_header: "รูป",
-        checkPoint_header: "จุดตรวจ",
-        vehicleType_header: "ประเภทรถ",
-        vehicleDetail_header: "รายละเอียดรถยนต์",
-        accuracy_header: "ความแม่นยำ (%)",
-        registrationGroup_header: "กลุ่มทะเบียน",
-        dateTime_header: "วัน-เวลา ที่บันทึก",
-        lane_header: "เลน",
-      },
-      table_rows: specialPlateSearchDataList.map((data) => ({
-        plate_data: data.plate,
-        image_data: {
-          plate_image: data.plate_image,
-          vehicle_image: data.vehicle_image,
-        },
-        checkPoint_data: data.site_name,
-        vehicleType_data: data.vehicle_body_type,
-        vehicleDetail_data: [data.vehicle_make_model, data.vehicle_make, data.vehicle_color],
-        accuracy_data: data.plate_confidence,
-        registrationGroup_data: data.registration_type,
-        dateTime_data: format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)"),
-        lane_data: data.lane,
-      })),
-    }
+    // setIsLoading(true)
+    // const pdfContent: DetactSpecialPlate = {
+    //   logo_text: "Plate Recognition",
+    //   title_header: "รายการทะเบียนรถที่ตรวจอ่านได้",
+    //   title_check_point: "ด่าน : ปิงโค้ง",
+    //   table_columns: {
+    //     plate_header: "ทะเบียน",
+    //     image_header: "รูป",
+    //     checkPoint_header: "จุดตรวจ",
+    //     vehicleType_header: "ประเภทรถ",
+    //     vehicleDetail_header: "รายละเอียดรถยนต์",
+    //     accuracy_header: "ความแม่นยำ (%)",
+    //     registrationGroup_header: "กลุ่มทะเบียน",
+    //     dateTime_header: "วัน-เวลา ที่บันทึก",
+    //     lane_header: "เลน",
+    //   },
+    //   table_rows: specialPlateSearchDataList.map((data) => ({
+    //     plate_data: data.plate,
+    //     image_data: {
+    //       plate_image: data.plate_image,
+    //       vehicle_image: data.vehicle_image,
+    //     },
+    //     checkPoint_data: data.site_name,
+    //     vehicleType_data: data.vehicle_body_type,
+    //     vehicleDetail_data: [data.vehicle_make_model, data.vehicle_make, data.vehicle_color],
+    //     accuracy_data: data.plate_confidence,
+    //     registrationGroup_data: data.registration_type,
+    //     dateTime_data: format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)"),
+    //     lane_data: data.lane,
+    //   })),
+    // }
 
-    try {
-      const result = await dispatch(dowloadPdfSpecialPlateThunk(pdfContent)).unwrap()
+    // try {
+    //   const result = await dispatch(dowloadPdfSpecialPlateThunk(pdfContent)).unwrap()
       
-      if (result && result.data) {
-        if (result.data.pdfUrl) {
-          const fullUrl = `${FILE_URL}${result.data.pdfUrl}`
-          window.open(fullUrl, '_blank')
-          return
-        }
-      }
-    } 
-    catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      PopupMessage("การดาวน์โหลดล้มเหลว", errorMessage, 'error')
-    }
-    finally {
-      setIsLoading(false)
-    }
+    //   if (result && result.data) {
+    //     if (result.data.pdfUrl) {
+    //       const fullUrl = `${FILE_URL}${result.data.pdfUrl}`
+    //       window.open(fullUrl, '_blank')
+    //       return
+    //     }
+    //   }
+    // } 
+    // catch (error: unknown) {
+    //   const errorMessage = error instanceof Error ? error.message : String(error)
+    //   PopupMessage("การดาวน์โหลดล้มเหลว", errorMessage, 'error')
+    // }
+    // finally {
+    //   setIsLoading(false)
+    // }
   }
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
+    if (!filterSpecialPlatesData) return
     event.preventDefault()
     setIsLoading(true)
     setPage(value)
-    const query: Record<string, string> = {
-      "page": value.toString(),
-      "limit": rowsPerPage.toString(),
-    }
-    const response = await dispatch(fetchSpecialPlateSearchDataThunk(query)).unwrap()
+    setPageInput(value)
+
+    const response = await postSpecialPlateSearchData(filterSpecialPlatesData, value, rowsPerPage)
     
     if (response && response.data) {
       setSpecialPlateSearchDataList(response.data)
@@ -269,14 +210,48 @@ const SpecialRegistrationDetected = () => {
     }
   }
 
+  const handlePageInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target.value
+    const cleaned = input.replace(/\D/g, '')
+
+    if (cleaned) {
+      const numberInput = Number(cleaned);
+      if (numberInput > 0 && numberInput <= totalPages) {
+        setPageInput(numberInput)
+      }
+    }
+    else if (cleaned === "") {
+      setPageInput(1)
+    }
+    return cleaned
+  }
+
+  const handlePageInputKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && filterSpecialPlatesData) {
+      event.preventDefault()
+  
+      setIsLoading(true)
+      setPage(pageInput)
+
+      try {
+        const response = await postSpecialPlateSearchData(filterSpecialPlatesData, pageInput, rowsPerPage)
+        if (response && response.data) {
+          setSpecialPlateSearchDataList(response.data)
+        }
+      } catch (error) {
+        console.error("API request failed:", error)
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }
+
   const handleRowsPerPageChange = async (event: SelectChangeEvent) => {
+    if (!filterSpecialPlatesData) return
     setIsLoading(true)
     setRowsPerPage(parseInt(event.target.value))
-    const query: Record<string, string> = {
-      "page": page.toString(),
-      "limit": event.target.value,
-    }
-    const response = await dispatch(fetchSpecialPlateSearchDataThunk(query)).unwrap()
+
+    const response = await postSpecialPlateSearchData(filterSpecialPlatesData, page, Number(event.target.value))
     
     if (response && response.data) {
       setSpecialPlateSearchDataList(response.data)
@@ -285,6 +260,35 @@ const SpecialRegistrationDetected = () => {
         setTotalPages(Math.ceil(response.countAll / Number(event.target.value)))
       }
     }
+  }
+
+  const checkRegistrationTypeColor = (value: string | undefined): string => {
+    if (!value) {
+      return ""
+    }
+
+    const type = value.toLocaleLowerCase() 
+    if (type === "blacklist") {
+      return "bg-darkRed"
+    }
+    else if (type === "vip") {
+      return "bg-fruitSalad"
+    }
+    else if (type === "member") {
+      return "bg-dodgerBlue"
+    }
+
+    return ""
+  }
+
+  const handleImageClick = (event: React.MouseEvent, plate: string, vehicleImage: string, plateImage: string) => {
+    event.stopPropagation()
+    setIsImageCardShow(true)
+    setCarouselData({
+      plate: plate,
+      vehicleImage: `${FILE_URL}${vehicleImage}`,
+      plateImage: `${FILE_URL}${plateImage}`
+    })
   }
 
   return (
@@ -365,29 +369,41 @@ const SpecialRegistrationDetected = () => {
                       </tr>
                     </thead>
                     <tbody className="text-white">
-                      {specialPlateSearchDataList.map((data, index) => (
-                        <tr key={index + 1} className="h-[50px] w-full border-b-[1px] border-dashed border-darkGray">
-                          <td className="text-start text-white bg-celtic pl-5">{`${data.plate} ${data.region_info.name_th}`}</td>
-                          <td className="text-center text-white bg-tuna">
-                            <img
-                              src={`${FILE_URL}${data.vehicle_image}`}
-                              alt="Vehicle"
-                              className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]"
-                            />
-                            <img
-                              src={`${FILE_URL}${data.plate_image}`}
-                              alt="Plate"
-                              className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]"
-                            />
-                          </td>
-                          <td className="pl-5 text-start text-white bg-celtic">{data.site_name}</td>
-                          <td className="pl-5 text-start text-white bg-tuna">{data.vehicle_body_type}</td>
-                          <td className="text-center text-white bg-celtic">{data.vehicle_make_model}</td>
-                          <td className="text-center text-white bg-celtic">{data.vehicle_make}</td>
-                          <td className="text-center text-white bg-tuna">{data.vehicle_color}</td>
-                          <td className="text-center text-white bg-celtic">{format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)")}</td>
-                        </tr>
-                      ))}
+                      {
+                        specialPlateSearchDataList.map((data, index) => {
+                          const bgColor = data.is_special_plate ? checkRegistrationTypeColor(data.special_plate?.plate_class?.title_en) : ""
+
+                          return (
+                            <tr key={index + 1} className={`h-[50px] w-full border-b-[1px] border-dashed border-darkGray
+                              ${data.is_special_plate ? bgColor : ""}
+                            `}>
+                              <td className={`text-start text-white ${data.is_special_plate ? bgColor : "bg-tuna"} pl-5`}>{`${data.plate} ${data.region_info.name_th}`}</td>
+                              <td 
+                                className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}
+                                ref={el => tdRefs.current[index] = el}
+                                onClick={(e) => handleImageClick(e, `${data.plate} ${data.region_info ? data.region_info.name_th : ""}`, data.vehicle_image, data.plate_image)}
+                              >
+                                <img
+                                  src={`${FILE_URL}${data.vehicle_image}`}
+                                  alt="Vehicle"
+                                  className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]"
+                                />
+                                <img
+                                  src={`${FILE_URL}${data.plate_image}`}
+                                  alt="Plate"
+                                  className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]"
+                                />
+                              </td>
+                              <td className={`pl-5 text-start text-white ${data.is_special_plate ? bgColor : "bg-tuna"}`}>{data.camera_info ? data.camera_info.cam_id : ""}</td>
+                              <td className={`pl-5 text-start text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}>{data.vehicle_body_type_info ? data.vehicle_body_type_info.body_type_th : reformatString(data.vehicle_body_type)}</td>
+                              <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-tuna"}`}>{data.vehicle_model_info ? data.vehicle_model_info.model_en : reformatString(data.vehicle_body_type)}</td>
+                              <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}>{data.vehicle_make_info ? data.vehicle_make_info.make_en : reformatString(data.vehicle_make)}</td>
+                              <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-tuna"}`}>{data.vehicle_color_info ? data.vehicle_color_info.color_th : reformatString(data.vehicle_color)}</td>
+                              <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}>{data.epoch_start ? format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)") : ""}</td>
+                            </tr>
+                          )
+                        })
+                      }
                     </tbody>
                   </table>
                 </div>
@@ -401,7 +417,10 @@ const SpecialRegistrationDetected = () => {
                 rowsPerPageOptions={rowsPerPageOptions}
                 handleRowsPerPageChange={handleRowsPerPageChange}
                 totalPages={totalPages}
-                setPage={setPage}
+                textFieldFontSize="15px"
+                pageInput={pageInput.toString()}
+                handlePageInputKeyDown={handlePageInputKeyDown}
+                handlePageInputChange={handlePageInputChange}
               />
             </div>
           </div>
@@ -412,6 +431,23 @@ const SpecialRegistrationDetected = () => {
         >
           <SearchFilter setFilterData={setFilterData} />
         </div>
+        <Dialog open={isImageCardShow} onClose={() => setIsImageCardShow(false)} className="absolute z-30">
+          <div 
+            className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm "
+            onClick={() => setIsImageCardShow(false)} 
+          >
+            <div 
+              className="bg-black rounded"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ImagesCarousel 
+                plate={carouselData ? carouselData.plate : ""}
+                vehicleImage={carouselData ? carouselData.vehicleImage : ""}
+                plateImage={carouselData ? carouselData.plateImage : ""}
+              />
+            </div>
+          </div>
+        </Dialog>
       </div>
     </div>
   )

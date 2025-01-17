@@ -19,7 +19,7 @@ export const fetchLastRecognitions = async (
   param?: Record<string, string>
 ): Promise<LastRecognitionResult> => {
   if (isDevEnv) {
-    const data = { data: lastRecognitionData}
+    const data = { data: param && param.filter === "is_special_plate:1" ? lastRecognitionData.filter((row) => row.is_special_plate === true) : lastRecognitionData}
     return Promise.resolve(data);
   }
   return await fetchClient<LastRecognitionResult>(combineURL(API_URL, "/lpr-data/get"), {

@@ -7,11 +7,9 @@ import Loading from "../../../../components/loading/Loading";
 
 interface DOTInform {
   vehicle: any;
-  owner: any;
-  rightsHolder: any;
 }
 
-function DOTInform({ vehicle, owner, rightsHolder }: DOTInform) {
+function DOTInform({ vehicle }: DOTInform) {
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<DOTInform>();
 
@@ -23,8 +21,6 @@ function DOTInform({ vehicle, owner, rightsHolder }: DOTInform) {
         
         setData({
           vehicle,
-          owner,
-          rightsHolder
         });
         setIsLoading(false);
       } catch (error) {
@@ -34,117 +30,57 @@ function DOTInform({ vehicle, owner, rightsHolder }: DOTInform) {
     };
 
     loadData();
-  }, [vehicle, owner, rightsHolder]);
+  }, [vehicle]);
 
   return (
-    <div className="p-1 text-white rounded-md w-full text-[0.8vw]">
+    <div className="grid grid-cols-2 py-2 text-white rounded-md w-full gap-1">
       {isLoading && <Loading />}
-      <VehicleDisplay
-        pathImageVehicle={data?.vehicle.pathImageVehicle}
-        pathImage={data?.vehicle.pathImage}
-        desc={data?.vehicle.plateId}
-      />
-      <div className="flex my-5">
-        <img width={20} height={20} src="/icons/detail.png" alt="car" />
-        <p
-          className="ms-2"
-          style={{
-            fontWeight: "bolder",
-            color: "white",
-          }}
-        >
-          ข้อมูลรถยนต์
-        </p>
+      <div>
+        <VehicleDisplay
+          vehicleImage={data?.vehicle.vehicleImage}
+          pathImage={data?.vehicle.pathImage}
+          desc=""
+        />
       </div>
-
-      <div className="flex">
-        <div className="w-1/3 font-semibold bg-title p-2">ทะเบียนรถ :</div>
-        <div className="w-2/3 bg-content p-2">{data?.vehicle.plateId}</div>
-      </div>
-
-      <div className="flex">
-        <div className="w-1/3 font-semibold bg-title p-2">ยี่ห้อ :</div>
-        <div className="w-2/3 bg-content p-2">{data?.vehicle.brand}</div>
-      </div>
-
-      <div className="flex">
-        <div className="w-1/3 font-semibold bg-title p-2">สี :</div>
-        <div className="w-2/3 bg-content p-2">{data?.vehicle.color}</div>
-      </div>
-
-      <div className="flex">
-        <div className="w-1/3 font-semibold bg-title p-2">รุ่น/แบบ :</div>
-        <div className="w-2/3 bg-content p-2">{data?.vehicle.model}</div>
-      </div>
-
-      <div className="flex">
-        <div className="w-1/3 font-semibold bg-title p-2">ประเภท :</div>
-        <div className="w-2/3 bg-content p-2">
-          {data?.vehicle.type}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <div className="flex my-5">
-            <img width={20} height={20} src="/icons/person.png" alt="car" />
-            <p
-              className="ms-2"
-              style={{
-                fontWeight: "bolder",
-                color: "white",
-              }}
-            >
-              ข้อมูลผู้ครอบครอง
-            </p>
-          </div>
-
-          <div className="flex">
-            <div className="w-1/3 font-semibold bg-title p-2">ผู้ครอบครอง :</div>
-            <div className="w-2/3 bg-content p-2">{data?.owner.name}</div>
-          </div>
-
-          <div className="flex">
-            <div className="w-1/3 font-semibold bg-title p-2">เลขที่บัตร :</div>
-            <div className="w-2/3 bg-content p-2">{data?.owner.nationNumber}</div>
-          </div>
-
-          <div className="flex">
-            <div className="w-1/3 font-semibold bg-title p-2">ที่อยู่ :</div>
-            <div className="w-2/3 bg-content p-2">
-              {data?.owner.address}
-            </div>
-          </div>
+      <div className="h-[260px]">
+        <div className="flex py-3 px-2 text-[14px] bg-swamp">
+          <img width={20} height={20} src="/icons/detail.png" alt="car" />
+          <p
+            className="ms-2"
+            style={{
+              fontWeight: "bolder",
+              color: "white",
+            }}
+          >
+            ข้อมูลรถยนต์
+          </p>
         </div>
 
-        <div>
-          <div className="flex my-5">
-            <img width={20} height={20} src="/icons/person.png" alt="car" />
-            <p
-              className="ms-2"
-              style={{
-                fontWeight: "bolder",
-                color: "white",
-              }}
-            >
-              ข้อมูลผู้ถือกรรมสิทธิ์
-            </p>
+        <div className="text-[14px]">
+          <div className="flex h-[43.5px]">
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">ทะเบียนรถ</div>
+            <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.plateId}</div>
           </div>
 
-          <div className="flex">
-            <div className="w-1/3 font-semibold bg-title p-2">ผู้ครอบครอง :</div>
-            <div className="w-2/3 bg-content p-2">{data?.rightsHolder.name}</div>
+          <div className="flex h-[43.5px]">
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">ยี่ห้อ</div>
+            <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.brand}</div>
           </div>
 
-          <div className="flex">
-            <div className="w-1/3 font-semibold bg-title p-2">เลขที่บัตร :</div>
-            <div className="w-2/3 bg-content p-2">{data?.rightsHolder.nationNumber}</div>
+          <div className="flex h-[43.5px]">
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">สี</div>
+            <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.color}</div>
           </div>
 
-          <div className="flex">
-            <div className="w-1/3 font-semibold bg-title p-2">ที่อยู่ :</div>
-            <div className="w-2/3 bg-content p-2">
-              {data?.rightsHolder.address}
+          <div className="flex h-[43.5px]">
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">รุ่น/แบบ</div>
+            <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.model}</div>
+          </div>
+
+          <div className="flex h-[43.5px]">
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">ประเภท</div>
+            <div className="w-2/3 bg-content p-2 flex items-center">
+              {data?.vehicle.type}
             </div>
           </div>
         </div>

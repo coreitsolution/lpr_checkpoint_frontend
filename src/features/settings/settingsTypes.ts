@@ -1,5 +1,6 @@
 export interface SettingDetail {
   id: number
+  key: string
   name: string
   value: string
   description: string

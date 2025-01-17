@@ -167,3 +167,86 @@ export interface StreamEncodesDetail
   visible: boolean
   active: boolean
 }
+
+export interface VehicleBodyTypes {
+  message?: string
+  status?: string
+  success?: string
+  data?: VehicleBodyTypeDetail[]
+}
+
+export interface VehicleBodyTypeDetail 
+{
+  id: number
+  body_type: string
+  body_type_en?: string
+  body_type_th: string
+  details?: string
+  visible?: boolean
+  active?: boolean
+}
+
+export interface VehicleBodyTypesTh {
+  message?: string
+  status?: string
+  success?: string
+  data?: VehicleBodyTypeThDetail[]
+}
+
+export interface VehicleBodyTypeThDetail 
+{
+  id: number
+  body_type_th: string
+}
+
+export interface VehicleColors {
+  message?: string
+  status?: string
+  success?: string
+  data?: VehicleColorDetail[]
+}
+
+export interface VehicleColorDetail 
+{
+  id: number
+  color: string
+  color_en?: string
+  color_th: string
+  visible?: boolean
+  active?: boolean
+}
+
+export interface VehicleMakes {
+  message?: string
+  status?: string
+  success?: string
+  data?: VehicleMakesDetail[]
+}
+
+export interface VehicleMakesDetail 
+{
+  id: number
+  make: string
+  make_en: string
+  make_th?: string
+  visible?: boolean
+  active?: boolean
+}
+
+export interface VehicleModels {
+  message?: string
+  status?: string
+  success?: string
+  data?: VehicleModelsDetail[]
+}
+
+export interface VehicleModelsDetail 
+{
+  id: number
+  make: string
+  model: string
+  model_en: string
+  model_th?: string
+  visible?: boolean
+  active?: boolean
+}

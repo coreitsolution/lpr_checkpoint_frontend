@@ -14,6 +14,7 @@ import SelectBox from '../../../components/select-box/SelectBox'
 import TextBox from '../../../components/text-box/TextBox'
 import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePickerBuddhist"
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
+import AutoCompleteMultiple, { OptionType } from "../../../components/auto-complete/AutoCompleteMultiple"
 
 // API
 import { 
@@ -31,7 +32,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [lastname, setLastname] = useState("")
   const [plateConfidence, setPlateConfidence] = useState("")
   const [selectedNamePrefix, setNamePrefix] = useState<string>('')
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<string>('')
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<OptionType[]>([])
   const [checkedPlateConfidence, setCheckedPlateConfidence] = useState<number>(0)
   const [selectedPersonType, setSelectedPersonType] = useState<number | ''>('')
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null)
@@ -42,7 +43,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const { registrationTypes, commonPrefixes } = useSelector(
     (state: RootState) => state.dropdown
   )
-
   const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
   )
@@ -58,7 +58,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     faceConfidence: checkedPlateConfidence === 0 ? 0 : Number(plateConfidence),
     selectedStartDate: selectedStartDate,
     selectedEndDate: selectedEndDate,
-    checkpoint: selectedCheckpoint,
+    selectedCheckpoint: selectedCheckpoint.map((item) => item.value),
     selectedRegistrationType: registrationTypes?.data?.find((row) => row.id === selectedPersonType)?.title_en || 'all',
   }
 
@@ -75,7 +75,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   useEffect(() => {
     if (cameraSettings && cameraSettings.data) {
       const options = cameraSettings.data.map((row) => ({
-        label: row.checkpoint_name,
+        label: row.cam_id,
         value: row.id,
       }))
       setCheckpointOptions(options.sort((a, b) => { return a.label.localeCompare(b.label) }))
@@ -119,14 +119,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   ) => {
     event.preventDefault()
     setNamePrefix(value ? value.value : 0)
-  };
-
-  const handleCheckPointChange = (
-    event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
-  ) => {
-    event.preventDefault()
-    setSelectedCheckpoint(value ? value.value : 0)
   };
 
   return (
@@ -262,17 +254,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               </div>
             </div>
             <div className="grid grid-cols-1 my-[5px]">
-              <AutoComplete 
-                id="select-checkpoint"
-                sx={{ marginTop: "10px"}}
-                value={selectedCheckpoint}
-                onChange={handleCheckPointChange}
-                options={checkpointOptions}
-                label="จุดตรวจ"
-                labelFontSize="15px"
-              />
-            </div>
-            <div className="grid grid-cols-1 my-[5px]">
               <SelectBox
                 sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
                 id="select-people-type"
@@ -281,6 +262,21 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 onChange={(event: SelectChangeEvent<any>) => setSelectedPersonType(event.target.value)}
                 options={registrationTypesOptions}
                 label="กลุ่มบุคคล"
+                labelFontSize="15px"
+              />
+            </div>
+            <div className="grid grid-cols-1 my-[5px]">
+              <AutoCompleteMultiple 
+                id="select-checkpoint"
+                sx={{ marginTop: "10px"}}
+                value={selectedCheckpoint}
+                onChange={(_, newValue) => {
+                  setSelectedCheckpoint([
+                    ...newValue,
+                  ]);
+                }}
+                options={checkpointOptions}
+                label="จุดตรวจ"
                 labelFontSize="15px"
               />
             </div>

@@ -10,14 +10,14 @@ import {
 import { Status } from "../../constants/statusEnum";
 
 interface SettingsState {
-  settingData: SettingData | null;
+  settingData: { live_view_count: SettingData | null, checkpoint_name: SettingData | null };
   settingDataDetail: SettingDetail | null;
   status: Status;
   error: string | null;
 }
 
 const initialState: SettingsState = {
-  settingData: null,
+  settingData: { live_view_count: null, checkpoint_name: null },
   settingDataDetail: null,
   status: Status.IDLE,
   error: null,
@@ -27,7 +27,7 @@ export const fetchSettingsThunk = createAsyncThunk(
   "settings/fetchSettings",
   async (param?:Record<string, string>) => {
     const response = await fetchSettings(param);
-    return response;
+    return { data: response, key: param?.filter};
   }
 );
 
@@ -52,7 +52,12 @@ const settingsSlice = createSlice({
       })
       .addCase(fetchSettingsThunk.fulfilled, (state, action) => {
         state.status = Status.SUCCEEDED;
-        state.settingData = action.payload;
+        if (action.payload.key === "key:live_view_count") {
+          state.settingData.live_view_count = action.payload.data
+        } 
+        else if (action.payload.key === "key:checkpoint_name") {
+          state.settingData.checkpoint_name = action.payload.data
+        }
       })
       .addCase(fetchSettingsThunk.rejected, (state, action) => {
         state.status = Status.FAILED;

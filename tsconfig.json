@@ -28,7 +28,8 @@
     "skipLibCheck": false,
     "baseUrl": ".",
     "paths": {
-      "~icons/*": ["node_modules/unplugin-icons/icons/*"]
+      "~icons/*": ["node_modules/unplugin-icons/icons/*"],
+      "@/*": ["./src/*"]
     },
   },
 }

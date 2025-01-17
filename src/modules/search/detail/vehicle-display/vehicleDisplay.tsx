@@ -2,40 +2,31 @@ import React from "react";
 import Typography from "@mui/material/Typography";
 
 interface VehicleDisplayProps {
-  pathImageVehicle: string;
+  vehicleImage: string;
   pathImage: string;
   desc: string;
 }
 
 const VehicleDisplay: React.FC<VehicleDisplayProps> = ({
-  pathImageVehicle,
+  vehicleImage,
   pathImage,
   desc,
 }) => {
   return (
-    <div className="bg-black w-90 flex flex-col items-center overflow-hidden">
-      <div style={{ width: "280px", height: "9vw", position: "relative" }}>
-        <img
-          src={pathImageVehicle}
-          alt="Vehicle"
-          style={{
-            width: "100%",
-            height: "auto",
-            objectFit: "cover",
-            display: "block",
-          }}
-        />
+    <div className="bg-black w-full flex flex-col items-center overflow-hidden h-full">
+      <div className="w-full h-full relative">
+        <div className="flex items-center justify-center">
+          <img
+            src={vehicleImage}
+            alt="Vehicle"
+            className="h-[260px] w-full"
+          />
+        </div>
 
         <img
           src={pathImage}
           alt="License Plate"
-          style={{
-            width: "5vw",
-            position: "absolute",
-            bottom: "10px",
-            left: "10px",
-            border: "2px solid white",
-          }}
+          className="h-[80px] w-[180px] bottom-0 absolute border-[1px] border-white"
         />
       </div>
 

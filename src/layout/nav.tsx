@@ -1,4 +1,4 @@
-import { Us, Th } from "react-flags-select"
+import { Th } from "react-flags-select"
 import "./nav.scss";
 import { useCallback, useEffect, useState } from "react";
 import MenuIcon from "./menu-icon/menuicon";
@@ -6,15 +6,8 @@ import { NavLink } from "react-router-dom";
 import RiArrowDownSFill from "~icons/ri/arrow-down-s-fill";
 import RiArrowUpSFill from "~icons/ri/arrow-up-s-fill";
 import clsx from 'clsx';
-import { fetchClient, combineURL } from "../utils/fetchClient"
-
-// Types
-import {
-  SettingData,
-} from "../features/settings/settingsTypes"
-
-// Config
-import { API_URL } from '../config/apiConfig';
+import { useSelector, useDispatch } from "react-redux"
+import { RootState, AppDispatch } from "../app/store"
 
 // SVG
 import LOGO from "../assets/svg/sm-logo.svg"
@@ -22,12 +15,21 @@ import LOGO from "../assets/svg/sm-logo.svg"
 // Context
 import { useHamburger } from "../context/HamburgerContext";
 
+// API
+import { 
+  fetchSettingsThunk,
+} from "../features/settings/settingsSlice"
+
 function Nav() {
   const [languageSelected, setLanguageSelect] = useState("th");
   const [sidePosition, setSidePosition] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>("")
-  const [checkpoint, setCheckpoint] = useState<string>("")
+  const [checkpoint, setCheckpoint] = useState<string>("ด่าน: ")
   const { isOpen, toggleMenu } = useHamburger()
+  const dispatch: AppDispatch = useDispatch()
+  const { settingData } = useSelector(
+    (state: RootState) => state.settingsData
+  )
 
   const formatDate = (date: Date) => {
     const hours = date.getHours().toString().padStart(2, "0")
@@ -37,23 +39,21 @@ function Nav() {
   }
 
   useEffect(() => {
-    const fetchCheckpoint = async () => {
-      const response = await fetchClient<SettingData>(combineURL(API_URL, "/settings/get"), {
-        method: "GET",
-        queryParams: {"filter": "id:2"}
-      })
-
-      if (response && response.data) {
-        setCheckpoint(`ด่าน: ${response.data[0].value}`)
-      }
-    }
-    fetchCheckpoint()
+    dispatch(fetchSettingsThunk({
+      "filter": "key:checkpoint_name"
+    }))
     const interval = setInterval(() => {
       setCurrentTime(formatDate(new Date()))
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [dispatch])
+
+  useEffect(() => {
+    if (settingData && settingData.checkpoint_name && settingData.checkpoint_name.data) {
+      setCheckpoint(`ด่าน: ${settingData.checkpoint_name.data[0].value}`)
+    }
+  }, [settingData])
 
   const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLanguage = event.target.value
@@ -92,7 +92,7 @@ function Nav() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 min-w-[1300px]">
+    <nav className="fixed top-0 left-0 right-0 z-30 min-w-[1300px]">
       <div className="flex justify-between items-center bg-black">
         {/* Status Section */}
         <div 
@@ -145,14 +145,15 @@ function Nav() {
           <p className="text-[20px]">นางสาวธรพร ศรีสมร</p>
           <img src={`https://randomuser.me/api/portraits/women/1.jpg`} alt="User" className="w-12 h-12 rounded-full border-2 border-blue-600" />
           <div className="grid grid-cols-[20px_auto] border border-white rounded-[5px] py-[3px] px-[12px]">
-            <span className="mr-[5px]">{languageSelected === 'th' ? <Th /> : <Us />}</span>
+            {/* <span className="mr-[5px]">{languageSelected === 'th' ? <Th /> : <Us />}</span> */}
+            <span className="mr-[5px]">{<Th /> }</span>
             <select 
               className="bg-transparent text-[12px] text-center focus:outline-none focus:ring-0" 
               value={languageSelected} 
               onChange={handleLanguageChange}
             >
               <option className="text-black" value="th">TH</option>
-              <option className="text-black" value="en">EN</option>
+              {/* <option className="text-black" value="en">EN</option> */}
             </select>
           </div>
         </div>

@@ -74,7 +74,7 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPo
   return (
     <div id='location-setting'>
       {isSearching && <Loading />}
-      <div className="bg-black text-white p-[5px] w-full">
+      <div className="bg-black text-white w-full">
         <div className='grid grid-cols-2 mb-5'>
           <div className='col-start-2'>
             <TextBox

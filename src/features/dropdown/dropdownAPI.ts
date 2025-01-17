@@ -13,6 +13,10 @@ import {
   OfficerPositions,
   Regions,
   StreamEncodes,
+  VehicleBodyTypes,
+  VehicleColors,
+  VehicleMakes,
+  VehicleModels
 } from "./dropdownTypes";
 import { provincesDetail } from "../../mocks/mockProvinces";
 import { registrationTypes } from "../../mocks/mockRegistrationTypes";
@@ -24,6 +28,10 @@ import { positions } from "../../mocks/mockPositions";
 import { officerPrefixes } from '../../mocks/mockOfficerPrefixes';
 import { mockRegions } from '../../mocks/mockRegions';
 import { streamEncodes } from '../../mocks/mockStreamEncodes';
+import { vehicleBodyTypes } from '../../mocks/mockVehicleBodyTypes';
+import { vehicleColors } from '../../mocks/mockVehicleColors';
+import { vehicleMakes } from '../../mocks/mockVehicleMakes';
+import { vehicleModels } from '../../mocks/mockVehicleModels';
 
 
 export const fetchRegions = async (param?: Record<string, string>): Promise<Regions> => {
@@ -203,6 +211,71 @@ export const fetchStreamEncodes = async (param?: Record<string, string>): Promis
     return Promise.resolve(data);
   }
   return await fetchClient<StreamEncodes>(combineURL(API_URL, "/stream-encodes/get"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchVehicleBodyTypes = async (param?: Record<string, string>): Promise<VehicleBodyTypes> => {
+  if (isDevEnv) {
+    const data = {
+      data: vehicleBodyTypes
+    }
+    return Promise.resolve(data);
+  }
+  return await fetchClient<VehicleBodyTypes>(combineURL(API_URL, "/vehicle-body-types/get"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchVehicleBodyTypesTh = async (param?: Record<string, string>): Promise<VehicleBodyTypes> => {
+  if (isDevEnv) {
+    const data = {
+      data: vehicleBodyTypes
+    }
+    return Promise.resolve(data);
+  }
+  return await fetchClient<VehicleBodyTypes>(combineURL(API_URL, "/vehicle-body-types/get-group-th"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchVehicleColors = async (param?: Record<string, string>): Promise<VehicleColors> => {
+  if (isDevEnv) {
+    const data = {
+      data: vehicleColors
+    }
+    return Promise.resolve(data);
+  }
+  return await fetchClient<VehicleColors>(combineURL(API_URL, "/vehicle-colors/get"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchVehicleMakes = async (param?: Record<string, string>): Promise<VehicleMakes> => {
+  if (isDevEnv) {
+    const data = {
+      data: vehicleMakes
+    }
+    return Promise.resolve(data);
+  }
+  return await fetchClient<VehicleMakes>(combineURL(API_URL, "/vehicle-makes/get"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchVehicleModels = async (param?: Record<string, string>): Promise<VehicleModels> => {
+  if (isDevEnv) {
+    const data = {
+      data: vehicleModels
+    }
+    return Promise.resolve(data);
+  }
+  return await fetchClient<VehicleModels>(combineURL(API_URL, "/vehicle-models/get"), {
     method: "GET",
     queryParams: param,
   });

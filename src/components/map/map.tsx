@@ -97,41 +97,36 @@ function Map({
       });
 
       map.fitBounds(bounds);
-    } else if (coordinates && coordinates.length > 0) {
+    } 
+    else if (coordinates && coordinates.length > 0) {
       const bounds = new google.maps.LatLngBounds();
       const path: google.maps.LatLng[] = [];
       const color = "#FF0000";
 
-      coordinates.forEach((coord, coordIndex) => {
+      coordinates.forEach( async (coord) => {
         const position = new google.maps.LatLng(coord.lat, coord.lng);
         bounds.extend(position);
         path.push(position);
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
 
-        if (
-          !isFullScreen &&
-          coordIndex !== 0 &&
-          coordIndex !== coordinates.length - 1
-        ) {
-          return;
-        }
+        const container = document.createElement("div")
+        container.style.position = "relative"
+        container.style.display = "flex"
+        container.style.alignItems = "center"
+        container.style.justifyContent = "center"
+        container.style.backgroundColor = "transparent"
 
-        const label = document.createElement("div");
-        label.className = "price-tag";
-        label.style.backgroundColor = color;
+        const mapPinIcon = document.createElement("img")
+        mapPinIcon.src = '/svg/map-pin-icon.svg'
+        mapPinIcon.style.width = "30px"
+        mapPinIcon.style.height = "40px"
 
-        if (coordIndex === 0) {
-          label.textContent = `Start`;
-        } else if (coordIndex === coordinates.length - 1) {
-          label.textContent = `${coordIndex + 1} | Stop`;
-        } else {
-          label.textContent = `${coordIndex + 1}`;
-        }
+        container.appendChild(mapPinIcon)
 
         new AdvancedMarkerElement({
-          position,
           map,
-          collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
-          content: label,
+          position: coord,
+          content: container
         });
       });
 

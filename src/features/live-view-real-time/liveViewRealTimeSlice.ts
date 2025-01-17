@@ -17,6 +17,7 @@ import { Status } from "../../constants/statusEnum"
 
 interface LiveViewRealTimesState {
   liveViewRealTimeData: LastRecognitionResult | null
+  filteredLiveViewRealTimeData: LastRecognitionResult | null
   vehicleCountData: VehicleCountResult | null
   connectionData: ConnectionResult | null
   systemStatusData: SystemStatusResult | null
@@ -27,6 +28,7 @@ interface LiveViewRealTimesState {
 
 const initialState: LiveViewRealTimesState = {
   liveViewRealTimeData: null,
+  filteredLiveViewRealTimeData: null,
   vehicleCountData: null,
   connectionData: null,
   systemStatusData: null,
@@ -39,7 +41,7 @@ export const fetchLastRecognitionsThunk = createAsyncThunk(
   "liveViewRealTimes/fetchLastRecognitions",
   async (param?: Record<string, string>) => {
     const response = await fetchLastRecognitions(param)
-    return response
+    return { data: response, isFiltered: !!param?.filter }
   }
 )
 
@@ -87,7 +89,12 @@ const liveViewRealTimesSlice = createSlice({
       })
       .addCase(fetchLastRecognitionsThunk.fulfilled, (state, action) => {
         state.status = Status.SUCCEEDED
-        state.liveViewRealTimeData = action.payload
+        if (action.payload.isFiltered) {
+          state.filteredLiveViewRealTimeData = action.payload.data
+        } 
+        else {
+          state.liveViewRealTimeData = action.payload.data
+        }
       })
       .addCase(fetchLastRecognitionsThunk.rejected, (state, action) => {
         state.status = Status.FAILED

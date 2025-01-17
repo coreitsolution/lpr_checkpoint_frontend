@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../../app/store";
-import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import {
+  Dialog,
+  DialogTitle
+} from "@mui/material"
 import { format } from "date-fns";
 
 // Types
@@ -400,7 +403,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     }
 
     const isValid = Object.entries(cameraSettings).every(([key, value]) => {
-      if (key === "last_online" || key === "last_check") {
+      if (key === "last_online" || key === "last_check" || key === "detecion_count") {
         return true
       }
       if (value == null || value === "" || value === 0) {
@@ -878,24 +881,26 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       <Dialog
         open={state.isLocationSettingOpen}
         onClose={() => handleButtonClick("isLocationSettingOpen", false)}
-        className="relative z-50"
+        className="absolute z-30"
       >
-        <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
-          <DialogPanel
-            className="space-y-4 border bg-[var(--background-color)] p-5 bg-black text-white 
-          w-[50%] min-w-[700px] h-full max-h-[850px] overflow-y-auto"
+        <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+          <div
+            className="border bg-[var(--background-color)] bg-black text-white 
+          w-[50%] min-w-[700px] h-[88vh] overflow-y-auto"
           >
             <div className="flex justify-between">
               <DialogTitle className="text-[28px]">Location กล้อง</DialogTitle>
             </div>
-            <LocationSetting
-              closeDialog={() =>
-                handleButtonClick("isLocationSettingOpen", false)
-              }
-              comfirmPoint={comfirmPoint}
-              location={state.location}
-            />
-          </DialogPanel>
+            <div className="px-5">
+              <LocationSetting
+                closeDialog={() =>
+                  handleButtonClick("isLocationSettingOpen", false)
+                }
+                comfirmPoint={comfirmPoint}
+                location={state.location}
+              />
+            </div>
+          </div>
         </div>
       </Dialog>
     </div>

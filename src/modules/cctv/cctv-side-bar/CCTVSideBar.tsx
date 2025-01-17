@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import {
   Select,
   MenuItem,
+  Dialog,
 } from "@mui/material"
 import { format } from "date-fns"
 import "../../../styles/variables.scss"
@@ -20,9 +21,6 @@ import LocationDetailDialog from '../../search/detail/location-detail/LocationDe
 import { fetchLastRecognitionsThunk, fetchSystemStatusThunk, fetchVehicleCountThunk, dowloadFileThunk } from "../../../features/live-view-real-time/liveViewRealTimeSlice"
 
 // Types
-import {
-  SearchResult,
-} from "../../../features/api/types"
 import { CameraDetailSettings } from "../../../features/camera-settings/cameraSettingsTypes"
 import { 
   VehicleCountData, 
@@ -30,6 +28,7 @@ import {
   SystemStatusData,
   LastRecognitionData,
 } from "../../../features/live-view-real-time/liveViewRealTimeTypes"
+import { DirectionDetail } from "../../../features/api/types";
 
 // Services
 import { useSelector, useDispatch } from "react-redux"
@@ -39,23 +38,24 @@ import { RootState, AppDispatch } from "../../../app/store"
 import Loading from "../../../components/loading/Loading"
 
 // Utils
-import { capitalizeFirstLetter } from "../../../utils/comonFunction"
+import { reformatString, isEquals } from "../../../utils/comonFunction"
 import { PopupMessage } from "../../../utils/popupMessage"
 
 interface CCTVSideBarProp {
   setCollapse: (status: boolean) => void
   cameraSetting: CameraDetailSettings[]
-  setUpdateLastRecognition: (status: LastRecognitionData | null) => void
+  setUpdateLastRecognition: (data: LastRecognitionData | null) => void
+  setUpdateSpecialPlate: (data: LastRecognitionData) => void
 }
 
-const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, setUpdateLastRecognition}) => {
+const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, setUpdateLastRecognition, setUpdateSpecialPlate}) => {
   const [selectedMenu, setSelectedMenu] = useState<string | null>('lastRecognition')
   const [LPRCameraSetting, setLPRCameraSetting] = useState<number | ''>('')
   const buttonDowloadRefs = useRef<(HTMLButtonElement | null)[]>([])
   const vehicleInfoRefs = useRef<(HTMLDivElement | null)[]>([])
   const [isOpenFullDirectionDialog, setOpenFullDirectionDialog] = useState(false)
-  const [detailData, setDetailData] = useState<SearchResult>()
-  const [compareData, setCompareData] = useState<SearchResult[]>([])
+  const [detailData, setDetailData] = useState<LastRecognitionData | null>(null)
+  const [directionDetail, setDirectionDetail] = useState<DirectionDetail[]>([])
   const [compare, setIsCompare] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [LPRCameraDropdown, setLPRCameraDropdown] = useState<{ label: string, value: number }[]>([])
@@ -64,6 +64,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   const [originalData, setOriginalData] = useState<LastRecognitionData[]>([])
   const [connectionListData, setConnectionListData] = useState<ConnectionResult[]>([])
   const [systemStatusListData, setSystemStatusListData] = useState<SystemStatusData[]>([])
+  const [lprSpecialPlateData, setLprSpecialPlateData] = useState<LastRecognitionData[]>([])
 
   const dispatch: AppDispatch = useDispatch()
   const { liveViewRealTimeData, vehicleCountData, systemStatusData, connectionData } = useSelector(
@@ -121,10 +122,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     }
   }
 
-  const isEquals = (a: any, b: any) => {
-    return JSON.stringify(a) === JSON.stringify(b)
-  }
-
   useEffect(() => {
     if (cameraSetting) {
       const dropdownData = cameraSetting.map(({ alpr_cam_id , cam_id }) => ({
@@ -154,9 +151,14 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         const filterDataa = liveViewRealTimeData.data.filter((item) => item.camera_id === LPRCameraSetting)
         setLastRecognitionListData(filterDataa)
       }
-      if (liveViewRealTimeData.data.length > 0 && !isEquals(liveViewRealTimeData.data[0], originalData[0])) {
-        setUpdateLastRecognition(liveViewRealTimeData.data[0]) // latest data
+      if (liveViewRealTimeData.data.length > 0 && !isEquals(liveViewRealTimeData.data, originalData)) {
         setOriginalData(liveViewRealTimeData.data)
+        setUpdateLastRecognition(liveViewRealTimeData.data[0])
+        const specialPlateDetect = liveViewRealTimeData.data.filter((row) => row.special_plate !== null && row.is_special_plate)
+        if (!isEquals(specialPlateDetect, lprSpecialPlateData)) {
+          setLprSpecialPlateData(specialPlateDetect)
+          setUpdateSpecialPlate(specialPlateDetect[0])
+        }
       }
     }
   }, [liveViewRealTimeData])
@@ -205,8 +207,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
       setLastRecognitionListData(originalData)
     }
     else {
-      const filterDataa = originalData.filter((item) => item.camera_id === LPRCameraSetting)
-      setLastRecognitionListData(filterDataa)
+      const filterData = originalData.filter((item) => item.camera_id === LPRCameraSetting)
+      setLastRecognitionListData(filterData)
     }
   }, [LPRCameraSetting])
 
@@ -241,58 +243,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     setIsLoading(true)
 
     setTimeout(async () => {
-      const data: SearchResult = {
-        isSelected: false,
-        id: item.id,
-        plate: item.plate,
-        location: "",
-        pathImage: item.plate_image,
-        pathImageVehicle: item.vehicle_image,
-        directionString: "",
-        brand: item.vehicle_make,
-        model: item.vehicle_make_model,
-        color: item.vehicle_color,
-        directionDetail: [
-          {
-            color: "",
-            direction: "",
-            dateTime: "",
-          }
-        ],
-        periodTime: item.epoch_start,
-        map: [
-          {
-            lat: item.gps_latitude ? item.gps_latitude : 0,
-            lng: item.gps_longitude ? item.gps_longitude : 0,
-          }
-        ],
-        vehicle: {
-          id: 0,
-          plate: `${item.plate} ${item.region_info.name_th ? item.region_info.name_th : ""}`,
-          location: "",
-          type: item.vehicle_body_type,
-          brand: item.vehicle_make,
-          color: item.vehicle_color,
-          model: item.vehicle_make_model,
-          date: "", 
-          time: "", 
-          accuracy: item.plate_confidence,
-          imgCar: `${FILE_URL}${item.vehicle_image}`,
-          imgPlate: `${FILE_URL}${item.plate_image}`, 
-        },
-        ownerPerson: {
-          name: "นายอนุวัฒน์ เสถียรพิศุทธิ์",
-          nationNumber: 0,
-          address: "22/78 ซ.พัฒนาการ32 ถ.พัฒนาการ แขวงพัฒนาการ เขตสวนหลวง กรุงเทพมหานคร",
-        },
-        benefitPerson: {
-          name: "นายอนุวัฒน์ เสถียรพิศุทธิ์",
-          nationNumber: 0,
-          address: "22/78 ซ.พัฒนาการ32 ถ.พัฒนาการ แขวงพัฒนาการ เขตสวนหลวง กรุงเทพมหานคร",
-        }
-      }
-      setDetailData(data)
-      setCompareData([data, data])
+      setDetailData(item)
+      setDirectionDetail(directionDetail)
       setOpenFullDirectionDialog(true)
       setIsLoading(false)
     }, 500)
@@ -370,7 +322,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
               [clip-path:polygon(0_0,calc(100%-10px)_0,100%_100%,0_100%)] 
               ${selectedMenu === "lastRecognition" ? 
                 "bg-[var(--background-color)] border-[1px] border-dodgerBlue group-hover:bg-slate-500" : 
-                "bg-geyser group-hover:white"}`
+                "bg-geyser group-hover:white text-black"}`
               }
             >
               <div>
@@ -400,7 +352,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
               transform skew-x-[20deg] origin-left 
               ${selectedMenu === "vehicleCount" ? 
                 "bg-[var(--background-color)] border-[1px] border-dodgerBlue group-hover:bg-slate-500" : 
-                "bg-geyser group-hover:white"}`
+                "bg-geyser group-hover:white text-black"}`
               }
             >
               <div className='-skew-x-[20deg]'>
@@ -430,7 +382,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
               transform skew-x-[20deg] origin-left 
               ${selectedMenu === "systemStatus" ? 
                 "bg-[var(--background-color)] border-[1px] border-dodgerBlue group-hover:bg-slate-500" : 
-                "bg-geyser group-hover:white"}`
+                "bg-geyser group-hover:white text-black"}`
               }
             >
               <div className='-skew-x-[20deg]'>
@@ -460,7 +412,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
               transform skew-x-[20deg] origin-left
               ${selectedMenu === "connection" ? 
                 "bg-[var(--background-color)] border-[1px] border-dodgerBlue group-hover:bg-slate-500" : 
-                "bg-geyser group-hover:white"}`
+                "bg-geyser group-hover:white text-black"}`
               }
             >
               <div className='-skew-x-[20deg]'>
@@ -480,18 +432,17 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
             </button>
           </div>
           {/* Collapse Button */}
-          <div className="relative group ml-[1.64px]">
-            <div className="absolute inset-0 bg-blue-500/20 
-            transform skew-x-[20deg] origin-left rounded-r-lg" />
+          <div className="relative group ml-[1.4px]">
+            <div className="absolute inset-0 bg-blue-500/20 transform origin-left" />
             <button
               type="button"
               onClick={() => handleOnButtonClick("collapse")}
-              className="relative flex items-center space-x-2 pl-2 pr-4 py-1 bg-cornflower group-hover:bg-cornflower/50
+              className="relative flex items-center space-x-2 pl-2 pr-[11px] bg-cornflower group-hover:bg-cornflower/50
               transform skew-x-[20deg] origin-left"
             >
               <div className='-skew-x-[20deg]'>
                 <div className="flex">
-                  <RiArrowRightSFill className="w-[25px] h-[20px]" />
+                  <RiArrowRightSFill className="w-[30px] h-[28px]" />
                 </div>
               </div>
             </button>
@@ -547,16 +498,16 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                       <div className='flex h-[100px] w-full'>
                         <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
                           <img 
-                            key={`${index}_1`} 
-                            src={`${FILE_URL}${item.vehicle_image}`} 
+                            key={`vehicle_img_${item.id}_${item.vehicle_image}`}
+                            src={`${FILE_URL}${item.vehicle_image}?t=${Date.now()}`} 
                             alt="Vehicle Image"
                             className="w-full h-full" 
                           />
                         </div>
                         <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
                           <img 
-                            key={`${index}_2`} 
-                            src={`${FILE_URL}${item.plate_image}`} 
+                            key={`plate_img_${item.id}_${item.plate_image}`}
+                            src={`${FILE_URL}${item.plate_image}?t=${Date.now()}`} 
                             alt="Plate Image"
                             className="w-full h-[50%]" 
                           />
@@ -574,22 +525,22 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">ประเภท</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={capitalizeFirstLetter(item.vehicle_body_type)}>{capitalizeFirstLetter(item.vehicle_body_type)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_body_type)}>{reformatString(item.vehicle_body_type)}</span>
                         </div>
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">ยี่ห้อ</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={capitalizeFirstLetter(item.vehicle_make)}>{capitalizeFirstLetter(item.vehicle_make)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_make)}>{reformatString(item.vehicle_make)}</span>
                         </div>
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">สี</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={capitalizeFirstLetter(item.vehicle_color)}>{capitalizeFirstLetter(item.vehicle_color)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_color)}>{reformatString(item.vehicle_color)}</span>
                         </div>
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">รุ่น</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={capitalizeFirstLetter(item.vehicle_make_model)}>{capitalizeFirstLetter(item.vehicle_make_model)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_make_model)}>{reformatString(item.vehicle_make_model)}</span>
                         </div>
                         <div className='absolute bottom-0 right-0'>
                           <button 
@@ -609,20 +560,13 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
               </div>
             </div>
           </div>
-          {isOpenFullDirectionDialog ? (
+          <Dialog open={isOpenFullDirectionDialog} onClose={() => {}} className="absolute z-50">
             <LocationDetailDialog
-              data={detailData}
-              compareData={compareData}
-              open={isOpenFullDirectionDialog}
+              detailData={detailData}
               close={handleFullDirectionDialogClose}
               isCompare={compare}
-              closeText='ยกเลิก'
-              closeButtonCss='custom-close-btn'
-              isLiveView={true}
             />
-          ) : (
-            <></>
-          )}
+          </Dialog>
         </div>
         {/* Vehicle Count */}
         <div className={ selectedMenu === "vehicleCount" ? "" : "hidden"}>
@@ -692,7 +636,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                             <td className='text-start pl-[5px]'>{format(new Date(item.createdAt), "HH:mm:ss")} <span>&#62;</span> {item.details}</td>
                           </tr>
                         ))
-                      : ""}
+                      : null}
                   </tbody>
                 </table>
               </div>
@@ -739,7 +683,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                             </td>
                           </tr>
                         ))
-                      : ""}
+                      : null}
                   </tbody>
                 </table>
               </div>

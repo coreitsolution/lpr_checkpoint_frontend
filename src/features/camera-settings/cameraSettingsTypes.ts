@@ -36,6 +36,7 @@ export interface FfmpegOptions {
 
 export interface CameraScreenSettingDetail {
   id: number
+  key: string
   name: string
   value: string
   description: string

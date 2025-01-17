@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { FILE_URL } from '../../config/apiConfig'
@@ -8,6 +7,8 @@ import * as XLSX from "xlsx"
 import { SelectChangeEvent } from '@mui/material/Select'
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
@@ -61,6 +62,7 @@ function SpecialSuspectPerson() {
   const [fileImportError, setFileImportError] = useState<string>("")
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [page, setPage] = useState(1)
+  const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(100)
   const [rowsPerPageOptions] = useState([20, 50, 100])
@@ -412,6 +414,33 @@ function SpecialSuspectPerson() {
     await fetchSpecialSuspectPeopleData(page.toString(), event.target.value)
   }
 
+  const handlePageInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target.value
+    const cleaned = input.replace(/\D/g, '')
+
+    if (cleaned) {
+      const numberInput = Number(cleaned);
+      if (numberInput > 0 && numberInput <= totalPages) {
+        setPageInput(numberInput)
+      }
+    }
+    else if (cleaned === "") {
+      setPageInput(1)
+    }
+    return cleaned
+  }
+
+  const handlePageInputKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+  
+      setIsLoading(true)
+      setPage(pageInput)
+  
+      await fetchSpecialSuspectPeopleData(pageInput.toString(), rowsPerPage.toString())
+    }
+  }
+
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
@@ -557,7 +586,10 @@ function SpecialSuspectPerson() {
               rowsPerPageOptions={rowsPerPageOptions}
               handleRowsPerPageChange={handleRowsPerPageChange}
               totalPages={totalPages}
-              setPage={setPage}
+              textFieldFontSize="15px"
+              pageInput={pageInput.toString()}
+              handlePageInputKeyDown={handlePageInputKeyDown}
+              handlePageInputChange={handlePageInputChange}
             />
           </div>
         </div>
@@ -566,18 +598,20 @@ function SpecialSuspectPerson() {
             setFilterData={setFilterData}
           />
         </div>
-        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="relative z-50">
-          <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
-            <DialogPanel className="space-y-4 border bg-[var(--background-color)] p-5 max-w-[80%] text-white w-[80vw]">
+        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="absolute z-30">
+          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] text-white w-[80vw]">
               <div className="flex justify-between">
                 <DialogTitle className="text-[28px]">จัดการบุคคลต้องสงสัย</DialogTitle>
               </div>
-              <ManageSpecialSuspectPerson 
-                closeDialog={() => setIsAddRegistationOpen(false)} 
-                selectedRow={selectedRow}
-                isEditMode={isEditMode}
-              />
-            </DialogPanel>
+              <div className="px-5 pb-5">
+                <ManageSpecialSuspectPerson 
+                  closeDialog={() => setIsAddRegistationOpen(false)} 
+                  selectedRow={selectedRow}
+                  isEditMode={isEditMode}
+                />
+              </div>
+            </div>
           </div>
         </Dialog>
       </div>

@@ -1,10 +1,10 @@
 import { CameraScreenSettingDetail, CameraDetailSettings, StreamDetail } from "../features/camera-settings/cameraSettingsTypes";
 
 export const cameraDetailSettingsData: CameraDetailSettings[] =
-Array.from({length:3}, (_, i) => (
+Array.from({length:10}, (_, i) => (
   {
     id: i + 1,
-    cam_id: "CAM-102",
+    cam_id: `CAM-10${i}`,
     cam_uid: "UID98765",
     checkpoint_name:  (i + 1) % 2 === 0 ? "Checkpoint A" : (i + 1) % 3 === 0 ? "Checkpoint C" : "Checkpoint B",
     division_id: 101,
@@ -15,7 +15,7 @@ Array.from({length:3}, (_, i) => (
     route: "Route 66",
     latitude: "13.7563",
     longitude: "100.5018",
-    rtsp_live_url: "rtsp://viewer:Lprviewer@58.136.154.95:8554/live",
+    rtsp_live_url: "rtsp://viewer:Lprviewer@localhost:8554/live",
     rtsp_process_url: "rtsp://192.168.1.10/process",
     stream_encode_id: 1,
     stream_encode: {
@@ -27,7 +27,7 @@ Array.from({length:3}, (_, i) => (
     },
     api_server_url: "https://api.server.url",
     live_server_url: "https://live.server.url",
-    live_stream_url: "ws://58.136.154.95:10002",
+    live_stream_url: "ws://localhost:10002",
     wsport: 8080,
     pc_serial_number: "PC123456789",
     license_key: "LICENSE-XYZ-987",
@@ -41,7 +41,7 @@ Array.from({length:3}, (_, i) => (
     visible: 1,
     active: 1,
     alive: 1,
-    alpr_cam_id: 111,
+    alpr_cam_id: 10000001,
     detecion_count: 0,
     last_online: "2024-12-17T14:35:00Z",
     last_check: "2024-12-17T15:00:00Z",
@@ -53,9 +53,19 @@ Array.from({length:3}, (_, i) => (
 export const cameraScreenSettingDetail: CameraScreenSettingDetail[] = [
   {
     id: 1,
+    key: "live_view_count",
     name: "Live view",
     value: "1",
     description: "Live view",
+    created_at: "2024-12-17T14:35:00Z",
+    updated_at: "2024-12-17T14:35:00Z",
+  },
+  {
+    id: 2,
+    key: "checkpoint_name",
+    name: "Checkpoint name",
+    value: "Office",
+    description: "Checkpoint name",
     created_at: "2024-12-17T14:35:00Z",
     updated_at: "2024-12-17T14:35:00Z",
   }
@@ -65,7 +75,7 @@ export const streamDetailData: StreamDetail[] = [
   {
     uid: '260f15af-a923-43ca-9ff5-31045ae92d76',
     name: 'CAM-102',
-    streamUrl: 'rtsp://viewer:Lprviewer@58.136.154.95:8554/live',
+    streamUrl: 'rtsp://viewer:Lprviewer@localhost:8554/live',
     wsPort: '9102',
     ffmpegOptions: {
       '-stats': '',
@@ -81,7 +91,7 @@ export const streamDetailData: StreamDetail[] = [
   {
     uid: '260f15af-a923-43ca-9ff5-31045ae92d77',
     name: 'CAM-106',
-    streamUrl: 'rtsp://viewer:Lprviewer@58.136.154.95:8554/live',
+    streamUrl: 'rtsp://viewer:Lprviewer@localhost:8554/live',
     wsPort: '9106',
     ffmpegOptions: {
       '-stats': '',
@@ -97,7 +107,7 @@ export const streamDetailData: StreamDetail[] = [
   {
     uid: '7fe28328-290f-48ae-be2d-b8c4fd71668c',
     name: 'CAM-125',
-    streamUrl: 'rtsp://viewer:Lprviewer@58.136.154.95:8554/live',
+    streamUrl: 'rtsp://viewer:Lprviewer@localhost:8554/live',
     wsPort: '9125',
     ffmpegOptions: {
       '-stats': '',
@@ -113,7 +123,7 @@ export const streamDetailData: StreamDetail[] = [
   {
     uid: '5555555-290f-48ae-be2d-b8c4fd71668c',
     name: 'CAM-555',
-    streamUrl: 'rtsp://viewer:Lprviewer@58.136.154.95:9999/live',
+    streamUrl: 'rtsp://viewer:Lprviewer@localhost:9999/live',
     wsPort: '9156',
     ffmpegOptions: {
       '-stats': '',

@@ -4,12 +4,12 @@ import { Status } from "../../constants/statusEnum"
 
 // Types
 import { SpecialPlateSearchResult, PdfDowload, SpecialSuspectPeopleSearchResult } from "./SearchDataTypes"
-import { DetactSpecialPlate } from "../../features/api/types";
+import { DetactSpecialPlate, FilterSpecialPlatesBody } from "../../features/api/types";
 
 // API
 import {
   dowloadPdfSpecialPlate,
-  fetchSpecialPlateSearchData,
+  postSpecialPlateSearchData,
   fetchSpecialSuspectPeopleSearchData
 } from "./SearchDataAPI"
 
@@ -29,10 +29,10 @@ const initialState: SearchDataState = {
   error: null,
 }
 
-export const fetchSpecialPlateSearchDataThunk = createAsyncThunk(
-  "searchData/fetchSpecialPlateSearchData",
-  async (param?: Record<string, string>) => {
-    const response = await fetchSpecialPlateSearchData(param)
+export const postSpecialPlateSearchDataThunk = createAsyncThunk(
+  "searchData/postSpecialPlateSearchData",
+  async (body: FilterSpecialPlatesBody) => {
+    const response = await postSpecialPlateSearchData(body)
     return response
   }
 )
@@ -60,14 +60,14 @@ const searchDataSlice = createSlice({
   extraReducers: (builder) => {
     // Special Plates
     builder
-      .addCase(fetchSpecialPlateSearchDataThunk.pending, (state) => {
+      .addCase(postSpecialPlateSearchDataThunk.pending, (state) => {
         state.status = Status.LOADING
       })
-      .addCase(fetchSpecialPlateSearchDataThunk.fulfilled, (state, action) => {
+      .addCase(postSpecialPlateSearchDataThunk.fulfilled, (state, action) => {
         state.status = Status.SUCCEEDED
         state.specialPlateSearchData = action.payload
       })
-      .addCase(fetchSpecialPlateSearchDataThunk.rejected, (state, action) => {
+      .addCase(postSpecialPlateSearchDataThunk.rejected, (state, action) => {
         state.status = Status.FAILED
         state.error = action.error.message || "Failed to fetch special plates data."
       })

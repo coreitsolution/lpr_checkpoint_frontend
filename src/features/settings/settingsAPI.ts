@@ -11,8 +11,15 @@ import {
 
 export const fetchSettings = async (param?: Record<string, string>): Promise<SettingData> => {
   if (isDevEnv) {
+    let filterData:SettingDetail[] = []
+    if (param && param.filter && param.filter === "key:live_view_count") {
+      filterData = mockSettings.filter((row) => row.key === "live_view_count")
+    }
+    else if (param && param.filter && param.filter === "key:checkpoint_name") {
+      filterData = mockSettings.filter((row) => row.key === "checkpoint_name")
+    }
     const data = {
-      data: mockSettings
+      data: filterData
     }
     return Promise.resolve(data)
   }

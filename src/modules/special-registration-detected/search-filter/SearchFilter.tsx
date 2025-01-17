@@ -7,12 +7,14 @@ import { RootState, AppDispatch } from "../../../app/store"
 
 // Types
 import { FilterSpecialPlates } from "../../../features/api/types"
+import { VehicleModelsDetail } from "../../../features/dropdown/dropdownTypes"
 
 // Components
 import SelectBox from '../../../components/select-box/SelectBox'
 import TextBox from '../../../components/text-box/TextBox'
 import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePickerBuddhist"
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
+import AutoCompleteMultiple, { OptionType } from "../../../components/auto-complete/AutoCompleteMultiple"
 
 // API
 import { 
@@ -27,26 +29,24 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const dispatch: AppDispatch = useDispatch()
   const [letterCategory, setLetterCategory] = useState("")
   const [carRegistration, setCarRegistration] = useState("")
-  const [plateConfidence, setPlateConfidence] = useState("")
-  const [selectedProvince, setSelectedProvince] = useState<string>('')
-  const [selectedCarType, setSelectedCarType] = useState<string>('')
-  const [selectedCarBrand, setSelectedCarBrand] = useState<string>('')
-  const [selectedCarModel, setSelectedCarModel] = useState<string>('')
-  const [selectedCarColor, setSelectedCarColor] = useState<string>('')
-  const [selectedCarLane, setSelectedCarLane] = useState<string>('')
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<string>('')
-  const [checkedPlateConfidence, setCheckedPlateConfidence] = useState<number>(0)
+  const [selectedProvince, setSelectedProvince] = useState<string | ''>('')
+  const [selectedCarType, setSelectedCarType] = useState<string | ''>('')
+  const [selectedCarBrand, setSelectedCarBrand] = useState<string | ''>('')
+  const [selectedCarModel, setSelectedCarModel] = useState<string | ''>('')
+  const [selectedCarColor, setSelectedCarColor] = useState<string | ''>('')
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<OptionType[]>([])
   const [selectedRegistrationType, setSelectedRegistrationType] = useState<number | ''>('')
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null)
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null)
   const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string, value: number }[]>([])
   const [provincesOptions, setProvincesOptions] = useState<{ label: string, value: string }[]>([])
-  const [carTypesOptions] = useState<{ label: string, value: number }[]>([])
-  const [carBrandsOptions] = useState<{ label: string, value: number }[]>([])
-  const [carModelsOptions] = useState<{ label: string, value: number }[]>([])
-  const [carColorsOptions] = useState<{ label: string, value: number }[]>([])
-  const [checkpointOptions, setCheckpointOptions] = useState<{ label: string, value: number }[]>([])
-  const { provinces, registrationTypes } = useSelector(
+  const [carTypesOptions, setCarTypesOptions] = useState<{ label: string, value: string }[]>([])
+  const [carBrandsOptions, setCarBrandsOptions] = useState<{ label: string, value: string }[]>([])
+  const [carOriModelsOptions, setOriCarModelsOptions] = useState<VehicleModelsDetail[]>([])
+  const [carModelsOptions, setCarModelsOptions] = useState<{ label: string, value: string }[]>([])
+  const [carColorsOptions, setCarColorsOptions] = useState<{ label: string, value: string }[]>([])
+  const [checkpointOptions, setCheckpointOptions] = useState<{ label: string, value: string }[]>([])
+  const { provinces, registrationTypes, vehicleColors, vehicleMakes, vehicleModels, regions, vehicleBodyTypesTh } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -59,26 +59,24 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   }, [dispatch])
 
   const filterData: FilterSpecialPlates = {
-    letterCategory: letterCategory,
-    carRegistration: carRegistration,
-    selectedProvince: selectedProvince,
-    selectedCarType: selectedCarType,
-    selectedCarBrand: selectedCarBrand,
-    selectedCarModel: selectedCarModel,
-    selectedCarColor: selectedCarColor,
-    selectedCarLane: selectedCarLane,
-    plateConfidence: checkedPlateConfidence === 0 ? 0 : Number(plateConfidence),
-    selectedStartDate: selectedStartDate,
-    selectedEndDate: selectedEndDate,
-    selectedCheckpoint: selectedCheckpoint,
-    selectedRegistrationType: registrationTypes?.data?.find((row) => row.id === selectedRegistrationType)?.title_en || 'all',
+    plateGroup: letterCategory,
+    plateNumber: carRegistration,
+    regionCode: regions?.data?.find((row) => row.name === selectedProvince)?.code || "",
+    vehicleBodyTypeTH: selectedCarType.replace("all", ""),
+    vehicleMake: selectedCarBrand.replace("all", ""),
+    vehicleModel: selectedCarModel.replace("all", ""),
+    vehicleColor: selectedCarColor.replace("all", ""),
+    startDate: selectedStartDate ? selectedStartDate.toUTCString() : "",
+    endDate: selectedEndDate ? selectedEndDate.toUTCString() : "",
+    camIdList: selectedCheckpoint.map((item) => item.value),
+    plateTypeId: selectedRegistrationType || 0,
   }
 
   useEffect(() => {
     if (provinces && provinces.data) {
       const options = provinces.data.map((row) => ({
         label: row.name_th,
-        value: row.name_th,
+        value: row.name_en,
       }))
       setProvincesOptions(options)
     }
@@ -91,39 +89,94 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         value: row.id,
       }))
       setRegistrationTypesOptions([{label: "ทั้งหมด", value: 0}, ...options])
+      setSelectedRegistrationType(0)
     }
   }, [registrationTypes])
 
   useEffect(() => {
     if (cameraSettings && cameraSettings.data) {
       const options = cameraSettings.data.map((row) => ({
-        label: row.checkpoint_name,
-        value: row.id,
+        label: row.cam_id,
+        value: row.cam_id,
       }))
       setCheckpointOptions(options.sort((a, b) => { return a.label.localeCompare(b.label) }))
     }
   }, [cameraSettings])
 
   useEffect(() => {
-    if (registrationTypesOptions && registrationTypesOptions.length > 0) {
-      setSelectedRegistrationType(0)
+    if (vehicleBodyTypesTh && vehicleBodyTypesTh.data) {
+      const options = vehicleBodyTypesTh.data.map((row) => ({
+        label: row.body_type_th,
+        value: row.body_type_th,
+      }))
+      setCarTypesOptions([{label: "ทุกประเภท", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
+      setSelectedCarType('all')
     }
-  }, [registrationTypesOptions])
+  }, [vehicleBodyTypesTh])
+
+  useEffect(() => {
+    if (vehicleColors && vehicleColors.data) {
+      const options = vehicleColors.data.map((row) => ({
+        label: row.color_th,
+        value: row.color,
+      }))
+      setCarColorsOptions([{label: "ทุกสี", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
+      setSelectedCarColor('all')
+    }
+  }, [vehicleColors])
+
+  useEffect(() => {
+    if (vehicleMakes && vehicleMakes.data) {
+      const options = vehicleMakes.data.map((row) => ({
+        label: row.make_en,
+        value: row.make,
+      }))
+      setCarBrandsOptions([{label: "ทุกยี่ห้อ", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
+      setSelectedCarBrand('all')
+    }
+  }, [vehicleMakes])
+
+  useEffect(() => {
+    if (vehicleModels && vehicleModels.data) {
+      const options = vehicleModels.data.map((row) => ({
+        label: row.model_en,
+        value: row.model,
+      }))
+      setOriCarModelsOptions(vehicleModels.data)
+      setCarModelsOptions(([{label: "ทุกรุ่น", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
+      setSelectedCarModel('all')
+    }
+  }, [vehicleModels])
+
+  useEffect(() => {
+    if (selectedCarBrand && selectedCarBrand !== 'all' && carOriModelsOptions) {
+      setCarModelsOptions(carOriModelsOptions.filter((row) => row.make === selectedCarBrand).map((row) => ({
+        label: row.model_en,
+        value: row.model
+      })).sort((a, b) => { return a.label.localeCompare(b.label) }))
+    }
+    else if (selectedCarBrand && selectedCarBrand === 'all' && carOriModelsOptions) {
+      const options = carOriModelsOptions.map((row) => ({
+        label: row.model_en,
+        value: row.model,
+      }))
+      setCarModelsOptions(([{label: "ทุกรุ่น", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
+    }
+    
+  }, [selectedCarBrand])
 
   const handleReset = () => {
     setLetterCategory("")
     setCarRegistration("")
-    setSelectedProvince('')
+    setSelectedProvince("")
     setSelectedRegistrationType(0)
-    setPlateConfidence("")
-    setSelectedCarType('')
-    setSelectedCarBrand('')
-    setSelectedCarModel('')
-    setSelectedCarColor('')
-    setSelectedCarLane('')
-    setCheckedPlateConfidence(0)
+    setSelectedCarType('all')
+    setSelectedCarBrand('all')
+    setSelectedCarModel('all')
+    setSelectedCarColor('all')
     setSelectedStartDate(null)
     setSelectedEndDate(null)
+    setSelectedCheckpoint([])
   }
 
   const handleSearch = () => {
@@ -143,7 +196,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     value: { value: any; label: string } | null
   ) => {
     event.preventDefault()
-    setSelectedCarType(value ? value.value : 0)
+    setSelectedCarType(value ? value.value : "all")
   };
 
   const handleCarBrandChange = (
@@ -151,7 +204,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     value: { value: any; label: string } | null
   ) => {
     event.preventDefault()
-    setSelectedCarBrand(value ? value.value : 0)
+    setSelectedCarBrand(value ? value.value : "all")
   };
 
   const handleCarModelChange = (
@@ -159,7 +212,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     value: { value: any; label: string } | null
   ) => {
     event.preventDefault()
-    setSelectedCarModel(value ? value.value : 0)
+    setSelectedCarModel(value ? value.value : "all")
   };
 
   const handleCarColorChange = (
@@ -167,15 +220,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     value: { value: any; label: string } | null
   ) => {
     event.preventDefault()
-    setSelectedCarColor(value ? value.value : 0)
-  };
-
-  const handleCheckPointChange = (
-    event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
-  ) => {
-    event.preventDefault()
-    setSelectedCheckpoint(value ? value.value : 0)
+    setSelectedCarColor(value ? value.value : "all")
   };
 
   return (
@@ -207,49 +252,67 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
           </div>
 
           {/* Form */}
-          <div className="p-[10px] h-[84vh] overflow-auto">
+          <div className="p-[10px] h-[88vh] overflow-auto">
+            <div className="grid grid-cols-1">
+              <AutoCompleteMultiple 
+                id="select-checkpoint"
+                sx={{ marginTop: "5px"}}
+                value={selectedCheckpoint}
+                onChange={(_, newValue) => {
+                  setSelectedCheckpoint([
+                    ...newValue,
+                  ]);
+                }}
+                options={checkpointOptions}
+                label="จุดตรวจ"
+                labelFontSize="15px"
+              />
+            </div>
             <div className="grid grid-cols-1 my-[5px]">
-              <label>วันที่เริ่มต้น-สิ้นสุด</label>
-              <div className="grid grid-cols-2 gap-1">
-                {/* Start Date */}
-                <DatePickerBuddhist
-                  value={selectedStartDate}
-                  sx={{
-                    marginTop: "10px",
-                    borderRadius: "5px",
-                    backgroundColor: "white",
-                    "& .MuiTextField-root": {
-                      height: "fit-content",
-                    },
-                    "& .MuiOutlinedInput-input": {
-                      fontSize: 14
-                    }
-                  }}
-                  className="w-full"
-                  id="start-date"
-                  onChange={(value) => setSelectedStartDate(value)}
-                >
-                </DatePickerBuddhist>
-                {/* End Date */}
-                <DatePickerBuddhist
-                  value={selectedEndDate}
-                  sx={{
-                    marginTop: "10px",
-                    borderRadius: "5px",
-                    backgroundColor: "white",
-                    "& .MuiTextField-root": {
-                      height: "fit-content",
-                    },
-                    "& .MuiOutlinedInput-input": {
-                      fontSize: 14
-                    }
-                  }}
-                  className="w-full"
-                  id="end-date"
-                  onChange={(value) => setSelectedEndDate(value)}
-                >
-                </DatePickerBuddhist>
-              </div>
+              <DatePickerBuddhist
+                value={selectedStartDate}
+                sx={{
+                  marginTop: "5px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14
+                  }
+                }}
+                className="w-full"
+                id="start-date"
+                label="วันที่เริ่มต้น"
+                labelTextSize="15px"
+                isWithTime={true}
+                onChange={(value) => setSelectedStartDate(value)}
+              >
+              </DatePickerBuddhist>
+            </div>
+            <div className="grid grid-cols-1 my-[5px]">
+              <DatePickerBuddhist
+                value={selectedEndDate}
+                sx={{
+                  marginTop: "5px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14
+                  }
+                }}
+                className="w-full"
+                id="end-date"
+                label="วันที่สิ้นสุด"
+                labelTextSize="15px"
+                isWithTime={true}
+                onChange={(value) => setSelectedEndDate(value)}
+              >
+              </DatePickerBuddhist>
             </div>
             <div className="grid grid-cols-2 my-[5px] gap-1">
               <TextBox
@@ -278,7 +341,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
             <div className="grid grid-cols-1 my-[5px]">
               <AutoComplete 
                 id="provice-select"
-                sx={{ marginTop: "10px"}}
+                sx={{ marginTop: "5px"}}
                 value={selectedProvince}
                 onChange={handleProvicesChange}
                 options={provincesOptions}
@@ -289,7 +352,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
             <div className="grid grid-cols-1 my-[5px]">
               <AutoComplete 
                 id="select-car-type"
-                sx={{ marginTop: "10px"}}
+                sx={{ marginTop: "5px"}}
                 value={selectedCarType}
                 onChange={handleCarTypeChange}
                 options={carTypesOptions}
@@ -297,32 +360,32 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 labelFontSize="15px"
               />
             </div>
-            <div className="grid grid-cols-1 my-[5px]">
+            <div className="grid grid-cols-2 my-[5px] gap-1">
               <AutoComplete 
                 id="select-car-brand"
-                sx={{ marginTop: "10px"}}
+                sx={{ marginTop: "5px"}}
                 value={selectedCarBrand}
                 onChange={handleCarBrandChange}
                 options={carBrandsOptions}
                 label="ยี่ห้อ"
                 labelFontSize="15px"
+                title={selectedCarBrand !== "all" ? carBrandsOptions.find((row) => row.value === selectedCarBrand)?.label : ""}
               />
-            </div>
-            <div className="grid grid-cols-1 my-[5px]">
               <AutoComplete 
                 id="select-car-model"
-                sx={{ marginTop: "10px"}}
+                sx={{ marginTop: "5px"}}
                 value={selectedCarModel}
                 onChange={handleCarModelChange}
                 options={carModelsOptions}
                 label="รุ่นรถ"
                 labelFontSize="15px"
+                title={selectedCarModel !== "all" ? carModelsOptions.find((row) => row.value === selectedCarModel)?.label : ""}
               />
             </div>
             <div className="grid grid-cols-1 my-[5px]">
               <AutoComplete 
                 id="select-car-color"
-                sx={{ marginTop: "10px"}}
+                sx={{ marginTop: "5px"}}
                 value={selectedCarColor}
                 onChange={handleCarColorChange}
                 options={carColorsOptions}
@@ -331,29 +394,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               />
             </div>
             <div className="grid grid-cols-1 my-[5px]">
-              <AutoComplete 
-                id="select-checkpoint"
-                sx={{ marginTop: "10px"}}
-                value={selectedCheckpoint}
-                onChange={handleCheckPointChange}
-                options={checkpointOptions}
-                label="จุดตรวจ"
-                labelFontSize="15px"
-              />
-            </div>
-            <div className="grid grid-cols-1 my-[5px]">
               <SelectBox
-                sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
+                sx={{ marginTop: "5px", height: "40px", fontSize: "15px" }}
                 id="select-registrations-type"
                 className="w-full"
                 value={selectedRegistrationType}
                 onChange={(event: SelectChangeEvent<any>) => setSelectedRegistrationType(event.target.value)}
                 options={registrationTypesOptions}
-                label="ประเภททะเบียน"
+                label="กลุ่มทะเบียน"
                 labelFontSize="15px"
               />
             </div>
-            <div id="button-group" className="flex justify-center mt-[15px]">
+            <div id="button-group" className="flex justify-center mt-[20px]">
               <button 
                 type="button" 
                 className="flex justify-center items-center bg-dodgerBlue rounded w-[90px] h-[35px] mr-[10px]"

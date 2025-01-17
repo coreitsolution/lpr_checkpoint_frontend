@@ -69,7 +69,7 @@ const TextBox: React.FC<TextBoxProps> = ({
         slotProps={{
           input: {
             className: `bg-white w-full ${className}`, // Custom styling for the input
-            style: { color: "black", fontSize: textFieldFontSize || undefined }, // Ensure text is white
+            style: { color: "black" },
           },
         }}
         helperText={isError ? helperText : ""}

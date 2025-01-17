@@ -21,7 +21,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
 
   const [letterCategory, setLetterCategory] = useState("")
   const [carRegistration, setCarRegistration] = useState("")
-  const [selectedProvince, setSelectedProvince] = useState<{ value: any; label: string } | null>(null);
+  const [selectedProvince, setSelectedProvince] = useState<string | ''>('')
   const [selectedRegistrationType, setSelectedRegistrationType] = useState<number | ''>('')
   const [agencyText, setAgencyText] = useState("")
   const [selectedStatus, setSelectedStatus] = useState<number | ''>('')
@@ -32,7 +32,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const filterData: FilterSpecialRegistration = {
     letterCategory: letterCategory,
     carRegistration: carRegistration,
-    selectedProvince: selectedProvince?.value,
+    selectedProvince: selectedProvince,
     selectedRegistrationType: selectedRegistrationType,
     agency: agencyText,
     selectedStatus: selectedStatus,
@@ -58,6 +58,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         value: row.id,
       }));
       setRegistrationTypesOptions([{label: "ทุกประเภท", value: 0}, ...options])
+      setSelectedRegistrationType(0)
     }
   }, [registrationTypes])
 
@@ -68,25 +69,17 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         value: row.id,
       }));
       setDataStatusOptions([{label: "ทุกสถานะ", value: 2}, ...options])
-    }
-  }, [dataStatus])
-
-  useEffect(() => {
-    if (dataStatusOptions && dataStatusOptions.length > 0) {
       setSelectedStatus(2)
     }
-    if (registrationTypesOptions && registrationTypesOptions.length > 0) {
-      setSelectedRegistrationType(0)
-    }
-  }, [dataStatusOptions, registrationTypesOptions])
+  }, [dataStatus])
 
   const handleReset = () => {
     setLetterCategory("")
     setCarRegistration("")
-    setSelectedProvince(null)
-    setSelectedRegistrationType("")
+    setSelectedProvince("")
+    setSelectedRegistrationType(0)
     setAgencyText("")
-    setSelectedStatus("")
+    setSelectedStatus(2)
   }
 
   const handleSearch = () => {
@@ -98,7 +91,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     value: { value: any; label: string } | null
   ) => {
     event.preventDefault()
-    setSelectedProvince(value)
+    setSelectedProvince(value ? value.value : 0)
   }
 
   return (

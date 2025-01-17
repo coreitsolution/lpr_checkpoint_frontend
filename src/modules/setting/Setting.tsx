@@ -4,10 +4,11 @@ import {
   MenuItem,
   Button,
   SelectChangeEvent,
+  Dialog,
+  DialogTitle,
 } from "@mui/material"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 
 // Modules
 import CameraSetting from './camera-setting/CameraSetting'
@@ -68,7 +69,7 @@ const Setting = () => {
     setIsLoading(true)
     dispatch(fetchCameraSettingsThunk())
     dispatch(fetchSettingsThunk({
-      "filter": "id:1"
+      "filter": "key:live_view_count"
     }))
   }, [dispatch])
 
@@ -82,9 +83,9 @@ const Setting = () => {
   }, [cameraSettings])
 
   useEffect(() => {
-    if (settingData && settingData.data) {
-      setCameraScreenSettingDetail(settingData.data[0])
-      const numValue = Number(settingData.data[0].value) || 1
+    if (settingData && settingData.live_view_count && settingData.live_view_count.data) {
+      setCameraScreenSettingDetail(settingData.live_view_count.data[0])
+      const numValue = Number(settingData.live_view_count.data[0].value) || 1
       setSelectedScreenValue(numValue)
     }
   }, [settingData])
@@ -202,9 +203,9 @@ const Setting = () => {
             </Button>
           </div>
         </div>
-        <div className="rounded-lg overflow-hidden mt-[15px]">
+        <div className="rounded-lg overflow-y-auto h-[68vh] mt-[15px]">
           <table className="w-full">
-            <thead className="bg-swamp text-[15px] text-white">
+            <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80 text-[15px] text-white">
               <tr>
                 <th className="px-4 py-2">ลำดับ</th>
                 <th className="px-4 py-2">สถานะกล้อง</th>
@@ -257,44 +258,48 @@ const Setting = () => {
         </div>
       </div>
       {/* Camera Setting Dialog */}
-      <Dialog open={isCameraSettingOpen} onClose={() => {}} className="relative z-50">
-        <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
-          <DialogPanel 
-          className="space-y-4 border p-5 bg-black text-white 
-          w-full min-w-[700px] h-full max-h-[900px] overflow-y-auto"
+      <Dialog open={isCameraSettingOpen} onClose={() => {}} className="absolute z-30">
+        <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+          <div 
+          className="space-y-4 border bg-black text-white 
+          w-[90vw] min-w-[700px] h-full max-h-[900px] overflow-y-auto"
           >
             <div className="flex justify-between">
               <DialogTitle className="text-[28px]">ตั้งค่ากล้อง</DialogTitle>
             </div>
-            <CameraSetting 
-              closeDialog={handleCameraSettingScreenClose} 
-              selectedRow={selectedRow}
-              isEditMode={isEditMode}
-            />
-          </DialogPanel>
+            <div className="px-5 pb-5">
+              <CameraSetting 
+                closeDialog={handleCameraSettingScreenClose} 
+                selectedRow={selectedRow}
+                isEditMode={isEditMode}
+              />
+            </div>
+          </div>
         </div>
       </Dialog>
       {/* Sensor Setting Dialog */}
-      <Dialog open={isSensorSettingOpen} onClose={() => {}} className="relative z-50">
-        <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
-          <DialogPanel 
-          className="space-y-4 border bg-[var(--background-color)] p-5 bg-black text-white 
-          w-[50%] min-w-[700px] h-full max-h-[860px] overflow-y-auto"
+      <Dialog open={isSensorSettingOpen} onClose={() => {}} className="absolute z-30">
+        <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+          <div 
+          className="space-y-4 border bg-[var(--background-color)] bg-black text-white 
+          w-[50%] min-w-[700px] h-[92vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center">
               <DialogTitle className="text-[28px]">ตั้งค่าเซ็นเซอร์</DialogTitle>
               <button
                 onClick={handleSensorSettingScreenClose} 
-                className="text-white bg-transparent border-0 text-[28px]"
+                className="text-white bg-transparent border-0 text-[28px] pr-6"
               >
                 &times;
               </button>
             </div>
-            <SensorSetting 
-              closeDialog={handleSensorSettingScreenClose} 
-              selectedRow={selectedRow}
-            />
-          </DialogPanel>
+            <div className="px-5 pb-5">
+              <SensorSetting 
+                closeDialog={handleSensorSettingScreenClose} 
+                selectedRow={selectedRow}
+              />
+            </div>
+          </div>
         </div>
       </Dialog>
     </div>
