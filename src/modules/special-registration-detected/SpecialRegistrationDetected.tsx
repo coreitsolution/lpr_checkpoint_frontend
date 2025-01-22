@@ -3,11 +3,12 @@ import { motion } from "framer-motion"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { CSVLink } from "react-csv"
-import { format } from "date-fns"
 import {
   Dialog,
   SelectChangeEvent
 } from "@mui/material"
+import dayjs from 'dayjs'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
 
 // Context
 import { useHamburger } from "../../context/HamburgerContext"
@@ -21,7 +22,7 @@ import ImagesCarousel from "../../components/images-carousel/ImagesCarousel"
 import SearchFilter from "./search-filter/SearchFilter"
 
 // API
-import { postSpecialPlateSearchDataThunk } from "../../features/search-data/SearchDataSlice"
+import { postSpecialPlateSearchDataThunk, dowloadPdfSpecialPlateThunk } from "../../features/search-data/SearchDataSlice"
 
 // Types
 import { FilterSpecialPlates, FilterSpecialPlatesBody } from "../../features/api/types"
@@ -35,17 +36,21 @@ import { FILE_URL } from '../../config/apiConfig'
 
 // Constant
 import { SEPECIAL_PLATE_FILE_NAME } from "../../constants/filename"
+import { SearchSpecialRowPerPages } from "../../constants/dropdown"
+
+dayjs.extend(buddhistEra)
 
 const SpecialRegistrationDetected = () => {
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
   const [isImageCardShow, setIsImageCardShow] = useState(false)
+  const [isSearch, setIsSearch] = useState(false)
   const [page, setPage] = useState(1)
   const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(SearchSpecialRowPerPages[0])
   const [specialPlateSearchDataList, setSpecialPlateSearchDataList] = useState<LastRecognitionData[]>([])
-  const [rowsPerPageOptions] = useState([10, 20, 50, 100])
+  const [rowsPerPageOptions] = useState(SearchSpecialRowPerPages)
   const [filterSpecialPlatesData, setFilterSpecialPlatesData] = useState<FilterSpecialPlates | null>(null)
   const tdRefs = useRef<(HTMLTableCellElement | null)[]>([])
   const [carouselData, setCarouselData] = useState<{plate: string, vehicleImage: string, plateImage: string} | null>(null)
@@ -63,6 +68,7 @@ const SpecialRegistrationDetected = () => {
 
   const setFilterData = async (filterData: FilterSpecialPlates) => {
     setIsLoading(true)
+    setIsSearch(true)
     await fetchSpecialPlateData(filterData)
   }
 
@@ -115,7 +121,7 @@ const SpecialRegistrationDetected = () => {
     { label: "", key: "time" },
   ]
   
-  const csvData = [
+  const csvData = specialPlateSearchDataList?.length ? [
     { 
       title: "ทะเบียน",
       province: "หมวดจังหวัด",
@@ -130,69 +136,29 @@ const SpecialRegistrationDetected = () => {
     },
     ...specialPlateSearchDataList.map((data) => ({
       title: data.plate,
-      province: data.region_info.name_th,
+      province: data.region_info ? data.region_info.name_th : "",
       check_point: data.camera_info ? data.camera_info.cam_id : "",
       vehicle_type: data.vehicle_body_type_info ? data.vehicle_body_type_info.body_type_th : reformatString(data.vehicle_body_type),
       model: data.vehicle_model_info ? data.vehicle_model_info.model_en : reformatString(data.vehicle_body_type),
       brand: data.vehicle_make_info ? data.vehicle_make_info.make_en : reformatString(data.vehicle_make),
       color: data.vehicle_color_info ? data.vehicle_color_info.color_th : reformatString(data.vehicle_color),
-      registration_type: data.special_plate && data.special_plate.plate_class.title_en || "",
-      date: format(new Date(data.epoch_start), "dd/MM/yyyy"),
-      time: format(new Date(data.epoch_start), "HH:mm:ss"),
+      registration_type: data.special_plate && data.special_plate.plate_class_info.title_en || "Normal",
+      date: dayjs(data.epoch_start).format('DD/MM/BBBB'),
+      time: dayjs(data.epoch_start).format('HH:mm:ss'),
     }))
-  ]
+  ] : []
 
   const handleGeneratePdf = async () => {
-    // setIsLoading(true)
-    // const pdfContent: DetactSpecialPlate = {
-    //   logo_text: "Plate Recognition",
-    //   title_header: "รายการทะเบียนรถที่ตรวจอ่านได้",
-    //   title_check_point: "ด่าน : ปิงโค้ง",
-    //   table_columns: {
-    //     plate_header: "ทะเบียน",
-    //     image_header: "รูป",
-    //     checkPoint_header: "จุดตรวจ",
-    //     vehicleType_header: "ประเภทรถ",
-    //     vehicleDetail_header: "รายละเอียดรถยนต์",
-    //     accuracy_header: "ความแม่นยำ (%)",
-    //     registrationGroup_header: "กลุ่มทะเบียน",
-    //     dateTime_header: "วัน-เวลา ที่บันทึก",
-    //     lane_header: "เลน",
-    //   },
-    //   table_rows: specialPlateSearchDataList.map((data) => ({
-    //     plate_data: data.plate,
-    //     image_data: {
-    //       plate_image: data.plate_image,
-    //       vehicle_image: data.vehicle_image,
-    //     },
-    //     checkPoint_data: data.site_name,
-    //     vehicleType_data: data.vehicle_body_type,
-    //     vehicleDetail_data: [data.vehicle_make_model, data.vehicle_make, data.vehicle_color],
-    //     accuracy_data: data.plate_confidence,
-    //     registrationGroup_data: data.registration_type,
-    //     dateTime_data: format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)"),
-    //     lane_data: data.lane,
-    //   })),
-    // }
-
-    // try {
-    //   const result = await dispatch(dowloadPdfSpecialPlateThunk(pdfContent)).unwrap()
-      
-    //   if (result && result.data) {
-    //     if (result.data.pdfUrl) {
-    //       const fullUrl = `${FILE_URL}${result.data.pdfUrl}`
-    //       window.open(fullUrl, '_blank')
-    //       return
-    //     }
-    //   }
-    // } 
-    // catch (error: unknown) {
-    //   const errorMessage = error instanceof Error ? error.message : String(error)
-    //   PopupMessage("การดาวน์โหลดล้มเหลว", errorMessage, 'error')
-    // }
-    // finally {
-    //   setIsLoading(false)
-    // }
+    if (specialPlateSearchDataList.length > 0) {
+      setIsLoading(true)
+      const response = await dispatch(dowloadPdfSpecialPlateThunk()).unwrap()
+      if (response) {
+        window.open(`${FILE_URL}${response.filePath}`, "_blank");
+      }
+      setTimeout(() => {
+        setIsLoading(false)
+      }, 500)
+    }
   }
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
@@ -215,7 +181,7 @@ const SpecialRegistrationDetected = () => {
     const cleaned = input.replace(/\D/g, '')
 
     if (cleaned) {
-      const numberInput = Number(cleaned);
+      const numberInput = Number(cleaned)
       if (numberInput > 0 && numberInput <= totalPages) {
         setPageInput(numberInput)
       }
@@ -241,7 +207,7 @@ const SpecialRegistrationDetected = () => {
       } catch (error) {
         console.error("API request failed:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
   }
@@ -313,32 +279,40 @@ const SpecialRegistrationDetected = () => {
             <div className="flex items-end space-x-2">
               <motion.button
                 type="button"
-                className="flex justify-center items-center rounded"
-                whileHover={{
+                className={`flex justify-center items-center rounded ${!csvData.length ? 'opacity-50 cursor-not-allowed' : ''}`}
+                whileHover={csvData.length ? {
                   scale: 1.1,
                   rotate: 5,
-                }}
+                } : undefined}
               >
-                <CSVLink
-                  data={csvData}
-                  headers={headers}
-                  filename={`${SEPECIAL_PLATE_FILE_NAME}.csv`}
-                  className="flex items-center"
-                >
+                {csvData.length ? (
+                  <CSVLink
+                    data={csvData}
+                    headers={headers}
+                    filename={`${SEPECIAL_PLATE_FILE_NAME}.csv`}
+                    className="flex items-center"
+                  >
+                    <img
+                      src="/icons/csv-icon.png"
+                      alt="CSV"
+                      className="w-[32px] h-[30px]"
+                    />
+                  </CSVLink>
+                ) : (
                   <img
                     src="/icons/csv-icon.png"
                     alt="CSV"
                     className="w-[32px] h-[30px]"
                   />
-                </CSVLink>
+                )}
               </motion.button>
               <motion.button
                 type="button"
-                className="flex justify-center items-center rounded"
-                whileHover={{
+                className={`flex justify-center items-center rounded ${!csvData.length ? 'opacity-50 cursor-not-allowed' : ''}`}
+                whileHover={csvData.length ? {
                   scale: 1.1,
                   rotate: 5,
-                }}
+                } : undefined}
                 onClick={handleGeneratePdf}
               >
                 <img
@@ -370,8 +344,9 @@ const SpecialRegistrationDetected = () => {
                     </thead>
                     <tbody className="text-white">
                       {
+                        specialPlateSearchDataList.length > 0 ?
                         specialPlateSearchDataList.map((data, index) => {
-                          const bgColor = data.is_special_plate ? checkRegistrationTypeColor(data.special_plate?.plate_class?.title_en) : ""
+                          const bgColor = data.is_special_plate ? checkRegistrationTypeColor(data.special_plate?.plate_class_info?.title_en) : ""
 
                           return (
                             <tr key={index + 1} className={`h-[50px] w-full border-b-[1px] border-dashed border-darkGray
@@ -399,10 +374,15 @@ const SpecialRegistrationDetected = () => {
                               <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-tuna"}`}>{data.vehicle_model_info ? data.vehicle_model_info.model_en : reformatString(data.vehicle_body_type)}</td>
                               <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}>{data.vehicle_make_info ? data.vehicle_make_info.make_en : reformatString(data.vehicle_make)}</td>
                               <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-tuna"}`}>{data.vehicle_color_info ? data.vehicle_color_info.color_th : reformatString(data.vehicle_color)}</td>
-                              <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}>{data.epoch_start ? format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)") : ""}</td>
+                              <td className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}>{data.epoch_start ? dayjs(data.epoch_start).format('DD/MM/BBBB (HH:mm:ss)') : ""}</td>
                             </tr>
                           )
-                        })
+                        }) :
+                        !isLoading && isSearch && (
+                          <tr className="h-[50px] w-full border-b-[1px] border-dashed border-darkGray">
+                            <td colSpan={8} className="text-center bg-tuna">ไม่มีข้อมูล</td>
+                          </tr>
+                        )
                       }
                     </tbody>
                   </table>

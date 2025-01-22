@@ -1,24 +1,24 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState, AppDispatch } from "../../../app/store";
+import React, { useEffect, useState, useCallback } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import { RootState, AppDispatch } from "../../../app/store"
 import {
   Dialog,
   DialogTitle
 } from "@mui/material"
-import { format } from "date-fns";
+import { format } from "date-fns"
 
 // Types
 import {
   CameraDetailSettings,
   NewCameraDetailSettings,
-} from "../../../features/camera-settings/cameraSettingsTypes";
-import { SearchResult } from "../../../types/index";
+} from "../../../features/camera-settings/cameraSettingsTypes"
+import { SearchResult } from "../../../types/index"
 import { StreamEncodesDetail } from "../../../features/dropdown/dropdownTypes"
 
 // Components
-import ToggleButton from "../../../components/toggle-button/ToggleButton";
-import TextBox from "../../../components/text-box/TextBox";
-import Loading from "../../../components/loading/Loading";
+import ToggleButton from "../../../components/toggle-button/ToggleButton"
+import TextBox from "../../../components/text-box/TextBox"
+import Loading from "../../../components/loading/Loading"
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import SelectBox from '../../../components/select-box/SelectBox'
 
@@ -26,29 +26,29 @@ import SelectBox from '../../../components/select-box/SelectBox'
 import {
   fetchDistrictsThunk,
   fetchSubDistrictsThunk,
-} from "../../../features/dropdown/dropdownSlice";
+} from "../../../features/dropdown/dropdownSlice"
 import {
   postCameraSettingThunk,
   putCameraSettingThunk,
-} from "../../../features/camera-settings/cameraSettingsSlice";
+} from "../../../features/camera-settings/cameraSettingsSlice"
 
 // Icon
-import { Icon } from "../../../components/icons/Icon";
-import { Save } from "lucide-react";
+import { Icon } from "../../../components/icons/Icon"
+import { Save } from "lucide-react"
 
 // Modules
-import LocationSetting from "../location-setting/LocationSetting";
+import LocationSetting from "../location-setting/LocationSetting"
 
 // Pop-up
-import { PopupMessage } from "../../../utils/popupMessage";
+import { PopupMessage } from "../../../utils/popupMessage"
 
 // Constants
-import { DEFAULT_DETECTION_AREA } from "../../../constants/detectionArea";
+import { DEFAULT_DETECTION_AREA } from "../../../constants/detectionArea"
 
 interface CameraSettingProps {
-  closeDialog: () => void;
-  selectedRow: CameraDetailSettings | null;
-  isEditMode: boolean;
+  closeDialog: () => void
+  selectedRow: CameraDetailSettings | null
+  isEditMode: boolean
 }
 
 const CameraSetting: React.FC<CameraSettingProps> = ({
@@ -58,7 +58,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
 }) => {
   const [originalData, setOriginalData] = useState<CameraDetailSettings | null>(
     null
-  );
+  )
   const [state, setState] = useState({
     id: undefined as number | undefined,
     policeDivision: "",
@@ -97,9 +97,9 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       syncDataStatus: false,
       licenseStatus: false,
     },
-  });
+  })
 
-  const dispatch: AppDispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch()
   const {
     provinces,
     subDistricts,
@@ -108,14 +108,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     officerPrefixes,
     positions,
     streamEncodes
-  } = useSelector((state: RootState) => state.dropdown);
-  const [provincesOptions, setProvincesOptions] = useState<{ label: string; value: number }[]>([]);
-  const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string; value: number }[]>([]);
-  const [districtsOptions, setDistrictsOptions] = useState<{ label: string; value: number }[]>([]);
-  const [policeDivisionsOptions, setPoliceDivisionsOptions] = useState<{ label: string; value: number }[]>([]);
-  const [officerPrefixesOptions, setOfficerPrefixesOptions] = useState<{ label: string; value: number }[]>([]);
-  const [positionsOptions, setPositionsOptions] = useState<{ label: string; value: number }[]>([]);
-  const [streamEncodesOptions, setStreamEncodesOptions] = useState<{ label: string; value: number }[]>([]);
+  } = useSelector((state: RootState) => state.dropdown)
+  const [provincesOptions, setProvincesOptions] = useState<{ label: string ,value: number }[]>([])
+  const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
+  const [districtsOptions, setDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
+  const [policeDivisionsOptions, setPoliceDivisionsOptions] = useState<{ label: string ,value: number }[]>([])
+  const [officerPrefixesOptions, setOfficerPrefixesOptions] = useState<{ label: string ,value: number }[]>([])
+  const [positionsOptions, setPositionsOptions] = useState<{ label: string ,value: number }[]>([])
+  const [streamEncodesOptions, setStreamEncodesOptions] = useState<{ label: string ,value: number }[]>([])
 
   useEffect(() => {
     if (
@@ -165,8 +165,8 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
             syncDataStatus: false,
             licenseStatus: false,
           },
-        }));
-        setOriginalData(selectedRow);
+        }))
+        setOriginalData(selectedRow)
       }
     }
   }, [
@@ -177,22 +177,22 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     positions,
     isEditMode,
     selectedRow,
-  ]);
+  ])
 
   const hasChanges = () => {
-    return JSON.stringify(state) !== JSON.stringify(originalData);
-  };
+    return JSON.stringify(state) !== JSON.stringify(originalData)
+  }
 
   const handleToggle = (key: keyof typeof state.toggles, value: boolean) => {
     setState((prev) => ({
       ...prev,
       toggles: { ...prev.toggles, [key]: value },
-    }));
-  };
+    }))
+  }
 
   const handleDropdownChange = (key: keyof typeof state, value: string) => {
-    setState((prev) => ({ ...prev, [key]: value }));
-  };
+    setState((prev) => ({ ...prev, [key]: value }))
+  }
 
   const handleDropdownOfficerChange = (
     key: keyof typeof state.officer,
@@ -201,12 +201,12 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     setState((prev) => ({
       ...prev,
       officer: { ...prev.officer, [key]: value },
-    }));
-  };
+    }))
+  }
 
   const handleButtonClick = (key: keyof typeof state, value: boolean) => {
-    setState((prev) => ({ ...prev, [key]: value }));
-  };
+    setState((prev) => ({ ...prev, [key]: value }))
+  }
 
   const comfirmPoint = (result: SearchResult) => {
     setState((prev) => ({
@@ -216,8 +216,8 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         latitude: result.location.lat.toString(),
         longitude: result.location.lng.toString(),
       },
-    }));
-  };
+    }))
+  }
   
   useEffect(() => {
     const fetchData = async () => {
@@ -225,86 +225,86 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       if (state.provinceSelect) {
         query["filter"] = `province_id:${state.provinceSelect}`
         query["orderBy"] = `name_th`
-        await dispatch(fetchDistrictsThunk(query));
+        await dispatch(fetchDistrictsThunk(query))
       }
       if (state.districtsSelect) {
         query["filter"] = `district_id:${state.districtsSelect},province_id:${state.provinceSelect}`
         query["orderBy"] = `name_th`
-        await dispatch(fetchSubDistrictsThunk(query));
+        await dispatch(fetchSubDistrictsThunk(query))
       }
-    };
-    fetchData();
-  }, [dispatch, state.provinceSelect, state.districtsSelect]);
+    }
+    fetchData()
+  }, [dispatch, state.provinceSelect, state.districtsSelect])
 
   useEffect(() => {
     if (provinces && provinces.data) {
       const options = provinces.data.map((row) => ({
         label: row.name_th,
         value: row.id,
-      }));
-      setProvincesOptions(options);
+      }))
+      setProvincesOptions(options)
     }
-  }, [provinces]);
+  }, [provinces])
 
   useEffect(() => {
     if (districts && districts.data) {
       const options = districts.data.map((row) => ({
         label: row.name_th,
         value: row.id,
-      }));
-      setDistrictsOptions(options);
+      }))
+      setDistrictsOptions(options)
     }
-  }, [districts]);
+  }, [districts])
 
   useEffect(() => {
     if (subDistricts && subDistricts.data) {
       const options = subDistricts.data.map((row) => ({
         label: row.name_th,
         value: row.id,
-      }));
-      setSubDistrictsOptions(options);
+      }))
+      setSubDistrictsOptions(options)
     }
-  }, [subDistricts]);
+  }, [subDistricts])
 
   useEffect(() => {
     if (policeDivisions && policeDivisions.data) {
       const options = policeDivisions.data.map((row) => ({
         label: row.title_th,
         value: row.id,
-      }));
-      setPoliceDivisionsOptions(options);
+      }))
+      setPoliceDivisionsOptions(options)
     }
-  }, [policeDivisions]);
+  }, [policeDivisions])
 
   useEffect(() => {
     if (officerPrefixes && officerPrefixes.data) {
       const options = officerPrefixes.data.map((row) => ({
         label: row.title_th,
         value: row.id,
-      }));
-      setOfficerPrefixesOptions(options);
+      }))
+      setOfficerPrefixesOptions(options)
     }
-  }, [officerPrefixes]);
+  }, [officerPrefixes])
 
   useEffect(() => {
     if (positions && positions.data) {
       const options = positions.data.map((row) => ({
         label: row.position_th,
         value: row.id,
-      }));
-      setPositionsOptions(options);
+      }))
+      setPositionsOptions(options)
     }
-  }, [positions]);
+  }, [positions])
 
   useEffect(() => {
     if (streamEncodes && streamEncodes.data) {
       const options = streamEncodes.data.map((row) => ({
         label: row.name,
         value: row.id,
-      }));
-      setStreamEncodesOptions(options);
+      }))
+      setStreamEncodesOptions(options)
     }
-  }, [streamEncodes]);
+  }, [streamEncodes])
 
   const createCameraSettings = (): NewCameraDetailSettings | null => {
     const defaultDetectionArea = DEFAULT_DETECTION_AREA
@@ -333,33 +333,33 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       detection_area: JSON.stringify(defaultDetectionArea),
       visible: 1,
       active: 1,
-    };
+    }
 
     const isValid = Object.keys(cameraSettings).every((key) => {
-      const value = cameraSettings[key as keyof NewCameraDetailSettings];
+      const value = cameraSettings[key as keyof NewCameraDetailSettings]
       if (
         value == null ||
         value === "" ||
         (typeof value === "object" && Object.keys(value).length === 0)
       ) {
-        console.error(`Invalid or empty field: ${key}`, value);
-        return false;
+        console.error(`Invalid or empty field: ${key}`, value)
+        return false
       }
-      return true;
-    });
+      return true
+    })
 
     if (!isValid) {
-      console.error("Camera settings data is invalid.");
-      return null;
+      console.error("Camera settings data is invalid.")
+      return null
     }
 
-    return cameraSettings;
-  };
+    return cameraSettings
+  }
 
   const updateCameraSettings = (): CameraDetailSettings | null => {
     if (!selectedRow?.id) {
-      console.error("The selected row does not have a valid 'id'.");
-      return null;
+      console.error("The selected row does not have a valid 'id'.")
+      return null
     }
     // Check each value for emptiness or missing values
     const cameraSettings: CameraDetailSettings = {
@@ -407,19 +407,19 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         return true
       }
       if (value == null || value === "" || value === 0) {
-        console.error(`Invalid or empty field: ${key}`, value);
+        console.error(`Invalid or empty field: ${key}`, value)
         return false
       }
       return true
-    });
+    })
 
     if (!isValid) {
-      PopupMessage("พบข้อผิดพลาด", "ข้อมูลการตั้งค่ากล้องไม่ถูกต้อง", "error");
+      PopupMessage("พบข้อผิดพลาด", "ข้อมูลการตั้งค่ากล้องไม่ถูกต้อง", "error")
       return null
     }
 
     return cameraSettings
-  };
+  }
 
   const handleSubmit = useCallback(async () => {
     try {
@@ -429,26 +429,26 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
             "ไม่พบการเปลี่ยนแปลง",
             "ข้อมูลไม่มีการเปลี่ยนแปลง",
             "warning"
-          );
-          return;
+          )
+          return
         } else {
-          const updateCameraSetting = updateCameraSettings();
+          const updateCameraSetting = updateCameraSettings()
           if (updateCameraSetting) {
-            await dispatch(putCameraSettingThunk(updateCameraSetting));
-            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
-            closeDialog();
+            await dispatch(putCameraSettingThunk(updateCameraSetting))
+            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
+            closeDialog()
           } else {
-            PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error");
+            PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
           }
         }
       } else {
-        const newCameraSetting = createCameraSettings();
+        const newCameraSetting = createCameraSettings()
         if (newCameraSetting) {
-          await dispatch(postCameraSettingThunk(newCameraSetting));
-          PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
-          closeDialog();
+          await dispatch(postCameraSettingThunk(newCameraSetting))
+          PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
+          closeDialog()
         } else {
-          PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error");
+          PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
         }
       }
     } catch (error) {
@@ -456,13 +456,13 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         "พบข้อผิดพลาด",
         `ไม่สามารถสร้างการตั้งค่ากล้องได้: ${error}`,
         "error"
-      );
+      )
     }
-  }, [dispatch, state]);
+  }, [dispatch, state])
 
   const handleTextChange = (key: keyof typeof state, value: string) => {
-    setState((prev) => ({ ...prev, [key]: value }));
-  };
+    setState((prev) => ({ ...prev, [key]: value }))
+  }
 
   const handleTextLocationChange = (
     key: keyof typeof state.location,
@@ -471,8 +471,8 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     setState((prev) => ({
       ...prev,
       location: { ...prev.location, [key]: value },
-    }));
-  };
+    }))
+  }
 
   const handleTextOfficerChange = (
     key: keyof typeof state.officer,
@@ -481,69 +481,80 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     setState((prev) => ({
       ...prev,
       officer: { ...prev.officer, [key]: value },
-    }));
-  };
+    }))
+  }
 
   const handlePoliceDivisionChange = (
     event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
+    value: { value: any ,label: string } | null
   ) => {
     event.preventDefault()
-    handleDropdownChange("policeDivisionsSelect", value ? value.value : null);
-  };
+    if (value) {
+      handleDropdownChange("policeDivisionsSelect", value.value)
+      if (provinces && provinces.data) {
+        const province_id = provinces.data.find((data) => data.police_region_id === value.value)?.id
+        console.log(province_id)
+        handleDropdownChange("provinceSelect", province_id ? province_id as any : '')
+      }
+    }
+    else {
+      handleDropdownChange("policeDivisionsSelect", '')
+      handleDropdownChange("provinceSelect", '')
+    }
+  }
 
   const handleProvinceChange = (
     event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
+    value: { value: any ,label: string } | null
   ) => {
     event.preventDefault()
     if (value) {
-      handleDropdownChange("provinceSelect", value.value);
+      handleDropdownChange("provinceSelect", value.value)
     }
     else {
-      handleDropdownChange("provinceSelect", '');
-      handleDropdownChange("districtsSelect", '');
-      handleDropdownChange("subDistrictsSelect", '');
+      handleDropdownChange("provinceSelect", '')
+      handleDropdownChange("districtsSelect", '')
+      handleDropdownChange("subDistrictsSelect", '')
     }
-  };
+  }
 
   const handleDistrictChange = (
     event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
+    value: { value: any ,label: string } | null
   ) => {
     event.preventDefault()
     if (value) {
-      handleDropdownChange("districtsSelect", value.value);
+      handleDropdownChange("districtsSelect", value.value)
     }
     else {
-      handleDropdownChange("districtsSelect", '');
-      handleDropdownChange("subDistrictsSelect", '');
+      handleDropdownChange("districtsSelect", '')
+      handleDropdownChange("subDistrictsSelect", '')
     }
-  };
+  }
 
   const handleSubDistrictChange = (
     event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
+    value: { value: any ,label: string } | null
   ) => {
     event.preventDefault()
-    handleDropdownChange("subDistrictsSelect", value ? value.value : '');
-  };
+    handleDropdownChange("subDistrictsSelect", value ? value.value : '')
+  }
 
   const handleNamePrefixChange = (
     event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
+    value: { value: any ,label: string } | null
   ) => {
     event.preventDefault()
-    handleDropdownOfficerChange("namePrefixesSelect", value ? value.value : '');
-  };
+    handleDropdownOfficerChange("namePrefixesSelect", value ? value.value : '')
+  }
 
   const handlePositionsChange = (
     event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
+    value: { value: any ,label: string } | null
   ) => {
     event.preventDefault()
-    handleDropdownOfficerChange("positionsSelect", value ? value.value : '');
-  };
+    handleDropdownOfficerChange("positionsSelect", value ? value.value : '')
+  }
 
   return (
     <div id="camera-setting">
@@ -904,7 +915,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         </div>
       </Dialog>
     </div>
-  );
-};
+  )
+}
 
-export default CameraSetting;
+export default CameraSetting

@@ -8,6 +8,7 @@ export interface Regions {
 export interface RegionsDetail 
 {
   id: number
+  province_id: number
   code: string
   name: string
   name_th: string
@@ -249,4 +250,19 @@ export interface VehicleModelsDetail
   model_th?: string
   visible?: boolean
   active?: boolean
+}
+
+export interface PersonTypesDetail {
+  id: number
+  title_en: string
+  title_th: string
+  visible: number
+  active: number
+}
+
+export interface PersonTypes {
+  message?: string
+  status?: string
+  success?: string
+  data?: PersonTypesDetail[]
 }

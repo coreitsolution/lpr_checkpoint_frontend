@@ -85,14 +85,3 @@ export interface SpecialSuspectPeopleSearchData {
   vehicle_region_x: number
   vehicle_region_y: number
 }
-
-export interface PdfDowload {
-  message?: string
-  status?: string
-  success?: string
-  data?: PdfDowloadDetail
-}
-
-export interface PdfDowloadDetail {
-  pdfUrl: string
-}

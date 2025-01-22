@@ -3,8 +3,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { Status } from "../../constants/statusEnum"
 
 // Types
-import { SpecialPlateSearchResult, PdfDowload, SpecialSuspectPeopleSearchResult } from "./SearchDataTypes"
-import { DetactSpecialPlate, FilterSpecialPlatesBody } from "../../features/api/types";
+import { SpecialPlateSearchResult, SpecialSuspectPeopleSearchResult } from "./SearchDataTypes"
+import { FilterSpecialPlatesBody, PdfDowload } from "../../features/api/types";
 
 // API
 import {
@@ -47,8 +47,8 @@ export const fetchSpecialSuspectPeopleSearchDataThunk = createAsyncThunk(
 
 export const dowloadPdfSpecialPlateThunk = createAsyncThunk(
   "searchData/dowloadPdfSpecialPlate",
-  async (body: DetactSpecialPlate) => {
-    const response = await dowloadPdfSpecialPlate(body)
+  async() => {
+    const response = await dowloadPdfSpecialPlate()
     return response
   }
 )

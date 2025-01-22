@@ -1,7 +1,5 @@
 import React, {useState, useEffect} from 'react'
 import { FILE_URL } from '../../../config/apiConfig'
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
 import { format } from "date-fns"
 import Skeleton from '@mui/material/Skeleton'
 
@@ -11,66 +9,21 @@ import { LastRecognitionData } from "../../../features/live-view-real-time/liveV
 // Utils
 import { reformatString } from "../../../utils/comonFunction"
 
-// API
-import { fetchLastRecognitionsThunk } from "../../../features/live-view-real-time/liveViewRealTimeSlice"
-
 // Component
 import Loading from "../../../components/loading/Loading"
 
 interface CarDetectDialogProps {
   closeDialog: () => void
-  latestRecognitionData: LastRecognitionData | null
+  latestLprDetect: LastRecognitionData | null
+  lprDetectHistoryList: LastRecognitionData[]
 }
 
-const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestRecognitionData}) => {
-  const dispatch: AppDispatch = useDispatch()
-
+const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestLprDetect, lprDetectHistoryList}) => {
   const [isLoading, setIsLoading] = useState(false)
-  const [lprDetectHistoryList, setLprDetectHistoryList] = useState<LastRecognitionData[]>([])
-  const [latestLprDetect, setLatestLprDetect] = useState<LastRecognitionData | null>(null)
   const [timestamp, setTimestamp] = useState(Date.now())
 
-  const { filteredLiveViewRealTimeData } = useSelector(
-    (state: RootState) => state.liveViewRealTimes
-  )
-
-  const fetchLastRecognitions = async () => {
-    try {
-      setIsLoading(true)
-      const query: Record<string, string> = {
-        "limit": "11",
-        "orderBy": "id",
-        "reverseOrder": "true",
-        "filter": "is_special_plate:1",
-        "includesVehicleInfo": "1",
-      }
-      await dispatch(fetchLastRecognitionsThunk(query))
-    }
-    catch (ex) {
-      setLprDetectHistoryList([])
-    }
-  }
-
   useEffect(() => {
-    fetchLastRecognitions()
-  }, [latestRecognitionData])
-
-  useEffect(() => {
-    if (filteredLiveViewRealTimeData && filteredLiveViewRealTimeData.data) {
-      if (filteredLiveViewRealTimeData.data.length > 1) {
-        const data = [...filteredLiveViewRealTimeData.data]
-        const shiftData = data.shift()
-        setLatestLprDetect(shiftData ? shiftData : null)
-        setLprDetectHistoryList(filteredLiveViewRealTimeData.data.slice(1, 11))
-      }
-      else {
-        setLatestLprDetect(filteredLiveViewRealTimeData.data[0])
-        setLprDetectHistoryList([])
-      }
-    }
-  }, [filteredLiveViewRealTimeData])
-
-  useEffect(() => {
+    setIsLoading(true)
     setTimestamp(Date.now())
     setTimeout(() => {
       setIsLoading(false)
@@ -160,8 +113,8 @@ const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestRec
               latestLprDetect ? 
               (
                 <div className='flex items-center justify-start space-x-2 text-white'>
-                  <img src={`${checkRegistrationTypeColor(latestLprDetect?.special_plate?.plate_class.title_en).icon}`} alt="Icon" className='h-[30px] w-[30px]' />
-                  <p className='text-[20px] font-bold'>{latestLprDetect?.special_plate?.plate_class.title_en}</p>
+                  <img src={`${checkRegistrationTypeColor(latestLprDetect?.special_plate?.plate_class_info.title_en).icon}`} alt="Icon" className='h-[30px] w-[30px]' />
+                  <p className='text-[20px] font-bold'>{latestLprDetect?.special_plate?.plate_class_info.title_en}</p>
                 </div>
               ) :
               (
@@ -212,7 +165,7 @@ const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestRec
                       </tr>
                       <tr className='border-b-[1px] border-dashed border-darkGray h-[45px]'>
                         <td className='bg-celtic p-2 w-[150px]'>กลุ่มทะเบียน</td>
-                        <td className={`bg-tuna p-2 w-[416px] font-bold ${checkRegistrationTypeColor(latestLprDetect?.special_plate?.plate_class.title_en).textColor}`}>{latestLprDetect?.special_plate?.plate_class.title_en}</td>
+                        <td className={`bg-tuna p-2 w-[416px] font-bold ${checkRegistrationTypeColor(latestLprDetect?.special_plate?.plate_class_info.title_en).textColor}`}>{latestLprDetect?.special_plate?.plate_class_info.title_en}</td>
                       </tr>
                       <tr className='border-b-[1px] border-dashed border-darkGray h-[60px]'>
                         <td className='bg-celtic p-2 w-[150px]'>พฤติการ</td>
@@ -279,7 +232,7 @@ const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestRec
                               </div>
                             </td>
                             <td className="bg-tuna pl-2">{data.camera_info ? data.camera_info.cam_id : ""}</td>
-                            <td className={`bg-celtic pl-2 font-bold ${checkRegistrationTypeColor(data.special_plate?.plate_class.title_en).textColor}`}>{data.special_plate?.plate_class.title_en}</td>
+                            <td className={`bg-celtic pl-2 font-bold ${checkRegistrationTypeColor(data.special_plate?.plate_class_info.title_en).textColor}`}>{data.special_plate?.plate_class_info.title_en}</td>
                             <td className="bg-tuna pl-2 max-w-[124px] truncate">
                               {createVehicleInfo(data, true)}
                             </td>

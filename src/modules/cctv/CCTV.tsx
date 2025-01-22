@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
-import { format } from "date-fns"
 import {
   Button,
   keyframes,
   Dialog,
   DialogTitle
 } from "@mui/material"
+import dayjs from 'dayjs'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
 
 // Components
 import { VideoPlayer } from '../../components/video-player/VideoPlayer.js'
@@ -42,8 +43,9 @@ import {
   sendMessageThunk,
 } from "../../features/telegram/TelegramSlice"
 import { 
-  fetchSettingsThunk,
+  fetchSettingsShortThunk,
 } from "../../features/settings/settingsSlice"
+import { fetchLastRecognitionsThunk } from "../../features/live-view-real-time/liveViewRealTimeSlice"
 
 // Types
 import { 
@@ -58,14 +60,20 @@ import { reformatString } from "../../utils/comonFunction"
 // Config
 import { IMAGE_URL, TELEGRAM_CHAT_ID } from '../../config/apiConfig'
 
+dayjs.extend(buddhistEra)
+
 const CCTV = () => {
   const dispatch: AppDispatch = useDispatch()
   const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
   )
 
-  const { settingData } = useSelector(
+  const { settingDataShort } = useSelector(
     (state: RootState) => state.settingsData
+  )
+
+  const { filteredLiveViewRealTimeData } = useSelector(
+    (state: RootState) => state.liveViewRealTimes
   )
 
   const [isFullWidth, setIsFullWidth] = useState(false)
@@ -90,7 +98,8 @@ const CCTV = () => {
   const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
   const [isRestartStreamDisabled, setIsRestartStreamDisabled] = useState(false)
   const [isRestartStreamAnimating, setIsRestartStreamAnimating] = useState(false)
-  const [latestRecognitionData, setLatestRecognitionData] = useState<LastRecognitionData| null>(null)
+  const [lprDetectHistoryList, setLprDetectHistoryList] = useState<LastRecognitionData[]>([])
+  const [latestLprDetect, setLatestLprDetect] = useState<LastRecognitionData | null>(null)
 
   const spinAnimation = keyframes`
     0% {
@@ -122,13 +131,44 @@ const CCTV = () => {
   )
 
   const setUpdateSpecialPlate = async(update: LastRecognitionData) => {
-    setLatestRecognitionData(update)
-    setIsCarDetectOpen(true)
+    await fetchLastRecognitions()
     await dispatch(sendMessageThunk({ 
       chatId: TELEGRAM_CHAT_ID, 
-      message: `Special Plate found: ${update.plate} ${update.region_info.name_th} ${update.plate_confidence}% Type: ${update.special_plate?.plate_class.title_en}` 
+      message: `Special Plate found: ${update.plate} ${update.region_info.name_th} ${update.plate_confidence}% Type: ${update.special_plate?.plate_class_info.title_en}` 
     }))
   }
+
+  const fetchLastRecognitions = async () => {
+    try {
+      const query: Record<string, string> = {
+        "limit": "11",
+        "orderBy": "id",
+        "reverseOrder": "true",
+        "filter": "is_special_plate:1",
+        "includesVehicleInfo": "1",
+      }
+      await dispatch(fetchLastRecognitionsThunk(query))
+    }
+    catch (ex) {
+      setLprDetectHistoryList([])
+    }
+  }
+
+  useEffect(() => {
+    if (filteredLiveViewRealTimeData && filteredLiveViewRealTimeData.data) {
+      if (filteredLiveViewRealTimeData.data.length > 1) {
+        const data = [...filteredLiveViewRealTimeData.data]
+        const shiftData = data.shift()
+        setLatestLprDetect(shiftData ? shiftData : null)
+        setLprDetectHistoryList(filteredLiveViewRealTimeData.data.slice(1, 11))
+      }
+      else {
+        setLatestLprDetect(filteredLiveViewRealTimeData.data[0])
+        setLprDetectHistoryList([])
+      }
+      setIsCarDetectOpen(true)
+    }
+  }, [filteredLiveViewRealTimeData])
 
   const handleButtonClick = (event: React.MouseEvent, index: number) => {
     event.stopPropagation()
@@ -211,9 +251,7 @@ const CCTV = () => {
 
   useEffect(() => {
     dispatch(fetchCameraSettingsThunk())
-    dispatch(fetchSettingsThunk({
-      "filter": "key:live_view_count"
-    }))
+    dispatch(fetchSettingsShortThunk())
   }, [dispatch])
 
   useEffect(() => {
@@ -233,11 +271,11 @@ const CCTV = () => {
   }, [cameraSettings])
 
   useEffect(() => {
-    if (settingData && settingData.live_view_count && settingData.live_view_count.data) {
-      const numValue = Number(settingData.live_view_count.data[0].value) || 1
+    if (settingDataShort && settingDataShort.data) {
+      const numValue = Number(settingDataShort.data.live_view_count) || 1
       setSelectedScreenValue(numValue)
     }
-  }, [settingData])
+  }, [settingDataShort])
 
   return (
     <div className={`main-content pe-1 ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>
@@ -457,8 +495,8 @@ const CCTV = () => {
                                       <p className='truncate' title={`${reformatString(lprData.vehicle_color)}`}>{reformatString(lprData.vehicle_color)}</p>
                                     </div>
                                     <div>
-                                      <p>{format(new Date(lprData.epoch_start), "dd/MM/yyyy")}</p>
-                                      <p>{format(new Date(lprData.epoch_start), "HH:mm:ss")}</p>
+                                      <p>{dayjs(lprData.epoch_start).format('DD-MM-BBBB')}</p>
+                                      <p>{dayjs(lprData.epoch_start).format('HH:mm:ss')}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -493,8 +531,8 @@ const CCTV = () => {
                                       <p className='truncate' title={`${reformatString(streamLPRData.vehicle_color)}`}>{reformatString(streamLPRData.vehicle_color)}</p>
                                     </div>
                                     <div>
-                                      <p>{format(new Date(streamLPRData.epoch_start), "dd/MM/yyyy")}</p>
-                                      <p>{format(new Date(streamLPRData.epoch_start), "HH:mm:ss")}</p>
+                                      <p>{dayjs(lprData.epoch_start).format('DD-MM-BBBB')}</p>
+                                      <p>{dayjs(lprData.epoch_start).format('HH:mm:ss')}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -539,7 +577,8 @@ const CCTV = () => {
             </DialogTitle>
             <CarDetectDialog 
               closeDialog={() => setIsCarDetectOpen(false)} 
-              latestRecognitionData={latestRecognitionData}
+              latestLprDetect={latestLprDetect}
+              lprDetectHistoryList={lprDetectHistoryList}
             />
           </div>
         </div>

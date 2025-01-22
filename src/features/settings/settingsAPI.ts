@@ -3,10 +3,12 @@ import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import {
   SettingData,
+  SettingDataShort,
   SettingDetail,
 } from "./settingsTypes"
 import {
   mockSettings,
+  mockSettingsShort
 } from "../../mocks/mockSettings"
 
 export const fetchSettings = async (param?: Record<string, string>): Promise<SettingData> => {
@@ -24,6 +26,19 @@ export const fetchSettings = async (param?: Record<string, string>): Promise<Set
     return Promise.resolve(data)
   }
   return await fetchClient<SettingData>(combineURL(API_URL, "/settings/get"), {
+    method: "GET",
+    queryParams: param,
+  })
+}
+
+export const fetchSettingsShort = async (param?: Record<string, string>): Promise<SettingDataShort> => {
+  if (isDevEnv) {
+    const data = {
+      data: mockSettingsShort
+    }
+    return Promise.resolve(data)
+  }
+  return await fetchClient<SettingDataShort>(combineURL(API_URL, "/settings/get-short"), {
     method: "GET",
     queryParams: param,
   })

@@ -7,6 +7,8 @@ import {
 import { format } from "date-fns"
 import "../../../styles/variables.scss"
 import { FILE_URL } from '../../../config/apiConfig'
+import dayjs from 'dayjs'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
 
 // Icon
 import { Icon } from '../../../components/icons/Icon'
@@ -40,6 +42,8 @@ import Loading from "../../../components/loading/Loading"
 // Utils
 import { reformatString, isEquals } from "../../../utils/comonFunction"
 import { PopupMessage } from "../../../utils/popupMessage"
+
+dayjs.extend(buddhistEra)
 
 interface CCTVSideBarProp {
   setCollapse: (status: boolean) => void
@@ -241,11 +245,11 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   const handleVehicleInfoClick = async (event: React.MouseEvent, item: LastRecognitionData) => {
     event.stopPropagation()
     setIsLoading(true)
+    setDetailData(item)
+    setDirectionDetail(directionDetail)
+    setOpenFullDirectionDialog(true)
 
     setTimeout(async () => {
-      setDetailData(item)
-      setDirectionDetail(directionDetail)
-      setOpenFullDirectionDialog(true)
       setIsLoading(false)
     }, 500)
   }
@@ -518,7 +522,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                       className="w-full h-full relative"
                     >
                       <div className='bg-celti text-center'>
-                        <label className="px-1">{format(new Date(item.epoch_start), "dd/MM/yyyy HH:mm:ss")}</label>
+                        <label className="px-1">{dayjs(item.epoch_start).format('DD-MM-BBBB HH:mm:ss')}</label>
                         <label className="px-1 border-l-[1px] border-white">{`${item.plate_confidence}%`}</label>
                       </div>
                       <div className="h-[100px] relative flex flex-col p-1 pl-2">
@@ -603,8 +607,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                             key={`vehicle-count-${index + 1}`}
                             className="h-[35px] border-b-[1px] border-dashed border-darkGray"
                           >
-                            <td className="bg-celtic">{item.start_time}</td>
-                            <td className="bg-tuna">{item.end_time}</td>
+                            <td className="bg-celtic">{dayjs(item.start_time).format('DD/MM/BBBB (HH:mm)')}</td>
+                            <td className="bg-tuna">{dayjs(item.end_time).format('DD/MM/BBBB (HH:mm)')}</td>
                             <td className="bg-celtic">{item.lpr_count}</td>
                             <td className="bg-tuna">{item.special_plates_count}</td>
                             <td className="bg-celtic">{item.total_count}</td>
@@ -670,7 +674,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                             key={item.id}
                             className="h-[35px] border-b-[1px] border-dashed border-darkGray"
                           >
-                            <td className="bg-celtic w-[26%]">{item.sendingTime}</td>
+                            <td className="bg-celtic w-[26%]">{dayjs(item.sendingTime).format('DD/MM/BBBB (HH:mm:ss)')}</td>
                             <td className="bg-tuna w-[18%]">{item.ipServer}</td>
                             <td className="bg-celtic">{item.port}</td>
                             <td className="bg-tuna">{item.host}</td>

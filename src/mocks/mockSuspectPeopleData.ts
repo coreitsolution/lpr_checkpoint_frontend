@@ -20,7 +20,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     case_owner_name: "พ.ต.อ. สมชาย จงรักษ์",
     case_owner_agency: "ตำรวจภูธรจังหวัด",
     case_owner_phone: "0812345678",
-    special_suspect_person_images: [{
+    watchlist_images: [{
       createdAt: "2025-01-01T08:00:00Z",
       id: 101,
       notes: null,
@@ -29,7 +29,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
       updatedAt: "2025-01-01T08:00:00Z",
       url: "/uploads/image1.png",
     }],
-    special_suspect_person_files: [
+    watchlist_files: [
       {
         createdAt: "2025-01-01T08:00:00Z",
         id: 102,
@@ -42,6 +42,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     ],
     visible: 1,
     active: 1,
+    notes: "",
     createdAt: "2025-01-01T08:00:00Z",
     updatedAt: "2025-01-01T08:00:00Z",
   },
@@ -64,7 +65,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     case_owner_name: "พ.ต.ท. วิชัย สงเคราะห์",
     case_owner_agency: "สถานีตำรวจนครบาล",
     case_owner_phone: "0897654321",
-    special_suspect_person_images: [{
+    watchlist_images: [{
       createdAt: "2024-11-15T10:00:00Z",
       id: 103,
       notes: null,
@@ -73,7 +74,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
       updatedAt: "2024-11-15T10:00:00Z",
       url: "/uploads/image2.png",
     }],
-    special_suspect_person_files: [
+    watchlist_files: [
       {
         createdAt: "2024-11-15T10:00:00Z",
         id: 104,
@@ -86,6 +87,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     ],
     visible: 1,
     active: 1,
+    notes: "",
     createdAt: "2024-11-15T10:00:00Z",
     updatedAt: "2024-11-15T10:00:00Z",
   },
@@ -108,7 +110,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     case_owner_name: "ร.ต.อ. วัฒนา ใจกล้า",
     case_owner_agency: "กองบังคับการตำรวจ",
     case_owner_phone: "0921234567",
-    special_suspect_person_images: [{
+    watchlist_images: [{
       createdAt: "2025-03-01T09:30:00Z",
       id: 105,
       notes: null,
@@ -117,7 +119,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
       updatedAt: "2025-03-01T09:30:00Z",
       url: "/uploads/image3.png",
     }],
-    special_suspect_person_files: [
+    watchlist_files: [
       {
         createdAt: "2025-03-01T09:30:00Z",
         id: 106,
@@ -130,6 +132,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     ],
     visible: 1,
     active: 1,
+    notes: "",
     createdAt: "2025-03-01T09:30:00Z",
     updatedAt: "2025-03-01T09:30:00Z",
   },
@@ -152,7 +155,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     case_owner_name: "ด.ต. ทองสุข แก้วใส",
     case_owner_agency: "สถานีตำรวจภูธร",
     case_owner_phone: "0919876543",
-    special_suspect_person_images: [{
+    watchlist_images: [{
       createdAt: "2025-05-15T12:45:00Z",
       id: 107,
       notes: null,
@@ -161,7 +164,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
       updatedAt: "2025-05-15T12:45:00Z",
       url: "/uploads/image4.png",
     }],
-    special_suspect_person_files: [
+    watchlist_files: [
       {
         createdAt: "2025-05-15T12:45:00Z",
         id: 108,
@@ -174,6 +177,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     ],
     visible: 1,
     active: 1,
+    notes: "",
     createdAt: "2025-05-15T12:45:00Z",
     updatedAt: "2025-05-15T12:45:00Z",
   },
@@ -196,7 +200,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     case_owner_name: "พ.ต.ต. สรวิชญ์ พิพัฒน์",
     case_owner_agency: "สถานีตำรวจ",
     case_owner_phone: "0931234567",
-    special_suspect_person_images: [{
+    watchlist_images: [{
       createdAt: "2025-07-20T15:00:00Z",
       id: 109,
       notes: null,
@@ -205,7 +209,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
       updatedAt: "2025-07-20T15:00:00Z",
       url: "/uploads/image5.png",
     }],
-    special_suspect_person_files: [
+    watchlist_files: [
       {
         createdAt: "2025-07-20T15:00:00Z",
         id: 110,
@@ -218,6 +222,7 @@ export const suspectPeopleDetail: SuspectPeopleRespondsDetail[] = [
     ],
     visible: 1,
     active: 1,
+    notes: "",
     createdAt: "2025-07-20T15:00:00Z",
     updatedAt: "2025-07-20T15:00:00Z",
   },

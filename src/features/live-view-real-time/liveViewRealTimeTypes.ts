@@ -46,7 +46,7 @@ export interface CameraInfo {
 
 export interface LprSpecialPlateDetail {
   id: number
-  plate_class: PlateClass
+  plate_class_info: PlateClass
   behavior: string
   case_owner_name: string
   case_owner_agency: string

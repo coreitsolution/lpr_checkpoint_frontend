@@ -1,5 +1,6 @@
 import {
   SettingDetail,
+  SettingDetailShort
 } from "../features/settings/settingsTypes";
 
 export const mockSettings: SettingDetail[] = [
@@ -22,3 +23,9 @@ export const mockSettings: SettingDetail[] = [
     updated_at: "2024-12-17T14:35:00Z",
   }
 ]
+
+export const mockSettingsShort: SettingDetailShort = 
+{
+  live_view_count: "3",
+  checkpoint_name: "Office",
+}

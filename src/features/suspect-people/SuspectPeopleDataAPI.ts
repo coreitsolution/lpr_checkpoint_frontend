@@ -26,8 +26,8 @@ export const postSpecialSuspectPeopleData = async (newSetting: NewSuspectPeople)
     const settingWithId: SuspectPeopleRespondsDetail = { 
       ...newSetting, 
       id: newId,
-      special_suspect_person_images: [],
-      special_suspect_person_files: []
+      watchlist_images: [],
+      watchlist_files: []
     }
     if (Object.isExtensible(mockSpecialSuspectPeopleData)) {
       mockSpecialSuspectPeopleData.push(settingWithId);

@@ -3,7 +3,8 @@ import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment";
 import { 
   Provinces, 
-  RegistrationTypes, 
+  RegistrationTypes,
+  PersonTypes,
   DataStatusData,
   PoliceDivisions,
   Districts,
@@ -32,7 +33,7 @@ import { vehicleBodyTypes } from '../../mocks/mockVehicleBodyTypes';
 import { vehicleColors } from '../../mocks/mockVehicleColors';
 import { vehicleMakes } from '../../mocks/mockVehicleMakes';
 import { vehicleModels } from '../../mocks/mockVehicleModels';
-
+import { personTypes } from "../../mocks/mockPersonTypes";
 
 export const fetchRegions = async (param?: Record<string, string>): Promise<Regions> => {
   if (isDevEnv) {
@@ -276,6 +277,16 @@ export const fetchVehicleModels = async (param?: Record<string, string>): Promis
     return Promise.resolve(data);
   }
   return await fetchClient<VehicleModels>(combineURL(API_URL, "/vehicle-models/get"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchPersonTypes = async (param?: Record<string, string>): Promise<PersonTypes> => {
+  if (isDevEnv) {
+    return Promise.resolve(personTypes);
+  }
+  return await fetchClient<PersonTypes>(combineURL(API_URL, "/person-classes/get"), {
     method: "GET",
     queryParams: param,
   });

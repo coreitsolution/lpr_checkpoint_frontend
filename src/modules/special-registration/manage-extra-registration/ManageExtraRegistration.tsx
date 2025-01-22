@@ -730,7 +730,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
                 htmlFor="image-upload"
                 className="relative flex items-center justify-center w-full h-[250px] mt-[5px] bg-[#48494B] cursor-pointer overflow-hidden hover:bg-gray-800"
               >
-                {Object.keys(formData.imagesData).length > 0 ? (
+                { formData.imagesData && Object.keys(formData.imagesData).length > 0 ? (
                   <div className="relative w-full h-full">
                     {/* First Image (Full Size) */}
                     {formData.imagesData[0] && (
@@ -827,7 +827,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
             <div id="file-list-part" className="mt-[15px]">
               <table className="w-full">
                 <tbody>
-                  {formData.filesData.length > 0 ? (
+                  {formData.filesData && formData.filesData.length > 0 ? (
                     formData.filesData.map((file, index) => (
                       <tr
                         key={`${file.title}-${index}`}

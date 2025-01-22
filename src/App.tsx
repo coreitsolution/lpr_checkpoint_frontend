@@ -1,11 +1,12 @@
 import './App.css'
-import { Outlet, Route, Routes } from "react-router-dom";
-// import { Outlet, Route, Routes, Navigate } from "react-router-dom";
+import { Outlet, Route, Routes, useLocation } from "react-router-dom";
+// import { Outlet, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import Nav from "./layout/nav";
 import "./styles/Main.scss";
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "./app/store"
+// import { useAppDispatch } from './app/hooks'
 // API
 import {
   fetchProvincesThunk,
@@ -22,7 +23,9 @@ import {
   fetchVehicleMakesThunk,
   fetchVehicleModelsThunk,
   fetchVehicleBodyTypesThThunk,
+  fetchPersonTypesThunk,
 } from "./features/dropdown/dropdownSlice";
+// import { clearError } from './features/auth/authSlice'
 
 // Screen
 import Login from './modules/login/Login';
@@ -42,7 +45,9 @@ import FullScreenButton from './components/full-screen-button/FullScreenButton'
 // };
 
 // const PrivateRoute = ({ children }: { children: JSX.Element }) => {
-//   return isAuthenticated() ? children : <Navigate to="/Login" replace />;
+//   const dispatch = useAppDispatch()
+//   dispatch(clearError())
+//   return isAuthenticated() ? children : <Navigate to="/login" replace />;
 // };
 
 function Layout() {
@@ -57,6 +62,8 @@ function Layout() {
 function App() {
   const dispatch: AppDispatch = useDispatch();
   const constraintsRef = useRef<HTMLDivElement>(null)
+  const location = useLocation()
+
   useEffect(() => {
     dispatch(fetchProvincesThunk({
       "orderBy": "name_th",
@@ -69,20 +76,43 @@ function App() {
     dispatch(fetchCommonPrefixesThunk());
     dispatch(fetchOfficerPrefixesThunk());
     dispatch(fetchPositionThunk());
-    dispatch(fetchRegionsThunk());
+    dispatch(fetchRegionsThunk({
+      "orderBy": "name_th",
+    }));
     dispatch(fetchStreamEncodesThunk());
     dispatch(fetchVehicleBodyTypesThunk());
     dispatch(fetchVehicleColorsThunk());
     dispatch(fetchVehicleMakesThunk());
     dispatch(fetchVehicleModelsThunk());
     dispatch(fetchVehicleBodyTypesThThunk());
+    dispatch(fetchPersonTypesThunk({
+      "filter": "visible:1"
+    }));
   }, [dispatch]);
 
   return (
     <div ref={constraintsRef} className='min-h-screen min-w-screen'>
-      <FullScreenButton constraintsRef={constraintsRef} />
+      {location.pathname !== '/login' && (
+        <FullScreenButton constraintsRef={constraintsRef} />
+      )}
       <Routes>
-        <Route path="/Login" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        {/* <Route
+          path="/*"
+          element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+          }
+        >
+          <Route path="checkpoint/special-registration" element={<SpecialRegistration />} />
+          <Route path="checkpoint/cctv" element={<CCTV />} />
+          <Route path="checkpoint/settings" element={<Setting />} />
+          <Route path="checkpoint/special-registration-detected" element={<SpecialRegistrationDetected />} />
+          <Route path="checkpoint/suspect-people-detected" element={<SuspectPeopleDetected />} />
+          <Route path="checkpoint/special-suspect-person" element={<SpecialSuspectPerson />} />
+          <Route path="checkpoint/chart" element={<Chart />} />
+        </Route> */}
         <Route path="/*" element={<Layout />}>
           <Route path="checkpoint/special-registration" element={<SpecialRegistration />} />
           <Route path="checkpoint/cctv" element={<CCTV />} />
@@ -94,23 +124,6 @@ function App() {
         </Route>
       </Routes>
     </div>
-
-    // <Routes>
-    //   <Route path="/Login" element={<Login />} />
-
-    //   <Route
-    //     path="/*"
-    //     element={
-    //       <PrivateRoute>
-    //         <Layout />
-    //       </PrivateRoute>
-    //     }
-    //   >
-    //     <Route path="checkpoint/special-registration" element={<SpecialRegistration />} />
-    //     <Route path="checkpoint/cctv" element={<CCTV />} />
-    //     <Route path="checkpoint/settings" element={<Setting />} />
-    //   </Route>
-    // </Routes>
   );
 }
 

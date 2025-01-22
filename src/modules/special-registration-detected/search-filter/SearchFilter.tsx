@@ -46,7 +46,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [carModelsOptions, setCarModelsOptions] = useState<{ label: string, value: string }[]>([])
   const [carColorsOptions, setCarColorsOptions] = useState<{ label: string, value: string }[]>([])
   const [checkpointOptions, setCheckpointOptions] = useState<{ label: string, value: string }[]>([])
-  const { provinces, registrationTypes, vehicleColors, vehicleMakes, vehicleModels, regions, vehicleBodyTypesTh } = useSelector(
+  const { registrationTypes, vehicleColors, vehicleMakes, vehicleModels, regions, vehicleBodyTypesTh } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -61,7 +61,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const filterData: FilterSpecialPlates = {
     plateGroup: letterCategory,
     plateNumber: carRegistration,
-    regionCode: regions?.data?.find((row) => row.name === selectedProvince)?.code || "",
+    regionCode: selectedProvince,
     vehicleBodyTypeTH: selectedCarType.replace("all", ""),
     vehicleMake: selectedCarBrand.replace("all", ""),
     vehicleModel: selectedCarModel.replace("all", ""),
@@ -73,14 +73,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   }
 
   useEffect(() => {
-    if (provinces && provinces.data) {
-      const options = provinces.data.map((row) => ({
+    if (regions && regions.data) {
+      const options = regions.data.map((row) => ({
         label: row.name_th,
-        value: row.name_en,
+        value: row.code,
       }))
       setProvincesOptions(options)
     }
-  }, [provinces])
+  }, [regions])
 
   useEffect(() => {
     if (registrationTypes && registrationTypes.data) {

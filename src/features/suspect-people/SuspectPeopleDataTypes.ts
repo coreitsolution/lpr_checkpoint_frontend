@@ -49,6 +49,7 @@ export interface SuspectPeopleDetail {
   filesData: FileData[]
   visible: number
   active: number
+  notes: string
   createdAt?: string,
   updatedAt?: string,
 }
@@ -99,10 +100,11 @@ export interface SuspectPeopleRespondsDetail {
   case_owner_name: string
   case_owner_agency: string
   case_owner_phone: string
-  special_suspect_person_images: FileRespondsData[]
-  special_suspect_person_files: FileRespondsData[]
+  watchlist_images: FileRespondsData[]
+  watchlist_files: FileRespondsData[]
   visible: number
   active: number
+  notes: string
   createdAt?: string,
   updatedAt?: string,
 }

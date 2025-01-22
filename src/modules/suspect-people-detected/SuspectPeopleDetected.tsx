@@ -3,6 +3,8 @@ import { motion } from "framer-motion"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { CSVLink } from "react-csv"
+import dayjs from 'dayjs'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
 // import { SelectChangeEvent } from '@mui/material/Select'
 
 // Context
@@ -28,19 +30,21 @@ import { reformatString } from "../../utils/comonFunction"
 
 // Config
 import { FILE_URL } from '../../config/apiConfig'
-import { format } from "date-fns"
 
 // Constant
 import { SEPECIAL_SUSPECT_PEOPLE_FILE_NAME } from "../../constants/filename"
+// import { SearchSpecialRowPerPages } from "../../constants/dropdown"
+
+dayjs.extend(buddhistEra)
 
 const SuspectPeopleDetected = () => {
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
   // const [page, setPage] = useState(1)
   // const [totalPages, setTotalPages] = useState(0)
-  // const [rowsPerPage, setRowsPerPage] = useState(100)
+  // const [rowsPerPage, setRowsPerPage] = useState(SearchSpecialRowPerPages[0])
   const [specialSuspectPeopleSearchDataList, setSpecialSuspectPeopleSearchDataList] = useState<SpecialSuspectPeopleSearchData[]>([])
-  // const [rowsPerPageOptions] = useState([20, 50, 100])
+  // const [rowsPerPageOptions] = useState(SearchSpecialRowPerPages)
   const dispatch: AppDispatch = useDispatch()
   const { specialSuspectPeopleSearchData } = useSelector(
     (state: RootState) => state.searchData
@@ -144,7 +148,7 @@ const SuspectPeopleDetected = () => {
     { label: "", key: "time" },
   ]
   
-  const csvData = [
+  const csvData = specialSuspectPeopleSearchDataList?.length ? [
     { 
       title: "คำนำหน้า",
       firstname: "ชื่อ",
@@ -164,10 +168,10 @@ const SuspectPeopleDetected = () => {
       behavior: reformatString(data.vehicle_make),
       confidence: `${parseInt(data.plate_confidence.replace("%", "")).toFixed(2)}`,
       registration_type: "Blacklist",
-      date: format(new Date(data.epoch_start), "dd/MM/yyyy"),
-      time: format(new Date(data.epoch_start), "HH:mm:ss"),
+      date: dayjs(data.epoch_start).format('DD/MM/BBBB'),
+      time: dayjs(data.epoch_start).format('HH:mm:ss'),
     }))
-  ]
+  ] : [];
 
   // const handleGeneratePdf = async () => {
   //   setIsLoading(true)
@@ -269,24 +273,32 @@ const SuspectPeopleDetected = () => {
             <div className="flex items-end space-x-2">
               <motion.button 
                 type="button" 
-                className="flex justify-center items-center rounded"
-                whileHover={{ 
+                className={`flex justify-center items-center rounded ${!csvData.length ? 'opacity-50 cursor-not-allowed' : ''}`}
+                whileHover={csvData.length ? {
                   scale: 1.1,
                   rotate: 5,
-                }}
+                } : undefined}
               >
-                <CSVLink
-                  data={csvData}
-                  headers={headers}
-                  filename={`${SEPECIAL_SUSPECT_PEOPLE_FILE_NAME}.csv`}
-                  className="flex items-center"
-                >
+                {csvData.length ? (
+                  <CSVLink
+                    data={csvData}
+                    headers={headers}
+                    filename={`${SEPECIAL_SUSPECT_PEOPLE_FILE_NAME}.csv`}
+                    className="flex items-center"
+                  >
+                    <img
+                      src="/icons/csv-icon.png"
+                      alt="CSV"
+                      className="w-[32px] h-[30px]"
+                    />
+                  </CSVLink>
+                ) : (
                   <img
                     src="/icons/csv-icon.png"
                     alt="CSV"
                     className="w-[32px] h-[30px]"
                   />
-                </CSVLink>
+                )}
               </motion.button>
               <motion.button
                 type="button" 
@@ -338,7 +350,7 @@ const SuspectPeopleDetected = () => {
                           <td className="text-center text-white bg-celtic">{data.vehicle_make_model}</td>
                           <td className="text-center text-white bg-tuna">{data.vehicle_make}</td>
                           <td className="pr-5 text-end text-white bg-celtic">{parseInt(data.plate_confidence.replace("%", "")).toFixed(2)}</td>
-                          <td className="text-center text-white bg-tuna">{format(new Date(data.epoch_start), "dd/MM/yyyy (HH:mm:ss)")}</td>
+                          <td className="text-center text-white bg-tuna">{dayjs(data.epoch_start).format('DD/MM/BBBB (HH:mm:ss)')}</td>
                         </tr>
                       ))}
                     </tbody>

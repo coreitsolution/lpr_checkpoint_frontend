@@ -23,20 +23,17 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [lastname, setLastname] = useState("")
   const [selectedPersonType, setSelectedPersonType] = useState<number | ''>('')
   const [selectedNamePrefix, setSelectedNamePrefix] = useState<string>("")
-  const [selectedSex, setSelectedSex] = useState<string>("")
   const [agencyText, setAgencyText] = useState<string>("")
   const [selectedStatus, setSelectedStatus] = useState<number | ''>('')
   const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string; value: number; }[]>([])
   const [dataStatusOptions, setDataStatusOptions] = useState<{ label: string; value: number; }[]>([])
   const [namePrefixOptions, setNamePrefixOptions] = useState<{ label: string; value: number; }[]>([])
-  const [sexOptions] = useState<{ label: string; value: number; }[]>([])
 
   const filterData: FilterSpecialPeople = {
     selectedNamePrefix: selectedNamePrefix,
     firstname: firstname,
     lastname: lastname,
-    selectedSex: selectedSex,
-    selectedRegistrationType: selectedPersonType,
+    selectedPersonType: selectedPersonType,
     agency: agencyText,
     selectedStatus: selectedStatus,
   }
@@ -85,7 +82,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   }, [dataStatusOptions, registrationTypesOptions])
 
   const handleReset = () => {
-    setSelectedPersonType("")
+    setSelectedPersonType(0)
     setAgencyText("")
     setSelectedStatus(2)
     setFirstname("")
@@ -102,14 +99,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   ) => {
     event.preventDefault()
     setSelectedNamePrefix(value ? value.value : '')
-  }
-
-  const handleSexChange = (
-    event: React.SyntheticEvent,
-    value: { value: any; label: string } | null
-  ) => {
-    event.preventDefault()
-    setSelectedSex(value ? value.value : '')
   }
 
   return (
@@ -178,18 +167,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   labelFontSize="15px"
                   textFieldFontSize="15px"
                   onChange={(e: any) => setLastname(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col w-full">
-                <AutoComplete 
-                  id="sex"
-                  sx={{ marginTop: "10px"}}
-                  value={selectedSex}
-                  onChange={handleSexChange}
-                  options={sexOptions}
-                  label="เพศ"
-                  labelFontSize="15px"
-                  placeholder="กรุณาระบุเพศ"
                 />
               </div>
               <div className="grid grid-cols-1 my-[10px]">

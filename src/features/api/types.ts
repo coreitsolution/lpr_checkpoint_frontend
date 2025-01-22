@@ -164,8 +164,7 @@ export interface FilterSpecialPeople {
   selectedNamePrefix: number | string
   firstname: string
   lastname: string
-  selectedSex: number | string
-  selectedRegistrationType: number | string
+  selectedPersonType: number | string
   agency: string
   selectedStatus: number | string
 }
@@ -252,4 +251,12 @@ export interface DocumentWithFullscreen extends Document {
   msExitFullscreen?: () => Promise<void>
   mozCancelFullScreen?: () => Promise<void>
   webkitExitFullscreen?: () => Promise<void>
+}
+
+export interface PdfDowload {
+  statusCode?: number
+  status?: string
+  success?: boolean
+  message?: string
+  filePath: string
 }

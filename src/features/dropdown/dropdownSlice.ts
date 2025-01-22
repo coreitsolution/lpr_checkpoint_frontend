@@ -17,6 +17,7 @@ import {
   fetchVehicleColors,
   fetchVehicleMakes,
   fetchVehicleModels,
+  fetchPersonTypes,
 } from "./dropdownAPI";
 import { 
   Provinces,
@@ -35,6 +36,7 @@ import {
   VehicleColors,
   VehicleMakes,
   VehicleModels,
+  PersonTypes,
 } from "./dropdownTypes";
 
 interface DropdownState {
@@ -54,6 +56,7 @@ interface DropdownState {
   vehicleColors: VehicleColors | null;
   vehicleMakes: VehicleMakes | null;
   vehicleModels: VehicleModels | null;
+  personTypes: PersonTypes | null;
   status: Status;
   error: string | null;
 }
@@ -75,6 +78,7 @@ const initialState: DropdownState = {
   vehicleColors: null,
   vehicleMakes: null,
   vehicleModels: null,
+  personTypes: null,
   status: Status.IDLE,
   error: null,
 };
@@ -153,8 +157,8 @@ export const fetchPositionThunk = createAsyncThunk(
 
 export const fetchRegionsThunk = createAsyncThunk(
   "regions/fetchRegions",
-  async () => {
-    const response = await fetchRegions();
+  async (param?: Record<string, string>) => {
+    const response = await fetchRegions(param);
     return response;
   }
 );
@@ -203,6 +207,14 @@ export const fetchVehicleModelsThunk = createAsyncThunk(
   "vehicleModels/fetchVehicleModels",
   async (param?: Record<string, string>) => {
     const response = await fetchVehicleModels(param);
+    return response;
+  }
+);
+
+export const fetchPersonTypesThunk = createAsyncThunk(
+  "personTypes/fetchPersonTypes",
+  async (param?: Record<string, string>) => {
+    const response = await fetchPersonTypes(param);
     return response;
   }
 );
@@ -434,6 +446,20 @@ const dropdownSlice = createSlice({
       .addCase(fetchVehicleModelsThunk.rejected, (state, action) => {
         state.status = Status.FAILED;
         state.error = action.error.message || "Failed to fetch vehicle models";
+      });
+
+    builder
+      .addCase(fetchPersonTypesThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchPersonTypesThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.personTypes = action.payload;
+      })
+      .addCase(fetchPersonTypesThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch personTypes";
       });
   },
 });

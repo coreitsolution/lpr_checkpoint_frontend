@@ -1,6 +1,6 @@
 import { Th } from "react-flags-select"
 import "./nav.scss";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import MenuIcon from "./menu-icon/menuicon";
 import { NavLink } from "react-router-dom";
 import RiArrowDownSFill from "~icons/ri/arrow-down-s-fill";
@@ -8,6 +8,8 @@ import RiArrowUpSFill from "~icons/ri/arrow-up-s-fill";
 import clsx from 'clsx';
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../app/store"
+import dayjs from 'dayjs';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
 
 // SVG
 import LOGO from "../assets/svg/sm-logo.svg"
@@ -17,8 +19,10 @@ import { useHamburger } from "../context/HamburgerContext";
 
 // API
 import { 
-  fetchSettingsThunk,
+  fetchSettingsShortThunk,
 } from "../features/settings/settingsSlice"
+
+dayjs.extend(buddhistEra);
 
 function Nav() {
   const [languageSelected, setLanguageSelect] = useState("th");
@@ -26,34 +30,27 @@ function Nav() {
   const [currentTime, setCurrentTime] = useState<string>("")
   const [checkpoint, setCheckpoint] = useState<string>("ด่าน: ")
   const { isOpen, toggleMenu } = useHamburger()
+  const [dropdownVisible, setDropdownVisible] = useState(false)
+  const dropdownRefs = useRef<(HTMLDivElement | null)[]>([])
   const dispatch: AppDispatch = useDispatch()
-  const { settingData } = useSelector(
+  const { settingDataShort } = useSelector(
     (state: RootState) => state.settingsData
   )
 
-  const formatDate = (date: Date) => {
-    const hours = date.getHours().toString().padStart(2, "0")
-    const minutes = date.getMinutes().toString().padStart(2, "0")
-    const seconds = date.getSeconds().toString().padStart(2, "0")
-    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")} ${hours}:${minutes}:${seconds}`
-  }
-
   useEffect(() => {
-    dispatch(fetchSettingsThunk({
-      "filter": "key:checkpoint_name"
-    }))
+    dispatch(fetchSettingsShortThunk())
     const interval = setInterval(() => {
-      setCurrentTime(formatDate(new Date()))
+      setCurrentTime(dayjs(new Date()).format('DD-MM-BBBB HH:mm:ss'))
     }, 1000)
 
     return () => clearInterval(interval)
   }, [dispatch])
 
   useEffect(() => {
-    if (settingData && settingData.checkpoint_name && settingData.checkpoint_name.data) {
-      setCheckpoint(`ด่าน: ${settingData.checkpoint_name.data[0].value}`)
+    if (settingDataShort && settingDataShort.data ) {
+      setCheckpoint(`ด่าน: ${settingDataShort.data.checkpoint_name || ""}`)
     }
-  }, [settingData])
+  }, [settingDataShort])
 
   const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLanguage = event.target.value
@@ -90,6 +87,26 @@ function Nav() {
     { path: "/checkpoint/user-manage", icon: "add-user", label: "add-user" },
     { path: "/checkpoint/chart", icon: "bar-chart", label: "bar-chart" },
   ];
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleClickOutside = (event: MouseEvent) => {
+    const isDropdownClick = dropdownRefs.current.some(
+      ref => ref && ref.contains(event.target as Node)
+    )
+
+    if (!isDropdownClick) {
+      setDropdownVisible(false)
+    }
+  }
+
+  const handleButtonClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    setDropdownVisible(true)
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-30 min-w-[1300px]">
@@ -143,7 +160,39 @@ function Nav() {
         {/* User Section */}
         <div className="flex items-center space-x-5 mr-[50px] text-white">
           <p className="text-[20px]">นางสาวธรพร ศรีสมร</p>
-          <img src={`https://randomuser.me/api/portraits/women/1.jpg`} alt="User" className="w-12 h-12 rounded-full border-2 border-blue-600" />
+          <div className="relative">
+            <div className="bg-gradient-to-b from-aqua2 to-blueC p-[2px] rounded-full">
+              <img 
+                src={`https://randomuser.me/api/portraits/women/1.jpg`} 
+                alt="User" 
+                className="w-12 h-12 rounded-full" 
+                onClick={handleButtonClick}
+              />
+            </div>
+            {
+              dropdownVisible && (
+                <div
+                  className="flex items-center justify-center absolute right-0 mt-1 w-[130px] bg-gradient-to-b from-aqua2 to-blueC rounded-[5px] p-[2px] shadow-lg z-50"
+                >
+                  <div className="bg-black w-full h-full rounded-[5px]">
+                    <ul className="py-1">
+                      <li
+                        className={`px-4 py-1 hover:bg-linkWater hover:text-black cursor-pointer text-sm text-white text-center`}
+                      >
+                        ข้อมูลส่วนตัว
+                      </li>
+                      <div className="border-b-[1px] border-dodgerBlue mx-2"></div>
+                      <li
+                        className={`px-4 py-1 hover:bg-linkWater hover:text-black cursor-pointer text-sm text-white text-center`}
+                      >
+                        ออกจากระบบ
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              )
+            }
+          </div>
           <div className="grid grid-cols-[20px_auto] border border-white rounded-[5px] py-[3px] px-[12px]">
             {/* <span className="mr-[5px]">{languageSelected === 'th' ? <Th /> : <Us />}</span> */}
             <span className="mr-[5px]">{<Th /> }</span>

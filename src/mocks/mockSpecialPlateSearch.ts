@@ -70,7 +70,7 @@ export const specialPlateSearchData: LastRecognitionData[] =
       createdAt: "2024-12-20T04:34:16.000Z",
       updatedAt: "2025-01-08T09:46:17.000Z",
       deletedAt: "2025-01-08T09:46:17.000Z",
-      plate_class: {
+      plate_class_info: {
         id: 3,
         title_en: "Blacklist",
         title_th: "บุคคลเฝ้าระวัง",

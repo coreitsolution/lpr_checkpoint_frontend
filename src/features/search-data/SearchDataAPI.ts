@@ -1,10 +1,10 @@
 import { API_URL } from '../../config/apiConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
-import { SpecialPlateSearchResult, PdfDowload, SpecialSuspectPeopleSearchResult } from './SearchDataTypes';
+import { SpecialPlateSearchResult, SpecialSuspectPeopleSearchResult } from './SearchDataTypes';
 import { specialPlateSearchData } from "../../mocks/mockSpecialPlateSearch"
 import { specialSuspectPeopleSearchData } from '../../mocks/mockSpecialSuspectPeopleSearch';
-import { DetactSpecialPlate, FilterSpecialPlatesBody } from "../../features/api/types";
+import { DetactSpecialPlate, FilterSpecialPlatesBody, PdfDowload } from "../../features/api/types";
 
 let mockSpecialPlateSearchData = [...specialPlateSearchData]
 let mockSpecialSuspectPeopleSearchData = [...specialSuspectPeopleSearchData]
@@ -26,20 +26,15 @@ export const postSpecialPlateSearchData = async (
   );
 };
 
-export const dowloadPdfSpecialPlate = async (
-  data: DetactSpecialPlate
-): Promise<PdfDowload> => {
+export const dowloadPdfSpecialPlate = async (): Promise<PdfDowload> => {
   if (isDevEnv) {
     const data: PdfDowload = {
-      data: {
-        pdfUrl: "/pdf/example.pdf"
-      }
+      filePath: "/pdf/example.pdf"
     }
     return Promise.resolve(data);
   }
-  return await fetchClient<PdfDowload>(combineURL(API_URL, "/lpr-data/get-detect-special-plate-pdf"), {
+  return await fetchClient<PdfDowload>(combineURL(API_URL, "/lpr-data/search/get-pdf"), {
     method: "GET",
-    body: JSON.stringify(data),
   });
 };
 
@@ -122,9 +117,7 @@ export const dowloadPdfSpecialSuspectPeople = async (
 ): Promise<PdfDowload> => {
   if (isDevEnv) {
     const data: PdfDowload = {
-      data: {
-        pdfUrl: "/pdf/example.pdf"
-      }
+      filePath: "/pdf/example.pdf"
     }
     return Promise.resolve(data);
   }

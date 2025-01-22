@@ -5,8 +5,8 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { FILE_URL } from '../../config/apiConfig'
 import * as XLSX from "xlsx"
-import dayjs from 'dayjs';
-import 'dayjs/locale/th';
+import dayjs from 'dayjs'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
 import {
   SelectChangeEvent,
   Dialog,
@@ -46,6 +46,11 @@ import Loading from "../../components/loading/Loading"
 import SearchFilter from "./search-filter/SearchFilter"
 import PaginationComponent from "../../components/pagination/Pagination"
 
+// Constant
+import { SpecialRowPerPages } from "../../constants/dropdown"
+
+dayjs.extend(buddhistEra)
+
 function SpecialRegistration() {
   const dispatch: AppDispatch = useDispatch()
   const { specialPlatesData } = useSelector(
@@ -58,13 +63,14 @@ function SpecialRegistration() {
   const [selectedRow, setSelectedRow] = useState<SpecialPlatesRespondsDetail | null>(null)
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
+  const [isSearch, setIsSearch] = useState(false)
   const [fileImportError, setFileImportError] = useState<string>("")
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [page, setPage] = useState(1)
   const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(100)
-  const [rowsPerPageOptions] = useState([20, 50, 100])
+  const [rowsPerPage, setRowsPerPage] = useState(SpecialRowPerPages[SpecialRowPerPages.length - 1])
+  const [rowsPerPageOptions] = useState(SpecialRowPerPages)
 
   const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
@@ -131,6 +137,7 @@ function SpecialRegistration() {
 
   const setFilterData = async (filterData: FilterSpecialRegistration) => {
     setIsLoading(true)
+    setIsSearch(true)
     const {
       letterCategory,
       carRegistration,
@@ -529,8 +536,8 @@ function SpecialRegistration() {
                                 <p className="pl-[10px]">{registrationTypes?.data?.find((row) => row.id === item.plate_class_id)?.title_en}</p>
                               }
                             </td>
-                            <td className="text-center bg-tuna">{ dayjs(item.createdAt).format('DD/MM/YYYY') }</td>
-                            <td className="text-center bg-celtic">{ dayjs(item.updatedAt).format('DD/MM/YYYY') }</td>
+                            <td className="text-center bg-tuna">{ dayjs(item.createdAt).format('DD/MM/BBBB') }</td>
+                            <td className="text-center bg-celtic">{ dayjs(item.updatedAt).format('DD/MM/BBBB') }</td>
                             <td className="text-center bg-tuna">
                               {
                                 item.case_owner_name === "" ? "ไม่ระบุตัวตน" : item.case_owner_name
@@ -564,7 +571,12 @@ function SpecialRegistration() {
                               </button>
                             </td>
                           </tr>
-                        )) : null
+                        )) :
+                        !isLoading && isSearch && (
+                          <tr className="h-[50px] w-full border-b-[1px] border-dashed border-darkGray">
+                            <td colSpan={9} className="text-center bg-tuna">ไม่มีข้อมูล</td>
+                          </tr>
+                        )
                       }
                     </tbody>
                   </table>

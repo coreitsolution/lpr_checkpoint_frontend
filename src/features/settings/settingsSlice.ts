@@ -2,22 +2,26 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   fetchSettings,
   putSettings,
+  fetchSettingsShort,
 } from "./settingsAPI";
 import {
   SettingData,
   SettingDetail,
+  SettingDataShort
 } from "./settingsTypes";
 import { Status } from "../../constants/statusEnum";
 
 interface SettingsState {
   settingData: { live_view_count: SettingData | null, checkpoint_name: SettingData | null };
   settingDataDetail: SettingDetail | null;
+  settingDataShort: SettingDataShort | null;
   status: Status;
   error: string | null;
 }
 
 const initialState: SettingsState = {
   settingData: { live_view_count: null, checkpoint_name: null },
+  settingDataShort: null,
   settingDataDetail: null,
   status: Status.IDLE,
   error: null,
@@ -28,6 +32,14 @@ export const fetchSettingsThunk = createAsyncThunk(
   async (param?:Record<string, string>) => {
     const response = await fetchSettings(param);
     return { data: response, key: param?.filter};
+  }
+);
+
+export const fetchSettingsShortThunk = createAsyncThunk(
+  "settings/fetchSettingsShort",
+  async (param?:Record<string, string>) => {
+    const response = await fetchSettingsShort(param);
+    return response;
   }
 );
 
@@ -74,6 +86,19 @@ const settingsSlice = createSlice({
       .addCase(putSettingsThunk.rejected, (state, action) => {
         state.status = Status.FAILED;
         state.error = action.error.message || "Failed to put camera setting";
+      })
+
+      .addCase(fetchSettingsShortThunk.pending, (state) => {
+        state.status = Status.LOADING;
+        state.error = null;
+      })
+      .addCase(fetchSettingsShortThunk.fulfilled, (state, action) => {
+        state.status = Status.SUCCEEDED;
+        state.settingDataShort = action.payload;
+      })
+      .addCase(fetchSettingsShortThunk.rejected, (state, action) => {
+        state.status = Status.FAILED;
+        state.error = action.error.message || "Failed to fetch setting short data";
       })
   },
 });

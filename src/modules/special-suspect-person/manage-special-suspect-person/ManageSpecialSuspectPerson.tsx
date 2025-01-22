@@ -99,19 +99,19 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   const [isBlackListType, setIsBlackListType] = useState(true)
 
   const dispatch: AppDispatch = useDispatch()
-  const { provinces, registrationTypes, districts, subDistricts, commonPrefixes } = useSelector(
+  const { provinces, personTypes, districts, subDistricts, commonPrefixes } = useSelector(
     (state: RootState) => state.dropdown
   )
 
   useEffect(() => {
-    if (registrationTypes && registrationTypes.data) {
-      const options = registrationTypes.data.map((row) => ({
+    if (personTypes && personTypes.data) {
+      const options = personTypes.data.map((row) => ({
         label: row.title_en,
         value: row.id,
       }))
       setPersonTypesOptions(options)
     }
-  }, [registrationTypes])
+  }, [personTypes])
 
   useEffect(() => {
     if (provinces && provinces.data) {
@@ -189,6 +189,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
 
   useEffect(() => {
     setIsLoading(true)
+    console.log("selectedRow", selectedRow)
     if (isEditMode && selectedRow) {
       const data = {
         name_prefix: selectedRow.title_id,
@@ -200,7 +201,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         district_id: selectedRow.district_id,
         sub_district_id: selectedRow.subdistrict_id,
         postal_code: selectedRow.zipcode,
-        imagesData: selectedRow.special_suspect_person_images,
+        imagesData: selectedRow.watchlist_images,
         case_number: selectedRow.case_number,
         arrest_warrant_date: parseDateString(
           selectedRow.arrest_warrant_date
@@ -214,7 +215,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         person_class_id: selectedRow.person_class_id,
         case_owner_agency: selectedRow.case_owner_agency,
         active: selectedRow.active,
-        filesData: selectedRow.special_suspect_person_files,
+        filesData: selectedRow.watchlist_files,
         visible: 1,
       }
       checkIsBlackListType(selectedRow.person_class_id)
@@ -468,6 +469,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         case_owner_agency: formData.case_owner_agency,
         filesData: formData.filesData,
         visible: 1,
+        notes: "",
       }
 
       let isSuccess = true
@@ -681,8 +683,8 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   const handleCancelButton = async () => {
     const filesToDelete: string[] = []
   
-    if (selectedRow && selectedRow.special_suspect_person_images) {
-      selectedRow.special_suspect_person_images.forEach((image) => {
+    if (selectedRow && selectedRow.watchlist_images) {
+      selectedRow.watchlist_images.forEach((image) => {
         const imageUrl = image.url
         let isFound = false
 
@@ -811,7 +813,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   }
 
   const checkIsBlackListType = (value: any) => {
-    const type = registrationTypes?.data?.find((type) => type.id === value)?.title_en
+    const type = personTypes?.data?.find((type) => type.id === value)?.title_en
     setIsBlackListType(!type || type.toLowerCase() === "blacklist" ? true : false)
   }
 
@@ -887,7 +889,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
                 htmlFor="image-upload"
                 className="relative flex items-center justify-center w-full h-[250px] mt-[5px] bg-[#48494B] cursor-pointer overflow-hidden hover:bg-gray-800"
               >
-                {Object.keys(formData.imagesData).length > 0 ? (
+                { formData.imagesData && Object.keys(formData.imagesData).length > 0 ? (
                   <div className="relative w-full h-full">
                     {/* First Image (Full Size) */}
                     {formData.imagesData[0] && (
@@ -984,7 +986,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
             <div id="file-list-part" className="mt-[15px]">
               <table className="w-full">
                 <tbody>
-                  {formData.filesData.length > 0 ? (
+                  {formData.filesData && formData.filesData.length > 0 ? (
                     formData.filesData.map((file, index) => (
                       <tr
                         key={`${file.title}-${index}`}

@@ -65,6 +65,8 @@ export default {
 				tangerineYellow: "#FDCC0A",
 				darkRed: "#9F0C0C",
 				charade: "#384043",
+				aqua2: "#0CFCEE",
+				blueC: "#0B23FC",
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				card: {

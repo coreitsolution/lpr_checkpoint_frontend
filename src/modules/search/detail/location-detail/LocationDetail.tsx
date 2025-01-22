@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import Map from "../../../../components/map/map";
 import DOTInform from "../dot-inform/DotInform";
 import {
@@ -13,6 +14,9 @@ import { reformatString } from "../../../../utils/comonFunction"
 // Config
 import { FILE_URL } from '../../../../config/apiConfig'
 
+// Component
+import Loading from "../../../../components/loading/Loading"
+
 interface LocationDialog {
   close: () => void;
   detailData: LastRecognitionData | null;
@@ -24,9 +28,18 @@ export default function LocationDetailDialog({
   close,
   isCompare = false,
 }: LocationDialog) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    setIsLoading(true)
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+  }, [])
 
   return (
     <div className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm ">
+      {isLoading && <Loading />}
       <div 
         className="bg-black 
         w-[90vw] h-[95vh] overflow-y-auto flex flex-col"
@@ -89,8 +102,8 @@ export default function LocationDetailDialog({
                                 <div className="w-full">
                                   <DOTInform
                                     vehicle={{
-                                      vehicleImage: `${FILE_URL}${detailData.plate_image}`,
-                                      pathImage: `${FILE_URL}${detailData.vehicle_image}`,
+                                      vehicleImage: `${FILE_URL}${detailData.vehicle_image}`,
+                                      pathImage: `${FILE_URL}${detailData.plate_image}`,
                                       plateId: `${detailData.plate} ${detailData.region_info ? detailData.region_info.name_th : ""}`,
                                       brand: detailData.vehicle_make_info ? detailData.vehicle_make_info.make_en : reformatString(detailData.vehicle_make),
                                       color: detailData.vehicle_color_info ? detailData.vehicle_color_info.color_th : reformatString(detailData.vehicle_color),

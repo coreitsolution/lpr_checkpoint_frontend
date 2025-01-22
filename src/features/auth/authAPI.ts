@@ -1,4 +1,5 @@
-import { fetchClient } from '../../utils/fetchClient'
+import { fetchClient, combineURL } from "../../utils/fetchClient"
+import { API_URL } from '../../config/apiConfig';
 
 interface LoginCredentials {
   username: string
@@ -12,7 +13,7 @@ interface LoginResponse {
 
 export const loginUser = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   
-  return await fetchClient<LoginResponse>("/login", {
+  return await fetchClient<LoginResponse>(combineURL(API_URL, "/users/login"), {
     method: 'POST',
     body: JSON.stringify(credentials),
   })
