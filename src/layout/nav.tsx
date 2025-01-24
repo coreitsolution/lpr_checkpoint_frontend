@@ -5,14 +5,10 @@ import MenuIcon from "./menu-icon/menuicon";
 import { NavLink } from "react-router-dom";
 import RiArrowDownSFill from "~icons/ri/arrow-down-s-fill";
 import RiArrowUpSFill from "~icons/ri/arrow-up-s-fill";
-import clsx from 'clsx';
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../app/store"
 import dayjs from 'dayjs';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
-
-// SVG
-import LOGO from "../assets/svg/sm-logo.svg"
 
 // Context
 import { useHamburger } from "../context/HamburgerContext";
@@ -31,7 +27,8 @@ function Nav() {
   const [checkpoint, setCheckpoint] = useState<string>("ด่าน: ")
   const { isOpen, toggleMenu } = useHamburger()
   const [dropdownVisible, setDropdownVisible] = useState(false)
-  const dropdownRefs = useRef<(HTMLDivElement | null)[]>([])
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
   const dispatch: AppDispatch = useDispatch()
   const { settingDataShort } = useSelector(
     (state: RootState) => state.settingsData
@@ -89,24 +86,35 @@ function Nav() {
   ];
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        imgRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !imgRef.current.contains(event.target as Node)
+      ) {
+        setDropdownVisible(false);
+      }
+    };
 
-  const handleClickOutside = (event: MouseEvent) => {
-    const isDropdownClick = dropdownRefs.current.some(
-      ref => ref && ref.contains(event.target as Node)
-    )
-
-    if (!isDropdownClick) {
-      setDropdownVisible(false)
-    }
-  }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     setDropdownVisible(true)
   }
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setDropdownVisible(false)
+  };
+  
+  const handleLogoutClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setDropdownVisible(false)
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-30 min-w-[1300px]">
@@ -133,20 +141,11 @@ function Nav() {
                     <div className={`line ${isOpen ? "open" : ""}`} />
                   </button>
                 </div>
-                <LOGO />
+                <img src="/svg/sm-logo.svg" alt="Logo" className="w-[60px] h-[40px]" />
                 <span className="text-[25px]">License Plate Recognition</span>
               </div>
             </div>
-            <div className="flex space-x-2 w-full">
-              <div className="h-[20px]">
-                <span className={clsx(
-                  "flex w-[80px] items-center justify-center",
-                  "text-white text-[15px] mt-[10px] rounded-full",
-                  "bg-gradient-to-b from-green-500 to-green-800"
-                )}>
-                  Online
-                </span>
-              </div>
+            <div className="flex w-full">
               <div className="grid grid-cols-[150px] mb-[4px]">
                 <p className="text-[20px] text-center">{checkpoint}</p>
                 <p className="text-[15px] h-[25px] text-cyan-300">
@@ -163,6 +162,7 @@ function Nav() {
           <div className="relative">
             <div className="bg-gradient-to-b from-aqua2 to-blueC p-[2px] rounded-full">
               <img 
+                ref={imgRef}
                 src={`https://randomuser.me/api/portraits/women/1.jpg`} 
                 alt="User" 
                 className="w-12 h-12 rounded-full" 
@@ -172,18 +172,21 @@ function Nav() {
             {
               dropdownVisible && (
                 <div
-                  className="flex items-center justify-center absolute right-0 mt-1 w-[130px] bg-gradient-to-b from-aqua2 to-blueC rounded-[5px] p-[2px] shadow-lg z-50"
+                  className="flex items-center justify-center absolute right-0 mt-1 w-[130px] bg-gradient-to-b from-aqua2 to-blueC rounded-[5px] p-[2px] shadow-lg z-51"
+                  ref={dropdownRef}
                 >
                   <div className="bg-black w-full h-full rounded-[5px]">
                     <ul className="py-1">
                       <li
                         className={`px-4 py-1 hover:bg-linkWater hover:text-black cursor-pointer text-sm text-white text-center`}
+                        onClick={handleProfileClick}
                       >
                         ข้อมูลส่วนตัว
                       </li>
                       <div className="border-b-[1px] border-dodgerBlue mx-2"></div>
                       <li
                         className={`px-4 py-1 hover:bg-linkWater hover:text-black cursor-pointer text-sm text-white text-center`}
+                        onClick={handleLogoutClick}
                       >
                         ออกจากระบบ
                       </li>

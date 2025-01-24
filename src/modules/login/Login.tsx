@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { login, clearError } from '../../features/auth/authSlice'
 
 // Image
-import LogoImage from '../../assets/img/Logo.jpg'
+import LogoImage from '/images/Logo.jpg'
 
 // Pop-up
 import { PopupMessage } from "../../utils/popupMessage"
