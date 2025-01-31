@@ -30,6 +30,7 @@ import { LastRecognitionData } from "../../features/live-view-real-time/liveView
 
 // Utils
 import { reformatString } from "../../utils/comonFunction"
+import { PopupMessage } from "../../utils/popupMessage"
 
 // Config
 import { FILE_URL } from '../../config/apiConfig'
@@ -54,7 +55,8 @@ const SpecialRegistrationDetected = () => {
   const [filterSpecialPlatesData, setFilterSpecialPlatesData] = useState<FilterSpecialPlates | null>(null)
   const tdRefs = useRef<(HTMLTableCellElement | null)[]>([])
   const [carouselData, setCarouselData] = useState<{plate: string, vehicleImage: string, plateImage: string} | null>(null)
-  
+  const tableDataRef = useRef<HTMLDivElement>(null)
+
   const dispatch: AppDispatch = useDispatch()
   const { specialPlateSearchData } = useSelector(
     (state: RootState) => state.searchData
@@ -65,6 +67,12 @@ const SpecialRegistrationDetected = () => {
       setIsLoading(false)
     }
   }, [specialPlateSearchData])
+
+  useEffect(() => {
+    if (tableDataRef.current) {
+      tableDataRef.current.scrollTop = 0;
+    }
+  }, [specialPlateSearchDataList])
 
   const setFilterData = async (filterData: FilterSpecialPlates) => {
     setIsLoading(true)
@@ -204,9 +212,11 @@ const SpecialRegistrationDetected = () => {
         if (response && response.data) {
           setSpecialPlateSearchDataList(response.data)
         }
-      } catch (error) {
-        console.error("API request failed:", error)
-      } finally {
+      } 
+      catch (error) {
+        PopupMessage("มีข้อผิดพลาดเกิดขึ้น", "", "error")
+      } 
+      finally {
         setIsLoading(false)
       }
     }
@@ -325,7 +335,11 @@ const SpecialRegistrationDetected = () => {
           </div>
           <div id="body" className="mt-[5px] flex flex-col">
             <div className="flex-1 overflow-x-auto">
-              <div id="table-data" className="mt-[10px] overflow-y-auto h-[78vh]">
+              <div 
+                id="table-data" 
+                className="mt-[10px] overflow-y-auto h-[78vh]" 
+                ref={tableDataRef}
+              >
                 <div className="">
                   <table className="w-full text-[15px]">
                     <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80">

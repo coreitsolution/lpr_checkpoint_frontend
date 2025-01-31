@@ -6,7 +6,7 @@ import {
 } from "@mui/material"
 
 // Types
-import { LastRecognitionData } from "../../../../features/live-view-real-time/liveViewRealTimeTypes";
+import { RealTimeLprData } from "../../../../features/live-view-real-time/liveViewRealTimeTypes";
 
 // Utils
 import { reformatString } from "../../../../utils/comonFunction"
@@ -19,7 +19,7 @@ import Loading from "../../../../components/loading/Loading"
 
 interface LocationDialog {
   close: () => void;
-  detailData: LastRecognitionData | null;
+  detailData: RealTimeLprData | null;
   isCompare: boolean,
 }
 
@@ -102,13 +102,13 @@ export default function LocationDetailDialog({
                                 <div className="w-full">
                                   <DOTInform
                                     vehicle={{
-                                      vehicleImage: `${FILE_URL}${detailData.vehicle_image}`,
-                                      pathImage: `${FILE_URL}${detailData.plate_image}`,
-                                      plateId: `${detailData.plate} ${detailData.region_info ? detailData.region_info.name_th : ""}`,
-                                      brand: detailData.vehicle_make_info ? detailData.vehicle_make_info.make_en : reformatString(detailData.vehicle_make),
-                                      color: detailData.vehicle_color_info ? detailData.vehicle_color_info.color_th : reformatString(detailData.vehicle_color),
-                                      model: detailData.vehicle_model_info ? detailData.vehicle_model_info.model_en : reformatString(detailData.vehicle_make_model),
-                                      type: detailData.vehicle_body_type_info ? detailData.vehicle_body_type_info.body_type_th : reformatString(detailData.vehicle_body_type),
+                                      vehicleImage: `${FILE_URL}${detailData.vehicleImage}`,
+                                      pathImage: `${FILE_URL}${detailData.plateImage}`,
+                                      plateId: `${detailData.plateGroup} ${detailData.plateNumber} ${detailData.regionNameTH}`,
+                                      brand: reformatString(detailData.make),
+                                      color: reformatString(detailData.colorNameTH),
+                                      model: reformatString(detailData.model),
+                                      type: reformatString(detailData.bodyTypeTH),
                                     }}
                                   />
                                 </div>

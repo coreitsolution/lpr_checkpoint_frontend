@@ -7,7 +7,6 @@ import { FILE_URL } from '../../../config/apiConfig'
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
-
 // Components
 import { Checkbox } from "../../../components/ui/checkbox"
 import { Textarea } from "../../../components/ui/textarea"
@@ -825,6 +824,13 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
     if (value) {
       handleSelectChange("person_class_id", value.value)
       checkIsBlackListType(value.value)
+      handleTextChange("case_number", "")
+      handleStartArrestDateChange(null)
+      handleEndArrestDateChange(null)
+      setFormData((prevState) => ({
+        ...prevState,
+        ["behavior"]: "",
+      }))
     }
     else {
       handleSelectChange("person_class_id", "0")

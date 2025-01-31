@@ -21,7 +21,6 @@ import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 import {
   SpecialPlatesRespondsDetail,
   ImportSpecialPlatesDetail,
-  FileData,
   NewSpecialPlates,
 } from '../../features/registration-data/RegistrationDataTypes'
 import { FilterSpecialRegistration } from "../../features/api/types"
@@ -29,7 +28,6 @@ import { DeleteRequestData } from "../../features/file-upload/fileUploadTypes"
 
 // API
 import {
-  postFilesDataThunk,
   deleteFilesDataThunk,
 } from "../../features/file-upload/fileUploadSlice"
 import { 
@@ -71,10 +69,17 @@ function SpecialRegistration() {
   const [totalPages, setTotalPages] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(SpecialRowPerPages[SpecialRowPerPages.length - 1])
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
+  const tableDataRef = useRef<HTMLDivElement>(null)
 
   const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
+
+  useEffect(() => {
+    if (tableDataRef.current) {
+      tableDataRef.current.scrollTop = 0;
+    }
+  }, [specialRegistrationsList])
 
   const handleEditClick = (item: SpecialPlatesRespondsDetail) => {
     setSelectedRow(item)
@@ -94,7 +99,7 @@ function SpecialRegistration() {
       ).unwrap()
     }
     catch (error) {
-      
+      PopupMessage("ลบข้อมูลไม่สำเร็จ", "ไม่สามารถลบข้อมูลได้", "error")
     }
   }
 
@@ -202,11 +207,13 @@ function SpecialRegistration() {
 
   useEffect(() => {
     fetchSpecialPlateData('1', rowsPerPage.toString())
+  }, [])
 
+  useEffect(() => {
     if (!isAddRegistationOpen) {
       fetchSpecialPlateData('1', rowsPerPage.toString())
     }
-  }, [dispatch, isAddRegistationOpen])
+  }, [isAddRegistationOpen])
 
   useEffect(() => {
     if (specialPlatesData && specialPlatesData.data) {
@@ -239,14 +246,15 @@ function SpecialRegistration() {
           !row.plate_number ||
           !row.province_id ||
           !row.plate_class_id ||
-          !row.arrest_warrant_date ||
-          !row.arrest_warrant_expire_date ||
+          (row.plate_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_date) ||
+          (row.plate_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_expire_date) ||
+          (row.plate_class_id.toString().toLowerCase() === "blacklist" && !row.behavior) ||
           !row.case_owner_name ||
           !row.case_owner_agency ||
           !row.case_owner_phone
         ) {
           setFileImportError(
-            "plate_group, plate_number, province_id, plate_class_id, arrest_warrant_date, arrest_warrant_expire_date, case_owner_name, case_owner_agency และ case_owner_phone เป็นช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้"
+            "plate_group, plate_number, province_id, plate_class_id, arrest_warrant_date, arrest_warrant_expire_date, behavior, case_owner_name, case_owner_agency และ case_owner_phone เป็นช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้"
           );
           return null;
         }
@@ -263,8 +271,8 @@ function SpecialRegistration() {
           case_owner_name: row.case_owner_name,
           case_owner_agency: row.case_owner_agency,
           case_owner_phone: row.case_owner_phone,
-          imagesData: row.imagesData || "",
-          filesData: row.filesData || "",
+          imagesData: "",
+          filesData: "",
           active: dataStatus.find((status) => status.status.toLocaleLowerCase() === row.active.toString().toLocaleLowerCase())?.id,
           visible: 1
         };
@@ -284,26 +292,6 @@ function SpecialRegistration() {
     }
   };
   
-  const uploadFile = useCallback(async (file: File): Promise<FileData[] | null> => {
-    try {
-      const formData = new FormData();
-      formData.append("files", file);
-  
-      const response = await dispatch(postFilesDataThunk(formData)).unwrap();
-  
-      if (response?.data) {
-        return response.data.map((file: any) => ({
-          title: file.title,
-          url: file.url,
-        }));
-      }
-      return null;
-    } 
-    catch (error) {
-      return null;
-    }
-  }, [dispatch]);
-  
   const parseExcelDate = (dateValue: any): string => {
     if (typeof dateValue === "number") {
       const date = new Date((dateValue - 25569) * 86400 * 1000);
@@ -316,73 +304,18 @@ function SpecialRegistration() {
     throw new Error("Invalid date format");
   }
 
-  const uploadFileFailed = (text: string) => {
-    PopupMessage("", text, "error");
-  }
-
-  const getFileInfo = async (filePath: string): Promise<File> => {
-    const filename = filePath.split(/[/\\\\]/).pop() || filePath; // Extract the file name
-    const ext = filename.includes('.') ? `.${filename.split('.').pop()}` : ''; // Extract the extension
-
-    // Map common extensions to MIME types
-    const mimeTypes: Record<string, string> = {
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.pdf': 'application/pdf',
-      '.doc': 'application/msword',
-      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    };
-
-    try {
-      // Determine MIME type based on extension
-      const mimeType = mimeTypes[ext.toLowerCase()] || 'application/octet-stream';
-
-      // Create a new File object
-      const file = new File([filePath], filename, { type: mimeType });
-
-      return file;
-    } 
-    catch (error) {
-      console.error('Error processing file:', error);
-      throw error;
-    }
-  }
-  
   const addNewSpecialRegistration = async (validatedData: ImportSpecialPlatesDetail[]) => {
     
     for (const row of validatedData) {
       try {
-        let images
-        let files
-        if (row.imagesData) {
-          const fileInfo = await getFileInfo(row.imagesData);
-          const result = await uploadFile(fileInfo);
-          if (!result) {
-            uploadFileFailed("ไม่สามารถอัปโหลดรูปได้");
-            return;
-          }
-          images = result;
-        }
 
-        if (row.filesData) {
-          const file = new File([row.filesData], row.filesData);
-          const result = await uploadFile(file);
-          if (!result) {
-            uploadFileFailed("ไม่สามารถอัปโหลดไฟล์ได้");
-            return;
-          }
-          files = result;
-        }
-  
         const updatedFormData: NewSpecialPlates = {
           arrest_warrant_date: parseExcelDate(row.arrest_warrant_date),
           arrest_warrant_expire_date: parseExcelDate(row.arrest_warrant_expire_date),
           plate_group: row.plate_group,
           plate_number: row.plate_number,
           province_id: row.province_id,
-          imagesData: images ? images : [],
+          imagesData: [],
           case_number: row.case_number,
           behavior: row.behavior,
           active: row.active,
@@ -390,7 +323,7 @@ function SpecialRegistration() {
           case_owner_name: row.case_owner_name,
           plate_class_id: row.plate_class_id,
           case_owner_agency: row.case_owner_agency,
-          filesData: files ? files : [],
+          filesData: [],
           visible: 1,
         };
   
@@ -488,7 +421,11 @@ function SpecialRegistration() {
           </div>
           <div id="body" className="mt-[5px] flex flex-col">
             <div className="flex-1 overflow-x-auto">
-              <div id="table-data" className="mt-[10px] overflow-y-auto h-[78vh]">
+              <div 
+                id="table-data" 
+                className="mt-[10px] overflow-y-auto h-[78vh]"
+                ref={tableDataRef}
+              >
                 <div className="">
                   <table className="w-full text-[15px]">
                     <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80">

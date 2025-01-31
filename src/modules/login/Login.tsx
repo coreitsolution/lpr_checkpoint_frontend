@@ -7,15 +7,36 @@ import { useNavigate } from 'react-router-dom'
 
 // API
 import { login, clearError } from '../../features/auth/authSlice'
+import {
+  fetchProvincesThunk,
+  fetchDataStatusThunk,
+  fetchRegistrationTypesThunk,
+  fetchPoliceDivisionsThunk,
+  fetchCommonPrefixesThunk,
+  fetchOfficerPrefixesThunk,
+  fetchPositionThunk,
+  fetchRegionsThunk,
+  fetchStreamEncodesThunk,
+  fetchVehicleBodyTypesThunk,
+  fetchVehicleColorsThunk,
+  fetchVehicleMakesThunk,
+  fetchVehicleModelsThunk,
+  fetchVehicleBodyTypesThThunk,
+  fetchPersonTypesThunk,
+} from "../../features/dropdown/dropdownSlice";
 
 // Image
 import LogoImage from '/images/Logo.jpg'
 
-// Pop-up
-import { PopupMessage } from "../../utils/popupMessage"
-
 // Icons
 import { FaEye, FaEyeSlash } from "react-icons/fa"
+
+// utils
+import { websocketService } from '../../utils/websocketService'
+import { PopupMessage } from "../../utils/popupMessage"
+
+// Config
+import { WEB_SOCKET_SERVICE } from '../../config/apiConfig'
 
 const LoginPage = () => {
   const [username, setUsername] = useState('')
@@ -45,9 +66,37 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (authData && authData.isAuthenticated) {
+      dispatch(fetchProvincesThunk({
+        "orderBy": "name_th",
+      }));
+      dispatch(fetchDataStatusThunk());
+      dispatch(fetchRegistrationTypesThunk({
+        "filter": "visible:1"
+      }));
+      dispatch(fetchPoliceDivisionsThunk());
+      dispatch(fetchCommonPrefixesThunk());
+      dispatch(fetchOfficerPrefixesThunk());
+      dispatch(fetchPositionThunk());
+      dispatch(fetchRegionsThunk({
+        "orderBy": "name_th",
+      }));
+      dispatch(fetchStreamEncodesThunk());
+      dispatch(fetchVehicleBodyTypesThunk());
+      dispatch(fetchVehicleColorsThunk());
+      dispatch(fetchVehicleMakesThunk());
+      dispatch(fetchVehicleModelsThunk());
+      dispatch(fetchVehicleBodyTypesThThunk());
+      dispatch(fetchPersonTypesThunk({
+        "filter": "visible:1"
+      }));
+      websocketService.connect(WEB_SOCKET_SERVICE);
       navigate('/checkpoint')
     }
   }, [authData, navigate])
+
+  const handleForgetPassword = () => {
+    PopupMessage("ลืมรหัสผ่าน", "กรุณาติดต่อผู้ดูแลระบบ", "info")
+  }
 
   return (
     <div id='login' className="flex items-center justify-center min-h-screen">
@@ -77,9 +126,11 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <div className='mb-[25px]'>
               <input
-                type="username"
+                type="text"
                 className="w-full text-black px-4 py-2 border border-linkWater2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Username"
+                name="username"
+                autoComplete="username"
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
@@ -89,6 +140,7 @@ const LoginPage = () => {
                 className="w-full text-black px-4 py-2 border border-linkWater2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Password"
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete='current-password'
               />
               <button
                 type="button"
@@ -123,6 +175,7 @@ const LoginPage = () => {
         >
           <button
             className="text-black hover:underline"
+            onClick={handleForgetPassword}
           >
             ลืมรหัสผ่านหรือไม่?
           </button>

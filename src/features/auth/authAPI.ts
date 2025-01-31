@@ -1,15 +1,6 @@
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { API_URL } from '../../config/apiConfig';
-
-interface LoginCredentials {
-  username: string
-  password: string
-}
-
-interface LoginResponse {
-  token: string
-  user: any
-}
+import { LoginCredentials, LoginResponse, RefreshTokenResponse } from "./authTypes";
 
 export const loginUser = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   
@@ -19,7 +10,15 @@ export const loginUser = async (credentials: LoginCredentials): Promise<LoginRes
   })
 }
 
-export const logoutUser = async (): Promise<void> => {
-  
-  return Promise.resolve()
+export const refreshToken = async (): Promise<RefreshTokenResponse> => {
+  return await fetchClient<RefreshTokenResponse>(combineURL(API_URL, "/users/refresh"), {
+    method: 'POST',
+  });
 }
+
+export const logoutUser = async (): Promise<{ success: boolean }> => {
+  await fetchClient<void>(combineURL(API_URL, "/users/logout"), {
+    method: "POST",
+  });
+  return { success: true }
+};

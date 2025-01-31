@@ -29,3 +29,7 @@ export const formatPhone = (value: string) => {
 export const isEquals = (a: any, b: any) => {
   return JSON.stringify(a) === JSON.stringify(b)
 }
+
+export const isNumber = (value: string) => {
+  return /^[0-9]*$/.test(value)
+}

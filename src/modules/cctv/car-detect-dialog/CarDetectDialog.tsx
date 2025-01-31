@@ -20,11 +20,9 @@ interface CarDetectDialogProps {
 
 const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestLprDetect, lprDetectHistoryList}) => {
   const [isLoading, setIsLoading] = useState(false)
-  const [timestamp, setTimestamp] = useState(Date.now())
 
   useEffect(() => {
     setIsLoading(true)
-    setTimestamp(Date.now())
     setTimeout(() => {
       setIsLoading(false)
     }, 500);
@@ -130,8 +128,8 @@ const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestLpr
               (
                 <div className='flex flex-col mt-2'>
                 <div className='flex relative h-[26vh]'>
-                  <img src={`${FILE_URL}${latestLprDetect?.vehicle_image}?t=${timestamp}`} alt="Vehicle Image" className='w-full h-full' />
-                  <img src={`${FILE_URL}${latestLprDetect?.plate_image}?t=${timestamp}`} alt="Plate Image" className='w-[200px] h-[10vh] absolute bottom-0' />
+                  <img src={`${FILE_URL}${latestLprDetect?.vehicle_image}`} alt="Vehicle Image" className='w-full h-full' />
+                  <img src={`${FILE_URL}${latestLprDetect?.plate_image}`} alt="Plate Image" className='w-[200px] h-[10vh] absolute bottom-0' />
                 </div>
                 <div className='bg-swamp text-center p-2'>
                   <span className='text-[17px] text-white'>{`${latestLprDetect?.plate} ${latestLprDetect?.region_info.name_th}`}</span>
@@ -227,8 +225,8 @@ const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestLpr
                             </td>
                             <td className="bg-celtic text-center">
                               <div>
-                                <img key={`${index}_vehicle_image`} src={`${FILE_URL}${data.vehicle_image}?t=${timestamp}`} alt={`${index}_vehicle_image`} className="inline-flex items-center justify-center align-middle h-[65px] w-[60px]" />
-                                <img key={`${index}_plate_image`} src={`${FILE_URL}${data.plate_image}?t=${timestamp}`} alt={`${index}_plate_image`} className="inline-flex items-center justify-center align-middle h-[65px] w-[60px]" />
+                                <img key={`${index}_vehicle_image`} src={`${FILE_URL}${data.vehicle_image}`} alt={`${index}_vehicle_image`} className="inline-flex items-center justify-center align-middle h-[65px] w-[60px]" />
+                                <img key={`${index}_plate_image`} src={`${FILE_URL}${data.plate_image}`} alt={`${index}_plate_image`} className="inline-flex items-center justify-center align-middle h-[65px] w-[60px]" />
                               </div>
                             </td>
                             <td className="bg-tuna pl-2">{data.camera_info ? data.camera_info.cam_id : ""}</td>

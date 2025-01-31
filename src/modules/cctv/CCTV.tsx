@@ -52,10 +52,10 @@ import {
   CameraDetailSettings,
   StartStopStream,
 } from "../../features/camera-settings/cameraSettingsTypes"
-import { LastRecognitionData } from "../../features/live-view-real-time/liveViewRealTimeTypes"
+import { LastRecognitionData, RealTimeLprData } from "../../features/live-view-real-time/liveViewRealTimeTypes"
 
 // Utils
-import { reformatString } from "../../utils/comonFunction"
+import { reformatString, isNumber } from "../../utils/comonFunction"
 
 // Config
 import { IMAGE_URL, TELEGRAM_CHAT_ID } from '../../config/apiConfig'
@@ -92,8 +92,8 @@ const CCTV = () => {
   const restartButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [activeStreamUrls, setActiveStreamUrls] = useState<Record<number, { id: number, url: string, name:string}>>({})
-  const [streamLPRMapping, setStreamLPRMapping] = useState<Record<string, LastRecognitionData>>({})
-  const [streamLPRData, setStreamLPRData] = useState<LastRecognitionData | null>(null)
+  const [streamLPRMapping, setStreamLPRMapping] = useState<Record<string, RealTimeLprData>>({})
+  const [streamLPRData, setStreamLPRData] = useState<RealTimeLprData | null>(null)
   const [isCarDetectOpen, setIsCarDetectOpen] = useState(false)
   const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
   const [isRestartStreamDisabled, setIsRestartStreamDisabled] = useState(false)
@@ -115,12 +115,12 @@ const CCTV = () => {
   }, [])
 
   const setUpdateLastRecognition = useCallback(
-    async (update: LastRecognitionData | null) => {
+    async (update: RealTimeLprData | null) => {
       if (update) {
         setStreamLPRData(update)
         setStreamLPRMapping((prevMapping) => ({
           ...prevMapping,
-          [update.camera_id]: update,
+          [update.alprCamId]: update,
         }))
         
       }
@@ -130,11 +130,13 @@ const CCTV = () => {
     }, [dispatch]
   )
 
-  const setUpdateSpecialPlate = async(update: LastRecognitionData) => {
+  const setUpdateSpecialPlate = async(update: RealTimeLprData) => {
+    if (!update.isSpecialPlate) return
+    
     await fetchLastRecognitions()
     await dispatch(sendMessageThunk({ 
       chatId: TELEGRAM_CHAT_ID, 
-      message: `Special Plate found: ${update.plate} ${update.region_info.name_th} ${update.plate_confidence}% Type: ${update.special_plate?.plate_class_info.title_en}` 
+      message: `Special Plate found: ${update.plateGroup} ${update.plateNumber} ${update.regionNameTH} ${update.plateConfidence}% Type: ${update.specialPlateClassTH}` 
     }))
   }
 
@@ -476,27 +478,34 @@ const CCTV = () => {
                                     `}>
                                     <img
                                       className="h-full w-[50%]"
-                                      src={`${IMAGE_URL}${lprData?.vehicle_image}`}
+                                      src={`${IMAGE_URL}${lprData?.vehicleImage}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                     <img
                                       className="h-[60%] w-[50%]"
-                                      src={`${IMAGE_URL}${lprData?.plate_image}`}
+                                      src={`${IMAGE_URL}${lprData?.plateImage}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                   </div>
                                 </div>
                                 <div className="flex flex-col h-[114px] text-center bg-tuna">
-                                  <p className="text-white text-[24px] font-medium">{`${lprData.plate} ${lprData.region_info.name_th}`}</p>
+                                  <p className="text-white text-[24px] font-medium">
+                                    {`
+                                      ${isNumber(lprData.plateGroup) && isNumber(lprData.plateNumber) ? 
+                                      `${lprData.plateGroup}-${lprData.plateNumber}` : 
+                                      `${lprData.plateGroup} ${lprData.plateNumber}`} 
+                                      ${lprData.regionNameTH}
+                                    `}
+                                  </p>
                                   <p className='border-b-[2px] border-gainsboro mx-[25px] mt-[10px]'></p>
                                   <div className="grid grid-cols-2 text-white text-[18px] font-light p-2">
                                     <div className='border-r-[1px] border-gainsboro'>
-                                      <p className='truncate' title={`${reformatString(lprData.vehicle_make)} ${reformatString(lprData.vehicle_make_model)}`}>{reformatString(lprData.vehicle_make)} {reformatString(lprData.vehicle_make_model)}</p>
-                                      <p className='truncate' title={`${reformatString(lprData.vehicle_color)}`}>{reformatString(lprData.vehicle_color)}</p>
+                                      <p className='truncate' title={`${reformatString(lprData.make)} ${reformatString(lprData.model)}`}>{reformatString(lprData.make)} {reformatString(lprData.model)}</p>
+                                      <p className='truncate' title={`${reformatString(lprData.color)}`}>{reformatString(lprData.color)}</p>
                                     </div>
                                     <div>
-                                      <p>{dayjs(lprData.epoch_start).format('DD-MM-BBBB')}</p>
-                                      <p>{dayjs(lprData.epoch_start).format('HH:mm:ss')}</p>
+                                      <p>{dayjs(lprData.detectionDatetime).format('DD-MM-BBBB')}</p>
+                                      <p>{dayjs(lprData.detectionDatetime).format('HH:mm:ss')}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -512,27 +521,34 @@ const CCTV = () => {
                                     `}>
                                     <img
                                       className="h-full w-[50%]"
-                                      src={`${IMAGE_URL}${streamLPRData?.vehicle_image}`}
+                                      src={`${IMAGE_URL}${streamLPRData?.vehicleImage}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                     <img
                                       className="h-[60%] w-[50%]"
-                                      src={`${IMAGE_URL}${streamLPRData?.plate_image}`}
+                                      src={`${IMAGE_URL}${streamLPRData?.plateImage}`}
                                       alt={`Car ${index + 1}`}
                                     />
                                   </div>
                                 </div>
                                 <div className="flex flex-col h-[122px] text-center bg-tuna">
-                                  <p className="text-white text-[24px] font-medium">{`${streamLPRData?.plate} ${streamLPRData?.region_info.name_th}`}</p>
+                                  <p className="text-white text-[24px] font-medium">
+                                    {`
+                                      ${isNumber(streamLPRData?.plateGroup) && isNumber(streamLPRData?.plateNumber) ? 
+                                      `${streamLPRData?.plateGroup}-${streamLPRData?.plateNumber}` : 
+                                      `${streamLPRData?.plateGroup} ${streamLPRData?.plateNumber}`} 
+                                      ${streamLPRData?.regionNameTH}
+                                    `}
+                                  </p>
                                   <p className='border-b-[2px] border-gainsboro mx-[25px] mt-[10px]'></p>
                                   <div className="grid grid-cols-2 text-white text-[18px] font-light p-2">
                                     <div className='border-r-[1px] border-gainsboro'>
-                                      <p className='truncate' title={`${reformatString(streamLPRData.vehicle_make)} ${reformatString(streamLPRData.vehicle_make_model)}`}>{reformatString(streamLPRData.vehicle_make)} {reformatString(streamLPRData.vehicle_make_model)}</p>
-                                      <p className='truncate' title={`${reformatString(streamLPRData.vehicle_color)}`}>{reformatString(streamLPRData.vehicle_color)}</p>
+                                      <p className='truncate' title={`${reformatString(streamLPRData.make)} ${reformatString(streamLPRData.model)}`}>{reformatString(streamLPRData.make)} {reformatString(streamLPRData.model)}</p>
+                                      <p className='truncate' title={`${reformatString(streamLPRData.color)}`}>{reformatString(streamLPRData.color)}</p>
                                     </div>
                                     <div>
-                                      <p>{dayjs(lprData.epoch_start).format('DD-MM-BBBB')}</p>
-                                      <p>{dayjs(lprData.epoch_start).format('HH:mm:ss')}</p>
+                                      <p>{dayjs(lprData.detectionDatetime).format('DD-MM-BBBB')}</p>
+                                      <p>{dayjs(lprData.detectionDatetime).format('HH:mm:ss')}</p>
                                     </div>
                                   </div>
                                 </div>

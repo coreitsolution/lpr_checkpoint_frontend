@@ -20,7 +20,7 @@ import RiArrowLeftSFill from "~icons/ri/arrow-left-s-fill"
 import LocationDetailDialog from '../../search/detail/location-detail/LocationDetail'
 
 // API
-import { fetchLastRecognitionsThunk, fetchSystemStatusThunk, fetchVehicleCountThunk, dowloadFileThunk } from "../../../features/live-view-real-time/liveViewRealTimeSlice"
+import { fetchSystemStatusThunk, fetchVehicleCountThunk, dowloadFileThunk } from "../../../features/live-view-real-time/liveViewRealTimeSlice"
 
 // Types
 import { CameraDetailSettings } from "../../../features/camera-settings/cameraSettingsTypes"
@@ -28,7 +28,7 @@ import {
   VehicleCountData, 
   ConnectionResult, 
   SystemStatusData,
-  LastRecognitionData,
+  RealTimeLprData,
 } from "../../../features/live-view-real-time/liveViewRealTimeTypes"
 import { DirectionDetail } from "../../../features/api/types";
 
@@ -40,16 +40,17 @@ import { RootState, AppDispatch } from "../../../app/store"
 import Loading from "../../../components/loading/Loading"
 
 // Utils
-import { reformatString, isEquals } from "../../../utils/comonFunction"
+import { reformatString, isNumber } from "../../../utils/comonFunction"
 import { PopupMessage } from "../../../utils/popupMessage"
+import { websocketService } from '../../../utils/websocketService'
 
 dayjs.extend(buddhistEra)
 
 interface CCTVSideBarProp {
   setCollapse: (status: boolean) => void
   cameraSetting: CameraDetailSettings[]
-  setUpdateLastRecognition: (data: LastRecognitionData | null) => void
-  setUpdateSpecialPlate: (data: LastRecognitionData) => void
+  setUpdateLastRecognition: (data: RealTimeLprData | null) => void
+  setUpdateSpecialPlate: (data: RealTimeLprData) => void
 }
 
 const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, setUpdateLastRecognition, setUpdateSpecialPlate}) => {
@@ -58,20 +59,20 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   const buttonDowloadRefs = useRef<(HTMLButtonElement | null)[]>([])
   const vehicleInfoRefs = useRef<(HTMLDivElement | null)[]>([])
   const [isOpenFullDirectionDialog, setOpenFullDirectionDialog] = useState(false)
-  const [detailData, setDetailData] = useState<LastRecognitionData | null>(null)
+  const [detailData, setDetailData] = useState<RealTimeLprData | null>(null)
   const [directionDetail, setDirectionDetail] = useState<DirectionDetail[]>([])
   const [compare, setIsCompare] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [LPRCameraDropdown, setLPRCameraDropdown] = useState<{ label: string, value: number }[]>([])
-  const [lastRecognitionListData, setLastRecognitionListData] = useState<LastRecognitionData[]>([])
+  const [lastRecognitionData, setLastRecognitionData] = useState<RealTimeLprData | null>(null)
+  const [lastRecognitionListData, setLastRecognitionListData] = useState<RealTimeLprData[]>([])
   const [vehicleCountListData, setVehicleCountListData] = useState<VehicleCountData[]>([])
-  const [originalData, setOriginalData] = useState<LastRecognitionData[]>([])
+  const [originalData, setOriginalData] = useState<RealTimeLprData[]>([])
   const [connectionListData, setConnectionListData] = useState<ConnectionResult[]>([])
   const [systemStatusListData, setSystemStatusListData] = useState<SystemStatusData[]>([])
-  const [lprSpecialPlateData, setLprSpecialPlateData] = useState<LastRecognitionData[]>([])
 
   const dispatch: AppDispatch = useDispatch()
-  const { liveViewRealTimeData, vehicleCountData, systemStatusData, connectionData } = useSelector(
+  const { vehicleCountData, systemStatusData, connectionData } = useSelector(
     (state: RootState) => state.liveViewRealTimes
   )
 
@@ -80,22 +81,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     VehicleCountIcon: "/icons/checklist",
     SystemStatusIcon: "/icons/system-status",
     ConnectionIcon: "/icons/connection",
-  }
-
-  const fetchLastRecognitions = async () => {
-    try {
-      const query: Record<string, string> = {
-        "limit": "20",
-        "orderBy": "id",
-        "reverseOrder": "true",
-      }
-      await dispatch(fetchLastRecognitionsThunk(query))
-    }
-    catch (ex) {
-      setLastRecognitionListData([])
-      setOriginalData([])
-      setUpdateLastRecognition(null)
-    }
   }
 
   const fetchVehicleCount = async () => {
@@ -128,7 +113,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
 
   useEffect(() => {
     if (cameraSetting) {
-      const dropdownData = cameraSetting.map(({ alpr_cam_id , cam_id }) => ({
+      const dropdownData = cameraSetting.map(({ alpr_cam_id ,cam_id }) => ({
         label: cam_id,
         value: alpr_cam_id,
       }))
@@ -147,25 +132,13 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   }, [cameraSetting])
 
   useEffect(() => {
-    if (liveViewRealTimeData && liveViewRealTimeData.data) {
-      if (LPRCameraSetting === 0) {
-        setLastRecognitionListData(liveViewRealTimeData.data)
-      }
-      else {
-        const filterDataa = liveViewRealTimeData.data.filter((item) => item.camera_id === LPRCameraSetting)
-        setLastRecognitionListData(filterDataa)
-      }
-      if (liveViewRealTimeData.data.length > 0 && !isEquals(liveViewRealTimeData.data, originalData)) {
-        setOriginalData(liveViewRealTimeData.data)
-        setUpdateLastRecognition(liveViewRealTimeData.data[0])
-        const specialPlateDetect = liveViewRealTimeData.data.filter((row) => row.special_plate !== null && row.is_special_plate)
-        if (!isEquals(specialPlateDetect, lprSpecialPlateData)) {
-          setLprSpecialPlateData(specialPlateDetect)
-          setUpdateSpecialPlate(specialPlateDetect[0])
-        }
+    if (lastRecognitionData) {
+      setUpdateLastRecognition(lastRecognitionData)
+      if (lastRecognitionData.isSpecialPlate) {
+        setUpdateSpecialPlate(lastRecognitionData)
       }
     }
-  }, [liveViewRealTimeData])
+  }, [lastRecognitionData])
 
   useEffect(() => {
     if (vehicleCountData && vehicleCountData.data) {
@@ -180,8 +153,34 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   }, [systemStatusData])
 
   useEffect(() => {
+    if (LPRCameraSetting === 0 || LPRCameraSetting === '') {
+      setLastRecognitionListData(originalData)
+    }
+    else {
+      const filterData = originalData.filter((item) => item.alprCamId === LPRCameraSetting)
+      setLastRecognitionListData(filterData)
+    }
+  }, [originalData])
+
+  useEffect(() => {
+    const handleWebSocketMessage = (message: string) => {
+      const latestData = JSON.parse(message) as RealTimeLprData
+
+      setLastRecognitionData(latestData)
+
+      setOriginalData(prev => [latestData, ...prev].slice(0, 20))
+    }
+
+    websocketService.subscribe('lpr-data/new-data', handleWebSocketMessage)
+
+    return () => {
+      websocketService.unsubscribe('lpr-data/new-data', handleWebSocketMessage);
+    }
+  }, [])
+
+  useEffect(() => {
     setIsLoading(true)
-    fetchLastRecognitions()
+    // fetchLastRecognitions()
     fetchVehicleCount()
     fetchSystemStatus()
     // dispatch(fetchConnectionThunk())
@@ -191,7 +190,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     }, 500)
 
     const interval = setInterval(() => {
-      fetchLastRecognitions()
+      // fetchLastRecognitions()
       fetchVehicleCount()
       fetchSystemStatus()
       // dispatch(fetchConnectionThunk())
@@ -211,7 +210,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
       setLastRecognitionListData(originalData)
     }
     else {
-      const filterData = originalData.filter((item) => item.camera_id === LPRCameraSetting)
+      const filterData = originalData.filter((item) => item.alprCamId === LPRCameraSetting)
       setLastRecognitionListData(filterData)
     }
   }, [LPRCameraSetting])
@@ -236,13 +235,12 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         }
       }
     } 
-    catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      PopupMessage("การดาวน์โหลดล้มเหลว", errorMessage, 'error');
+    catch (error) {
+      PopupMessage("การดาวน์โหลดล้มเหลว", "", 'error');
     }    
   }
 
-  const handleVehicleInfoClick = async (event: React.MouseEvent, item: LastRecognitionData) => {
+  const handleVehicleInfoClick = async (event: React.MouseEvent, item: RealTimeLprData) => {
     event.stopPropagation()
     setIsLoading(true)
     setDetailData(item)
@@ -498,20 +496,27 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                     onClick={(e) => handleVehicleInfoClick(e, item)}
                   >
                     <div className='w-full h-full text-center'>
-                      <label className='ml-1'>{`${item.plate} ${item.region_info.name_th ? item.region_info.name_th : ""}`}</label>
+                      <label className='ml-1'>
+                        {`
+                          ${isNumber(item.plateGroup) && isNumber(item.plateNumber) ? 
+                          `${item.plateGroup}-${item.plateNumber}` : 
+                          `${item.plateGroup} ${item.plateNumber}`} 
+                          ${item.regionNameTH}
+                        `}
+                      </label>
                       <div className='flex h-[100px] w-full'>
                         <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
                           <img 
-                            key={`vehicle_img_${item.id}_${item.vehicle_image}`}
-                            src={`${FILE_URL}${item.vehicle_image}?t=${Date.now()}`} 
+                            key={`vehicle_img_${index}_${item.vehicleImage}`}
+                            src={`${FILE_URL}${item.vehicleImage}`} 
                             alt="Vehicle Image"
                             className="w-full h-full" 
                           />
                         </div>
                         <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
                           <img 
-                            key={`plate_img_${item.id}_${item.plate_image}`}
-                            src={`${FILE_URL}${item.plate_image}?t=${Date.now()}`} 
+                            key={`plate_img_${index}_${item.plateImage}`}
+                            src={`${FILE_URL}${item.plateImage}`} 
                             alt="Plate Image"
                             className="w-full h-[50%]" 
                           />
@@ -522,29 +527,29 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                       className="w-full h-full relative"
                     >
                       <div className='bg-celti text-center'>
-                        <label className="px-1">{dayjs(item.epoch_start).format('DD-MM-BBBB HH:mm:ss')}</label>
-                        <label className="px-1 border-l-[1px] border-white">{`${item.plate_confidence}%`}</label>
+                        <label className="px-1">{dayjs(item.detectionDatetime).format('DD-MM-BBBB HH:mm:ss')}</label>
+                        <label className="px-1 border-l-[1px] border-white">{`${item.plateConfidence}%`}</label>
                       </div>
                       <div className="h-[100px] relative flex flex-col p-1 pl-2">
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">ประเภท</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_body_type)}>{reformatString(item.vehicle_body_type)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.bodyType)}>{reformatString(item.bodyType)}</span>
                         </div>
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">ยี่ห้อ</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_make)}>{reformatString(item.vehicle_make)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.make)}>{reformatString(item.make)}</span>
                         </div>
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">สี</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_color)}>{reformatString(item.vehicle_color)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.color)}>{reformatString(item.color)}</span>
                         </div>
                         <div className="flex mb-[2px]">
                           <span className="w-[55px] text-left">รุ่น</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.vehicle_make_model)}>{reformatString(item.vehicle_make_model)}</span>
+                          <span className='w-[135px] truncate' title={reformatString(item.model)}>{reformatString(item.model)}</span>
                         </div>
                         <div className='absolute bottom-0 right-0'>
                           <button 

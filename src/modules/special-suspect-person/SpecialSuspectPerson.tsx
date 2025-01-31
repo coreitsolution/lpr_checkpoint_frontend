@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
+import { fetchClient, combineURL } from "../../utils/fetchClient"
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
@@ -18,15 +19,17 @@ import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 import {
   SuspectPeopleRespondsDetail,
   ImportSuspectPeopleDetail,
-  FileData,
   NewSuspectPeople,
 } from '../../features/suspect-people/SuspectPeopleDataTypes'
 import { FilterSpecialPeople } from "../../features/api/types"
 import { DeleteRequestData } from "../../features/file-upload/fileUploadTypes"
+import { 
+  Districts,
+  SubDistricts,
+} from "../../features/dropdown/dropdownTypes"
 
 // API
 import {
-  postFilesDataThunk,
   deleteFilesDataThunk,
 } from "../../features/file-upload/fileUploadSlice"
 import { 
@@ -47,6 +50,9 @@ import PaginationComponent from "../../components/pagination/Pagination"
 // Constant
 import { SpecialRowPerPages } from "../../constants/dropdown"
 
+// Config
+import { API_URL } from '../../config/apiConfig'
+
 dayjs.extend(buddhistEra)
 
 function SpecialSuspectPerson() {
@@ -55,7 +61,7 @@ function SpecialSuspectPerson() {
     (state: RootState) => state.suspectPeopleData
   )
 
-  const [isAddRegistationOpen, setIsAddRegistationOpen] = useState(false)
+  const [isAddSuspectPersonOpen, setIsAddSuspectPersonOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isSearch, setIsSearch] = useState(false)
   const [specialSuspectPeopleList, setSpecialSuspectPeopleList] = useState<SuspectPeopleRespondsDetail[]>([])
@@ -69,20 +75,27 @@ function SpecialSuspectPerson() {
   const [totalPages, setTotalPages] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(SpecialRowPerPages[SpecialRowPerPages.length - 1])
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
+  const tableDataRef = useRef<HTMLDivElement>(null)
 
   const { provinces, dataStatus, personTypes, commonPrefixes } = useSelector(
     (state: RootState) => state.dropdown
   )
 
+  useEffect(() => {
+    if (tableDataRef.current) {
+      tableDataRef.current.scrollTop = 0;
+    }
+  }, [specialSuspectPeopleList])
+
   const handleEditClick = (item: SuspectPeopleRespondsDetail) => {
     setSelectedRow(item)
-    setIsAddRegistationOpen(true)
+    setIsAddSuspectPersonOpen(true)
     setIsEditMode(true)
   }
 
   const handleAddClick = () => {
     setIsEditMode(false)
-    setIsAddRegistationOpen(true)
+    setIsAddSuspectPersonOpen(true)
   }
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
@@ -92,7 +105,7 @@ function SpecialSuspectPerson() {
       ).unwrap()
     }
     catch (error) {
-      
+      PopupMessage("ลบข้อมูลไม่สำเร็จ", "ไม่สามารถลบไฟล์ได้", "error")
     }
   }
 
@@ -200,11 +213,13 @@ function SpecialSuspectPerson() {
 
   useEffect(() => {
     fetchSpecialSuspectPeopleData('1', rowsPerPage.toString())
+  }, [])
 
-    if (!isAddRegistationOpen) {
+  useEffect(() => {
+    if (!isAddSuspectPersonOpen) {
       fetchSpecialSuspectPeopleData('1', rowsPerPage.toString())
     }
-  }, [dispatch, isAddRegistationOpen])
+  }, [isAddSuspectPersonOpen])
 
   useEffect(() => {
     if (specialSuspectPeopleData && specialSuspectPeopleData.data) {
@@ -228,38 +243,72 @@ function SpecialSuspectPerson() {
       const sheet = workbook.Sheets[sheetName]
       const jsonData: ImportSuspectPeopleDetail[] = XLSX.utils.sheet_to_json(sheet)
   
-      const validatedData = jsonData.map((row) => {
-        if (
-          !row.province_id ||
-          !row.person_class_id ||
-          !row.arrest_warrant_date ||
-          !row.arrest_warrant_expire_date ||
-          !row.case_owner_name ||
-          !row.case_owner_agency ||
-          !row.case_owner_phone
-        ) {
-          setFileImportError(
-            "province_id, person_class_id, arrest_warrant_date, arrest_warrant_expire_date, case_owner_name, case_owner_agency และ case_owner_phone เป็นช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้"
-          )
-          return null
-        }
+      const validatedData = (await Promise.all(
+        jsonData.map(async (row) => {
+          if (
+            !row.name_prefix ||
+            !row.firstname ||
+            !row.lastname ||
+            !row.nation_number ||
+            !row.address ||
+            !row.province_id ||
+            !row.district_id ||
+            !row.sub_district_id ||
+            !row.postal_code ||
+            !row.person_class_id ||
+            (row.person_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_date) ||
+            (row.person_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_expire_date) ||
+            (row.person_class_id.toString().toLowerCase() === "blacklist" && !row.behavior) ||
+            !row.case_owner_name ||
+            !row.case_owner_agency ||
+            !row.case_owner_phone
+          ) {
+            setFileImportError(
+              `name_prefix, firstname, lastname, nation_number, address, 
+              province_id, district_id, sub_district_id, postal_code, person_class_id, 
+              arrest_warrant_date, arrest_warrant_expire_date, behavior case_owner_name, case_owner_agency และ case_owner_phone เป็นช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้`
+            )
+            return null
+          }
   
-        return {
-          province_id: provinces?.data?.find((province) => province.name_th === row.province_id.toString())?.id,
-          person_class_id: personTypes?.data?.find((type) => type.title_en.toLocaleLowerCase() === row.person_class_id.toString().toLocaleLowerCase())?.id,
-          case_number: row.case_number || "-",
-          arrest_warrant_date: row.arrest_warrant_date,
-          arrest_warrant_expire_date: row.arrest_warrant_expire_date,
-          behavior: row.behavior || "-",
-          case_owner_name: row.case_owner_name,
-          case_owner_agency: row.case_owner_agency,
-          case_owner_phone: row.case_owner_phone,
-          imagesData: row.imagesData || "",
-          filesData: row.filesData || "",
-          active: dataStatus.find((status) => status.status.toLocaleLowerCase() === row.active.toString().toLocaleLowerCase())?.id,
-          visible: 1
-        }
-      }).filter(Boolean)
+          let query: Record<string, string> = {}
+          query["filter"] = `name_th:${row.district_id}`
+          const district = await fetchClient<Districts>(combineURL(API_URL, "/districts/get"), {
+            method: "GET",
+            queryParams: query,
+          });
+  
+          query["filter"] = `name_th:${row.sub_district_id}`
+          const subDistrict = await fetchClient<SubDistricts>(combineURL(API_URL, "/subdistricts/get"), {
+            method: "GET",
+            queryParams: query,
+          });
+    
+          return {
+            name_prefix: commonPrefixes?.data?.find((prefix) => prefix.title_th === row.name_prefix.toString())?.id,
+            firstname: row.firstname,
+            lastname: row.lastname,
+            nation_number: row.nation_number,
+            address: row.address,
+            province_id: provinces?.data?.find((province) => province.name_th === row.province_id.toString())?.id,
+            district_id: district?.data?.find((district) => district.name_th === row.district_id.toString())?.id,
+            sub_district_id: subDistrict?.data?.find((subDistrict) => subDistrict.name_th === row.sub_district_id.toString())?.id,
+            postal_code: row.postal_code,
+            person_class_id: personTypes?.data?.find((type) => type.title_en.toLocaleLowerCase() === row.person_class_id.toString().toLocaleLowerCase())?.id,
+            case_number: row.case_number || "-",
+            arrest_warrant_date: row.arrest_warrant_date,
+            arrest_warrant_expire_date: row.arrest_warrant_expire_date,
+            behavior: row.behavior || "-",
+            case_owner_name: row.case_owner_name,
+            case_owner_agency: row.case_owner_agency,
+            case_owner_phone: row.case_owner_phone,
+            imagesData: "",
+            filesData: "",
+            active: dataStatus.find((status) => status.status.toLocaleLowerCase() === row.active.toString().toLocaleLowerCase())?.id,
+            visible: 1
+          }
+        })
+      )).filter(Boolean)
   
       if (validatedData && validatedData.length > 0) {
         await addNewSpecialSuspectPerson(validatedData as ImportSuspectPeopleDetail[])
@@ -275,26 +324,6 @@ function SpecialSuspectPerson() {
     }
   }
   
-  const uploadFile = useCallback(async (file: File): Promise<FileData[] | null> => {
-    try {
-      const formData = new FormData()
-      formData.append("files", file)
-  
-      const response = await dispatch(postFilesDataThunk(formData)).unwrap()
-  
-      if (response?.data) {
-        return response.data.map((file: any) => ({
-          title: file.title,
-          url: file.url,
-        }))
-      }
-      return null
-    } 
-    catch (error) {
-      return null
-    }
-  }, [dispatch])
-  
   const parseExcelDate = (dateValue: any): string => {
     if (typeof dateValue === "number") {
       const date = new Date((dateValue - 25569) * 86400 * 1000)
@@ -307,65 +336,10 @@ function SpecialSuspectPerson() {
     throw new Error("Invalid date format")
   }
 
-  const uploadFileFailed = (text: string) => {
-    PopupMessage("", text, "error")
-  }
-
-  const getFileInfo = async (filePath: string): Promise<File> => {
-    const filename = filePath.split(/[/\\\\]/).pop() || filePath // Extract the file name
-    const ext = filename.includes('.') ? `.${filename.split('.').pop()}` : '' // Extract the extension
-
-    // Map common extensions to MIME types
-    const mimeTypes: Record<string, string> = {
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.pdf': 'application/pdf',
-      '.doc': 'application/msword',
-      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    }
-
-    try {
-      // Determine MIME type based on extension
-      const mimeType = mimeTypes[ext.toLowerCase()] || 'application/octet-stream'
-
-      // Create a new File object
-      const file = new File([filePath], filename, { type: mimeType })
-
-      return file
-    } 
-    catch (error) {
-      console.error('Error processing file:', error)
-      throw error
-    }
-  }
-  
   const addNewSpecialSuspectPerson = async (validatedData: ImportSuspectPeopleDetail[]) => {
     
     for (const row of validatedData) {
       try {
-        let images
-        let files
-        if (row.imagesData) {
-          const fileInfo = await getFileInfo(row.imagesData)
-          const result = await uploadFile(fileInfo)
-          if (!result) {
-            uploadFileFailed("ไม่สามารถอัปโหลดรูปได้")
-            return
-          }
-          images = result
-        }
-
-        if (row.filesData) {
-          const file = new File([row.filesData], row.filesData)
-          const result = await uploadFile(file)
-          if (!result) {
-            uploadFileFailed("ไม่สามารถอัปโหลดไฟล์ได้")
-            return
-          }
-          files = result
-        }
   
         const updatedFormData: NewSuspectPeople = {
           arrest_warrant_date: parseExcelDate(row.arrest_warrant_date),
@@ -379,7 +353,7 @@ function SpecialSuspectPerson() {
           district_id: row.district_id,
           subdistrict_id: row.sub_district_id,
           zipcode: row.postal_code,
-          imagesData: images ? images : [],
+          imagesData: [],
           case_number: row.case_number,
           behavior: row.behavior,
           active: row.active,
@@ -387,7 +361,7 @@ function SpecialSuspectPerson() {
           case_owner_name: row.case_owner_name,
           person_class_id: row.person_class_id,
           case_owner_agency: row.case_owner_agency,
-          filesData: files ? files : [],
+          filesData: [],
           visible: 1,
           notes: "",
         }
@@ -486,7 +460,11 @@ function SpecialSuspectPerson() {
           </div>
           <div id="body" className="mt-[5px] flex flex-col">
             <div className="flex-1 overflow-x-auto">
-              <div id="table-data" className="mt-[10px] overflow-y-auto h-[78vh]">
+              <div 
+                id="table-data" 
+                className="mt-[10px] overflow-y-auto h-[78vh]"
+                ref={tableDataRef}
+              >
                 <div className="">
                   <table className="w-full text-[15px]">
                     <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80">
@@ -608,7 +586,7 @@ function SpecialSuspectPerson() {
             setFilterData={setFilterData}
           />
         </div>
-        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="absolute z-30">
+        <Dialog open={isAddSuspectPersonOpen} onClose={() => {}} className="absolute z-30">
           <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
             <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] text-white w-[80vw]">
               <div className="flex justify-between">
@@ -616,7 +594,7 @@ function SpecialSuspectPerson() {
               </div>
               <div className="px-5 pb-5">
                 <ManageSpecialSuspectPerson 
-                  closeDialog={() => setIsAddRegistationOpen(false)} 
+                  closeDialog={() => setIsAddSuspectPersonOpen(false)} 
                   selectedRow={selectedRow}
                   isEditMode={isEditMode}
                 />

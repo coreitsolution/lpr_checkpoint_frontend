@@ -39,6 +39,33 @@ export interface LastRecognitionData {
   directionDetail?: DirectionDetail[]
 }
 
+export interface RealTimeLprData {
+  id: number
+  alprCamId: number
+  camera: string
+  make: string
+  bodyType: string
+  bodyTypeTH: string
+  model: string
+  color: string
+  colorNameEN: string
+  colorNameTH: string
+  plate: string
+  plateGroup: string
+  plateNumber: string
+  region: string
+  regionNameTH: string
+  vehicleImage: string
+  plateImage: string
+  detectionDatetime: string
+  plateConfidence: string
+  isSpecialPlate: boolean
+  specialPlateId: number | null
+  specialPlateClassTH: string
+  map?: MapPosition[]
+  directionDetail?: DirectionDetail[]
+}
+
 export interface CameraInfo {
   id: number
   cam_id: string

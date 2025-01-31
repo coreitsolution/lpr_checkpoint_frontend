@@ -9,6 +9,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../app/store"
 import dayjs from 'dayjs';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
+import { useNavigate } from 'react-router-dom'
 
 // Context
 import { useHamburger } from "../context/HamburgerContext";
@@ -17,10 +18,14 @@ import { useHamburger } from "../context/HamburgerContext";
 import { 
   fetchSettingsShortThunk,
 } from "../features/settings/settingsSlice"
+import {
+  logout
+} from "../features/auth/authSlice"
 
 dayjs.extend(buddhistEra);
 
 function Nav() {
+  const navigate = useNavigate()
   const [languageSelected, setLanguageSelect] = useState("th");
   const [sidePosition, setSidePosition] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>("")
@@ -33,6 +38,8 @@ function Nav() {
   const { settingDataShort } = useSelector(
     (state: RootState) => state.settingsData
   )
+
+  const { authData } = useSelector((state: RootState) => state.auth)
 
   useEffect(() => {
     dispatch(fetchSettingsShortThunk())
@@ -114,7 +121,14 @@ function Nav() {
   const handleLogoutClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setDropdownVisible(false)
+    dispatch(logout())
   };
+
+  useEffect(() => {
+    if (!authData.isAuthenticated) {
+      navigate('/login')
+    }
+  }, [authData, navigate])
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-30 min-w-[1300px]">

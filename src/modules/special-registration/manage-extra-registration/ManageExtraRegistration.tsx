@@ -655,6 +655,13 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
     if (value) {
       handleSelectChange("plate_class_id", value.value)
       checkIsBlackListType(value.value)
+      handleTextChange("case_number", "")
+      handleStartArrestDateChange(null)
+      handleEndArrestDateChange(null)
+      setFormData((prevState) => ({
+        ...prevState,
+        ["behavior"]: "",
+      }))
     }
     else {
       handleSelectChange("plate_class_id", "0")
