@@ -188,7 +188,6 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
 
   useEffect(() => {
     setIsLoading(true)
-    console.log("selectedRow", selectedRow)
     if (isEditMode && selectedRow) {
       const data = {
         name_prefix: selectedRow.title_id,
@@ -493,7 +492,6 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         if (confirmed) {
           // Update existing data
           const updateDataWithId = { ...updatedFormData, id: selectedRow.id }
-          console.log("Update updatedFormData", updateDataWithId)
           await dispatch(
             putSpecialSuspectPeopleDataThunk(updateDataWithId)
           ).unwrap()

@@ -7,23 +7,6 @@ import { useNavigate } from 'react-router-dom'
 
 // API
 import { login, clearError } from '../../features/auth/authSlice'
-import {
-  fetchProvincesThunk,
-  fetchDataStatusThunk,
-  fetchRegistrationTypesThunk,
-  fetchPoliceDivisionsThunk,
-  fetchCommonPrefixesThunk,
-  fetchOfficerPrefixesThunk,
-  fetchPositionThunk,
-  fetchRegionsThunk,
-  fetchStreamEncodesThunk,
-  fetchVehicleBodyTypesThunk,
-  fetchVehicleColorsThunk,
-  fetchVehicleMakesThunk,
-  fetchVehicleModelsThunk,
-  fetchVehicleBodyTypesThThunk,
-  fetchPersonTypesThunk,
-} from "../../features/dropdown/dropdownSlice";
 
 // Image
 import LogoImage from '/images/Logo.jpg'
@@ -32,11 +15,7 @@ import LogoImage from '/images/Logo.jpg'
 import { FaEye, FaEyeSlash } from "react-icons/fa"
 
 // utils
-import { websocketService } from '../../utils/websocketService'
 import { PopupMessage } from "../../utils/popupMessage"
-
-// Config
-import { WEB_SOCKET_SERVICE } from '../../config/apiConfig'
 
 const LoginPage = () => {
   const [username, setUsername] = useState('')
@@ -66,30 +45,6 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (authData && authData.isAuthenticated) {
-      dispatch(fetchProvincesThunk({
-        "orderBy": "name_th",
-      }));
-      dispatch(fetchDataStatusThunk());
-      dispatch(fetchRegistrationTypesThunk({
-        "filter": "visible:1"
-      }));
-      dispatch(fetchPoliceDivisionsThunk());
-      dispatch(fetchCommonPrefixesThunk());
-      dispatch(fetchOfficerPrefixesThunk());
-      dispatch(fetchPositionThunk());
-      dispatch(fetchRegionsThunk({
-        "orderBy": "name_th",
-      }));
-      dispatch(fetchStreamEncodesThunk());
-      dispatch(fetchVehicleBodyTypesThunk());
-      dispatch(fetchVehicleColorsThunk());
-      dispatch(fetchVehicleMakesThunk());
-      dispatch(fetchVehicleModelsThunk());
-      dispatch(fetchVehicleBodyTypesThThunk());
-      dispatch(fetchPersonTypesThunk({
-        "filter": "visible:1"
-      }));
-      websocketService.connect(WEB_SOCKET_SERVICE);
       navigate('/checkpoint')
     }
   }, [authData, navigate])

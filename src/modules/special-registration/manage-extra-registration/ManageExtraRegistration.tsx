@@ -409,7 +409,6 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
             arrest_warrant_date: updatedFormData.arrest_warrant_date ? updatedFormData.arrest_warrant_date : "",
             arrest_warrant_expire_date: updatedFormData.arrest_warrant_expire_date ? updatedFormData.arrest_warrant_expire_date : "",
           }
-          console.log("Update updatedFormData", updateDataWithId)
           await dispatch(
             putSpecialPlateDataThunk(updateDataWithId)
           ).unwrap()

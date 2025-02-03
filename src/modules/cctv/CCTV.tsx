@@ -469,7 +469,7 @@ const CCTV = () => {
                           </div>
                           <div className="px-4 pb-2 w-full h-[35.7vh] py-[0.3rem] overflow-y-auto">
                             {lprData && selectedScreenValue !== 3 ? (
-                              <div className="flex flex-1 flex-col">
+                              <div className="flex flex-1 flex-col h-full items-center justify-center">
                                 <div className={`flex items-center justify-center align-middle h-[190px] w-full
                                   ${ isFullWidth || !isOpen ? "bg-celti" : "" }
                                   `}>
@@ -488,7 +488,7 @@ const CCTV = () => {
                                     />
                                   </div>
                                 </div>
-                                <div className="flex flex-col h-[114px] text-center bg-tuna">
+                                <div className="flex flex-col h-[114px] w-full text-center bg-tuna">
                                   <p className="text-white text-[24px] font-medium">
                                     {`
                                       ${isNumber(lprData.plateGroup) && isNumber(lprData.plateNumber) ? 
@@ -512,7 +512,7 @@ const CCTV = () => {
                               </div>
                             ) : ""}
                             {streamLPRData && selectedScreenValue === 3 ? (
-                              <div className="flex flex-1 flex-col h-full">
+                              <div className="flex flex-1 flex-col h-full items-center justify-center">
                                 <div className={`flex items-center justify-center align-middle h-[190px] w-full
                                   ${ isFullWidth || !isOpen ? "bg-celti" : "" }
                                   `}>
@@ -531,7 +531,7 @@ const CCTV = () => {
                                     />
                                   </div>
                                 </div>
-                                <div className="flex flex-col h-[122px] text-center bg-tuna">
+                                <div className="flex flex-col h-[122px] w-full text-center bg-tuna">
                                   <p className="text-white text-[24px] font-medium">
                                     {`
                                       ${isNumber(streamLPRData?.plateGroup) && isNumber(streamLPRData?.plateNumber) ? 

@@ -493,7 +493,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       handleDropdownChange("policeDivisionsSelect", value.value)
       if (provinces && provinces.data) {
         const province_id = provinces.data.find((data) => data.police_region_id === value.value)?.id
-        console.log(province_id)
         handleDropdownChange("provinceSelect", province_id ? province_id as any : '')
       }
     }
