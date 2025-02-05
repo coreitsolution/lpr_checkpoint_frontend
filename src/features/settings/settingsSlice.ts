@@ -15,16 +15,16 @@ interface SettingsState {
   settingData: { live_view_count: SettingData | null, checkpoint_name: SettingData | null };
   settingDataDetail: SettingDetail | null;
   settingDataShort: SettingDataShort | null;
-  status: Status;
-  error: string | null;
+  settingsStatus: Status;
+  settingsError: string | null;
 }
 
 const initialState: SettingsState = {
   settingData: { live_view_count: null, checkpoint_name: null },
   settingDataShort: null,
   settingDataDetail: null,
-  status: Status.IDLE,
-  error: null,
+  settingsStatus: Status.IDLE,
+  settingsError: null,
 };
 
 export const fetchSettingsThunk = createAsyncThunk(
@@ -43,11 +43,16 @@ export const fetchSettingsShortThunk = createAsyncThunk(
   }
 );
 
-export const putSettingsThunk = createAsyncThunk(
+export const putSettingsThunk = createAsyncThunk<SettingDetail, SettingDetail, { rejectValue: string }>(
   "settings/putSettings",
-  async (updateSetting: SettingDetail) => {
-    const response = await putSettings(updateSetting);
-    return response;
+  async (updateSetting: SettingDetail, { rejectWithValue }) => {
+    try {
+      const response = await putSettings(updateSetting);
+      return response;
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to update setting data.");
+    }
   }
 );
 
@@ -59,11 +64,11 @@ const settingsSlice = createSlice({
     builder
       // Setting
       .addCase(fetchSettingsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.settingsStatus = Status.LOADING;
+        state.settingsError = null;
       })
       .addCase(fetchSettingsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.settingsStatus = Status.SUCCEEDED;
         if (action.payload.key === "key:live_view_count") {
           state.settingData.live_view_count = action.payload.data
         } 
@@ -72,33 +77,33 @@ const settingsSlice = createSlice({
         }
       })
       .addCase(fetchSettingsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch setting data";
+        state.settingsStatus = Status.FAILED;
+        state.settingsError = action.error.message || "Failed to fetch setting data";
       })
       .addCase(putSettingsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.settingsStatus = Status.LOADING;
+        state.settingsError = null;
       })
       .addCase(putSettingsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.settingsStatus = Status.SUCCEEDED;
         state.settingDataDetail = action.payload;
       })
       .addCase(putSettingsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to put camera setting";
+        state.settingsStatus = Status.FAILED;
+        state.settingsError = action.payload || "Failed to put camera setting";
       })
 
       .addCase(fetchSettingsShortThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.settingsStatus = Status.LOADING;
+        state.settingsError = null;
       })
       .addCase(fetchSettingsShortThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.settingsStatus = Status.SUCCEEDED;
         state.settingDataShort = action.payload;
       })
       .addCase(fetchSettingsShortThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch setting short data";
+        state.settingsStatus = Status.FAILED;
+        state.settingsError = action.error.message || "Failed to fetch setting short data";
       })
   },
 });

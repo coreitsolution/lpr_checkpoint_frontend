@@ -38,7 +38,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     selectedStatus: selectedStatus,
   }
 
-  const { dataStatus, registrationTypes, commonPrefixes } = useSelector(
+  const { dataStatus, registrationTypes, personTitles } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -63,14 +63,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   }, [dataStatus])
 
   useEffect(() => {
-    if (commonPrefixes && commonPrefixes.data) {
-      const options = commonPrefixes.data.map((row) => ({
+    if (personTitles && personTitles.data) {
+      const options = personTitles.data.map((row) => ({
         label: row.title_th,
         value: row.id,
       }));
       setNamePrefixOptions(options)
     }
-  }, [commonPrefixes])
+  }, [personTitles])
   
   useEffect(() => {
     if (dataStatusOptions && dataStatusOptions.length > 0) {

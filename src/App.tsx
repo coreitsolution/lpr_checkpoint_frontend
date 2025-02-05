@@ -14,8 +14,7 @@ import {
   fetchDataStatusThunk,
   fetchRegistrationTypesThunk,
   fetchPoliceDivisionsThunk,
-  fetchCommonPrefixesThunk,
-  fetchOfficerPrefixesThunk,
+  fetchPersonTitlesThunk,
   fetchPositionThunk,
   fetchRegionsThunk,
   fetchStreamEncodesThunk,
@@ -66,8 +65,9 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
         "filter": "visible:1"
       }));
       dispatch(fetchPoliceDivisionsThunk());
-      dispatch(fetchCommonPrefixesThunk());
-      dispatch(fetchOfficerPrefixesThunk());
+      dispatch(fetchPersonTitlesThunk({
+        "orderBy": "title_th",
+      }));
       dispatch(fetchPositionThunk());
       dispatch(fetchRegionsThunk({
         "orderBy": "name_th",

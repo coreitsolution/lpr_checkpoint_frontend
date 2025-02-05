@@ -77,7 +77,7 @@ function SpecialSuspectPerson() {
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
   const tableDataRef = useRef<HTMLDivElement>(null)
 
-  const { provinces, dataStatus, personTypes, commonPrefixes } = useSelector(
+  const { provinces, dataStatus, personTypes, personTitles } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -285,7 +285,7 @@ function SpecialSuspectPerson() {
           });
     
           return {
-            name_prefix: commonPrefixes?.data?.find((prefix) => prefix.title_th === row.name_prefix.toString())?.id,
+            name_prefix: personTitles?.data?.find((prefix) => prefix.title_th === row.name_prefix.toString())?.id,
             firstname: row.firstname,
             lastname: row.lastname,
             nation_number: row.nation_number,
@@ -488,7 +488,7 @@ function SpecialSuspectPerson() {
                           <tr key={item.id} className="h-[80px] border-b-[1px] border-dashed border-darkGray">
                             <td className="pl-[10px] w-[100px] text-center bg-celtic">
                               {  
-                                commonPrefixes?.data?.find((row) => row.id === item.title_id)?.title_th
+                                personTitles?.data?.find((row) => row.id === item.title_id)?.title_th
                               }
                             </td>
                             <td className="pl-[10px] w-[280px] text-start bg-tuna">

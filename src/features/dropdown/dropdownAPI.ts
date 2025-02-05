@@ -9,8 +9,7 @@ import {
   PoliceDivisions,
   Districts,
   SubDistricts,
-  CommonTitles,
-  OfficerTitles,
+  PersonTitles,
   OfficerPositions,
   Regions,
   StreamEncodes,
@@ -24,9 +23,8 @@ import { registrationTypes } from "../../mocks/mockRegistrationTypes";
 import { policeDivisions } from "../../mocks/mockPoliceDivisions";
 import { districts } from "../../mocks/mockDistricts";
 import { subDistricts } from "../../mocks/mockSubDistricts";
-import { namePrefixes } from "../../mocks/mockNamePrefixes";
+import { personDetail } from "../../mocks/mockPersonTitles";
 import { positions } from "../../mocks/mockPositions";
-import { officerPrefixes } from '../../mocks/mockOfficerPrefixes';
 import { mockRegions } from '../../mocks/mockRegions';
 import { streamEncodes } from '../../mocks/mockStreamEncodes';
 import { vehicleBodyTypes } from '../../mocks/mockVehicleBodyTypes';
@@ -165,27 +163,14 @@ export const fetchSubDistricts = async (param?: Record<string, string>): Promise
   });
 };
 
-export const fetchCommonPrefixes = async (param?: Record<string, string>): Promise<CommonTitles> => {
+export const fetchPersonTitles = async (param?: Record<string, string>): Promise<PersonTitles> => {
   if (isDevEnv) {
     const data = {
-      data: namePrefixes
+      data: personDetail
     }
     return Promise.resolve(data);
   }
-  return await fetchClient<CommonTitles>(combineURL(API_URL, "/common-titles/get"), {
-    method: "GET",
-    queryParams: param,
-  });
-};
-
-export const fetchOfficerPrefixes = async (param?: Record<string, string>): Promise<OfficerTitles> => {
-  if (isDevEnv) {
-    const data = {
-      data: officerPrefixes
-    }
-    return Promise.resolve(data);
-  }
-  return await fetchClient<OfficerTitles>(combineURL(API_URL, "/officer-titles/get"), {
+  return await fetchClient<PersonTitles>(combineURL(API_URL, "/person-titles/get"), {
     method: "GET",
     queryParams: param,
   });

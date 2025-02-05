@@ -45,18 +45,23 @@ export const fetchSettingsShort = async (param?: Record<string, string>): Promis
 }
 
 export const putSettings = async (updatedSetting: SettingDetail): Promise<SettingDetail> => {
-  if (isDevEnv) {
-    const index = mockSettings.findIndex(
-      (setting) => setting.id === updatedSetting.id
-    )
-    if (index === -1) {
-      return Promise.reject(new Error("Setting not found in mock data"))
+  try {
+    if (isDevEnv) {
+      const index = mockSettings.findIndex(
+        (setting) => setting.id === updatedSetting.id
+      )
+      if (index === -1) {
+        return Promise.reject(new Error("Setting not found in mock data"))
+      }
+      mockSettings[index] = { ...mockSettings[index], ...updatedSetting }
+      return Promise.resolve(mockSettings[index])
     }
-    mockSettings[index] = { ...mockSettings[index], ...updatedSetting }
-    return Promise.resolve(mockSettings[index])
+    return await fetchClient<SettingDetail>(combineURL(API_URL, "/settings/update"), {
+      method: "PATCH",
+      body: JSON.stringify(updatedSetting),
+    })
+  } 
+  catch (error) {
+    throw new Error((error as { message: string }).message || "Unknown error occurred while updating data.")
   }
-  return await fetchClient<SettingDetail>(combineURL(API_URL, "/settings/update"), {
-    method: "PATCH",
-    body: JSON.stringify(updatedSetting),
-  })
 }

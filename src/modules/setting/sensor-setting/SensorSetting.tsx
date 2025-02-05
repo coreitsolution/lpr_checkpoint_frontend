@@ -1,7 +1,8 @@
 import React, {useState, useRef, useCallback, useEffect} from 'react'
-import { AppDispatch } from "../../../app/store"
 import { useDispatch } from "react-redux"
+import { AppDispatch } from "../../../app/store"
 import { FILE_URL } from '../../../config/apiConfig'
+
 // Types
 import {
   CameraDetailSettings
@@ -83,7 +84,6 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
           }
           if (updateData) {
             await dispatch(putCameraSettingThunk(updateData))
-            PopupMessage("", "บันทึกข้อมูลสำเร็จ", 'success')
           } 
           else {
             PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", 'error')

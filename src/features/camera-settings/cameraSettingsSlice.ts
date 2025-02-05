@@ -21,16 +21,16 @@ interface CameraSettingsState {
   cameraDetailSetting: CameraDetailSettings[];
   cameraSettings: CameraSettings | null;
   streamDetail: StreamDetail[];
-  status: Status;
-  error: string | null;
+  cameraSettingsStatus: Status;
+  cameraSettingsError: string | null;
 }
 
 const initialState: CameraSettingsState = {
   cameraSettings: null,
   cameraDetailSetting: [],
   streamDetail: [],
-  status: Status.IDLE,
-  error: null,
+  cameraSettingsStatus: Status.IDLE,
+  cameraSettingsError: null,
 };
 
 export const fetchCameraSettingsThunk = createAsyncThunk(
@@ -41,27 +41,42 @@ export const fetchCameraSettingsThunk = createAsyncThunk(
   }
 );
 
-export const postCameraSettingThunk = createAsyncThunk(
+export const postCameraSettingThunk = createAsyncThunk<CameraDetailSettings, NewCameraDetailSettings, { rejectValue: string }>(
   "cameraSettings/postCameraSetting",
-  async (newSetting: NewCameraDetailSettings) => {
-    const response = await postCameraSetting(newSetting);
-    return response;
+  async (newSetting: NewCameraDetailSettings, { rejectWithValue }) => {
+    try {
+      const response = await postCameraSetting(newSetting);
+      return response;
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to post camera setting");
+    }
   }
 );
 
-export const putCameraSettingThunk = createAsyncThunk(
+export const putCameraSettingThunk = createAsyncThunk<CameraDetailSettings, CameraDetailSettings, { rejectValue: string }>(
   "cameraSettings/putCameraSetting",
-  async (updateSetting: CameraDetailSettings) => {
-    const response = await putCameraSetting(updateSetting);
-    return response;
+  async (updateSetting: CameraDetailSettings, { rejectWithValue }) => {
+    try {
+      const response = await putCameraSetting(updateSetting);
+      return response;
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to put camera setting");
+    }
   }
 );
 
-export const deleteCameraSettingThunk = createAsyncThunk(
+export const deleteCameraSettingThunk = createAsyncThunk<number, number, { rejectValue: string }>(
   "cameraSettings/deleteCameraSetting",
-  async (id: number) => {
-    await deleteCameraSetting(id);
-    return id;
+  async (id: number, { rejectWithValue  }) => {
+    try {
+      await deleteCameraSetting(id);
+      return id;
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to delete camera setting"); 
+    }
   }
 );
 
@@ -93,39 +108,44 @@ export const postRestartStreamThunk = createAsyncThunk(
 const cameraSettingsSlice = createSlice({
   name: "cameraSetting",
   initialState,
-  reducers: {},
+  reducers: {
+    clearCameraSettingsData: (state) => {
+      state.cameraSettingsStatus = Status.IDLE;
+      state.cameraSettingsError = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCameraSettingsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(fetchCameraSettingsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
         state.cameraSettings = action.payload;
       })
       .addCase(fetchCameraSettingsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch cameraSettings";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.error.message || "Failed to fetch cameraSettings";
       })
       .addCase(postCameraSettingThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(postCameraSettingThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
         state.cameraDetailSetting.push(action.payload);
       })
       .addCase(postCameraSettingThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to post camera setting";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.payload || "Failed to post camera setting";
       })
       .addCase(putCameraSettingThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(putCameraSettingThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
         const index = state.cameraDetailSetting.findIndex(
           (setting) => setting.id === action.payload.id
         );
@@ -134,16 +154,16 @@ const cameraSettingsSlice = createSlice({
         }
       })
       .addCase(putCameraSettingThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to put camera setting";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.payload || "Failed to put camera setting";
       })
 
       .addCase(deleteCameraSettingThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(deleteCameraSettingThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
         if (state.cameraDetailSetting) {
           state.cameraDetailSetting = state.cameraDetailSetting.filter(
             (setting) => setting.id !== action.payload
@@ -151,59 +171,48 @@ const cameraSettingsSlice = createSlice({
         }
       })
       .addCase(deleteCameraSettingThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to delete camera setting";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.payload || "Failed to delete camera setting";
       })
 
-      // .addCase(postStartStreamThunk.pending, (state) => {
-      //   state.status = Status.LOADING;
-      //   state.error = null;
-      // })
-      // .addCase(postStartStreamThunk.fulfilled, (state, action) => {
-      //   state.status = Status.SUCCEEDED;
-      //   state.streamDetail = action.payload;
-      // })
-      // .addCase(postStartStreamThunk.rejected, (state, action) => {
-      //   state.status = Status.FAILED;
-      //   state.error = action.error.message || "Failed to post camera setting";
-      // })
       // Stream
       .addCase(postStartStreamThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(postStartStreamThunk.fulfilled, (state) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
       })
       .addCase(postStartStreamThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to post start stream";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.error.message || "Failed to post start stream";
       })
 
       .addCase(postStopStreamThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(postStopStreamThunk.fulfilled, (state) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
       })
       .addCase(postStopStreamThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to post stop stream";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.error.message || "Failed to post stop stream";
       })
 
       .addCase(postRestartStreamThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.cameraSettingsStatus = Status.LOADING;
+        state.cameraSettingsError = null;
       })
       .addCase(postRestartStreamThunk.fulfilled, (state) => {
-        state.status = Status.SUCCEEDED;
+        state.cameraSettingsStatus = Status.SUCCEEDED;
       })
       .addCase(postRestartStreamThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to post restart stream";
+        state.cameraSettingsStatus = Status.FAILED;
+        state.cameraSettingsError = action.error.message || "Failed to post restart stream";
       })
   },
 });
 
+export const { clearCameraSettingsData } = cameraSettingsSlice.actions;
 export default cameraSettingsSlice.reducer;

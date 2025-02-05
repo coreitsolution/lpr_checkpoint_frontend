@@ -98,7 +98,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   const [isBlackListType, setIsBlackListType] = useState(true)
 
   const dispatch: AppDispatch = useDispatch()
-  const { provinces, personTypes, districts, subDistricts, commonPrefixes } = useSelector(
+  const { provinces, personTypes, districts, subDistricts, personTitles } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -143,14 +143,14 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   }, [subDistricts]);
 
   useEffect(() => {
-    if (commonPrefixes && commonPrefixes.data) {
-      const options = commonPrefixes.data.map((row) => ({
+    if (personTitles && personTitles.data) {
+      const options = personTitles.data.map((row) => ({
         label: row.title_th,
         value: row.id,
       }));
       setCommonPrefixOptions(options);
     }
-  }, [commonPrefixes]);
+  }, [personTitles]);
 
   const [formData, setFormData] = useState<FormData>({
     name_prefix: "",
@@ -470,18 +470,6 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         notes: "",
       }
 
-      let isSuccess = true
-
-      const handleSuccess = () => {
-        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-        closeDialog()
-      }
-
-      const handleError = () => {
-        isSuccess = false
-        PopupMessage("บันทึกไม่สำเร็จ", "มีข้อผิดพลาดเกิดขึ้น", "error")
-      }
-
       if (isEditMode && selectedRow) {
         let title = "ยันยันการแก้ไข"
         if (hasOnlyActiveChanged()) {
@@ -507,15 +495,8 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
           postSpecialSuspectPeopleDataThunk(updatedFormData)
         ).unwrap()
       }
-
-      if (isSuccess) {
-        handleSuccess()
-      }
-      else {
-        handleError()
-      }
     } catch (error) {
-      PopupMessage("บันทึกไม่สำเร็จ", "มีข้อผิดพลาดเกิดขึ้น", "error")
+      PopupMessage("บันทึกไม่สำเร็จ", (error as { message: string }).message || "มีข้อผิดพลาดเกิดขึ้น", "error")
     }
   }
 

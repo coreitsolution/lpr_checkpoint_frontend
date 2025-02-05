@@ -1,22 +1,22 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { postFilesData, deleteFilesData } from "./fileUploadAPI"
-import { FileUpload, DeleteRequestData } from "./fileUploadTypes"
+import { FileUpload, DeleteRequestData, FileDelete } from "./fileUploadTypes"
 import { Status } from "../../constants/statusEnum"
 
 interface FileUploadState {
   files: FileUpload | null
-  status: Status
-  error: string | null
+  fileUploadStatus: Status
+  fileUploadError: string | null
 }
 
 const initialState: FileUploadState = {
   files: null,
-  status: Status.IDLE,
-  error: null,
+  fileUploadStatus: Status.IDLE,
+  fileUploadError: null,
 }
 
 // Async thunk for posting files
-export const postFilesDataThunk = createAsyncThunk(
+export const postFilesDataThunk = createAsyncThunk<FileUpload, FormData, { rejectValue: string }>(
   "fileUpload/postFilesData",
   async (newFile: FormData, { rejectWithValue }) => {
     try {
@@ -30,7 +30,7 @@ export const postFilesDataThunk = createAsyncThunk(
 )
 
 // Async thunk for deleting files
-export const deleteFilesDataThunk = createAsyncThunk(
+export const deleteFilesDataThunk = createAsyncThunk<FileDelete, DeleteRequestData, { rejectValue: string }>(
   "fileUpload/deleteFilesData",
   async (url: DeleteRequestData, { rejectWithValue }) => {
     try {
@@ -51,25 +51,25 @@ const fileUploadSlice = createSlice({
     builder
       // Post files
       .addCase(postFilesDataThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.fileUploadStatus = Status.LOADING
+        state.fileUploadError = null
       })
       .addCase(postFilesDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.fileUploadStatus = Status.SUCCEEDED
         state.files = action.payload
       })
       .addCase(postFilesDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.payload as string
+        state.fileUploadStatus = Status.FAILED
+        state.fileUploadError = action.payload || "Failed to post file data."
       })
 
       // Delete files
       .addCase(deleteFilesDataThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.fileUploadStatus = Status.LOADING
+        state.fileUploadError = null
       })
       .addCase(deleteFilesDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.fileUploadStatus = Status.SUCCEEDED
         if (state.files && Array.isArray(state.files.data)) {
           state.files.data = state.files.data.filter(
             (file: any) => file.url !== (action.payload as DeleteRequestData).url
@@ -77,8 +77,8 @@ const fileUploadSlice = createSlice({
         }
       })
       .addCase(deleteFilesDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.payload as string
+        state.fileUploadStatus = Status.FAILED
+        state.fileUploadError = action.payload || "Failed to delete file data."
       })
   },
 })

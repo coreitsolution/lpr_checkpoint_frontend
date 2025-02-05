@@ -40,7 +40,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [registrationTypesOptions, setRegistrationTypesOptions] = useState<{ label: string, value: number }[]>([])
   const [namePrefixOptions, setNamePrefixOptions] = useState<{ label: string, value: number }[]>([])
   const [checkpointOptions, setCheckpointOptions] = useState<{ label: string, value: number }[]>([])
-  const { registrationTypes, commonPrefixes } = useSelector(
+  const { registrationTypes, personTitles } = useSelector(
     (state: RootState) => state.dropdown
   )
   const { cameraSettings } = useSelector(
@@ -83,14 +83,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   }, [cameraSettings])
 
   useEffect(() => {
-    if (commonPrefixes && commonPrefixes.data) {
-      const options = commonPrefixes.data.map((row) => ({
+    if (personTitles && personTitles.data) {
+      const options = personTitles.data.map((row) => ({
         label: row.title_th,
         value: row.id,
       }))
       setNamePrefixOptions(options)
     }
-  }, [commonPrefixes])
+  }, [personTitles])
 
   useEffect(() => {
     if (registrationTypesOptions && registrationTypesOptions.length > 0) {

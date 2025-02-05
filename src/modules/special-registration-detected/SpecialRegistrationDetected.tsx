@@ -22,7 +22,7 @@ import ImagesCarousel from "../../components/images-carousel/ImagesCarousel"
 import SearchFilter from "./search-filter/SearchFilter"
 
 // API
-import { postSpecialPlateSearchDataThunk, dowloadPdfSpecialPlateThunk } from "../../features/search-data/SearchDataSlice"
+import { postSpecialPlateSearchDataThunk, dowloadPdfSpecialPlateThunk, clearSearchData } from "../../features/search-data/SearchDataSlice"
 
 // Types
 import { FilterSpecialPlates, FilterSpecialPlatesBody } from "../../features/api/types"
@@ -58,9 +58,21 @@ const SpecialRegistrationDetected = () => {
   const tableDataRef = useRef<HTMLDivElement>(null)
 
   const dispatch: AppDispatch = useDispatch()
-  const { specialPlateSearchData } = useSelector(
+  const { specialPlateSearchData, searchDataStatus, searchDataError } = useSelector(
     (state: RootState) => state.searchData
   )
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearSearchData())
+    }
+  }, [dispatch])
+
+  useEffect(() => {
+    if (searchDataStatus === "failed" && searchDataError) {
+      PopupMessage("มีข้อผิดพลาดเกิดขึ้น", searchDataError, "error")
+    }
+  }, [searchDataStatus, searchDataError])
 
   useEffect(() => {
     if (specialPlateSearchData) {

@@ -5,8 +5,8 @@ import { Status } from "../../constants/statusEnum"
 
 interface AuthState {
   authData: AuthData
-  status: Status
-  error: string | null
+  authStatus: Status
+  authError: string | null
 }
 
 const initialState: AuthState = {
@@ -14,8 +14,8 @@ const initialState: AuthState = {
     token: localStorage.getItem("token") || null,
     isAuthenticated: !!localStorage.getItem("token"),
   },
-  status: Status.IDLE,
-  error: null,
+  authStatus: Status.IDLE,
+  authError: null,
 }
 
 export const login = createAsyncThunk(
@@ -43,39 +43,39 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     clearError: (state) => {
-      state.error = null
+      state.authError = null
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.authStatus = Status.LOADING
+        state.authError = null
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.authStatus = Status.SUCCEEDED
         state.authData.isAuthenticated = true
         state.authData.token = action.payload.accessToken
         localStorage.setItem('token', action.payload.accessToken)
       })
       .addCase(login.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || 'Login failed'
+        state.authStatus = Status.FAILED
+        state.authError = action.error.message || 'Login failed'
       })
 
       .addCase(refresh.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.authStatus = Status.LOADING
+        state.authError = null
       })
       .addCase(refresh.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.authStatus = Status.SUCCEEDED
         state.authData.isAuthenticated = true
         state.authData.token = action.payload.accessToken
         localStorage.setItem('token', action.payload.accessToken)
       })
       .addCase(refresh.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || 'Login failed'
+        state.authStatus = Status.FAILED
+        state.authError = action.error.message || 'Login failed'
       })
 
       .addCase(logout.fulfilled, (state, action) => {

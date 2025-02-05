@@ -108,34 +108,21 @@ export interface SubDistrictsDetail {
   updatedAt: string
 }
 
-export interface CommonTitles {
+export interface PersonTitles {
   message?: string
   status?: string
   success?: string
-  data?: CommonDetail[]
+  data?: PersonDetail[]
 }
 
-export interface CommonDetail {
+export interface PersonDetail {
   id: number
-  title_en: string
-  title_th: string
-  visible: number
-  active: number
-}
-
-export interface OfficerTitles {
-  message?: string
-  status?: string
-  success?: string
-  data?: OfficerTitlesDetail[]
-}
-
-export interface OfficerTitlesDetail {
-  id: number
+  group: string
   title_en: string
   title_th: string
   title_abbr_en: string
   title_abbr_th: string
+  visible: number
   active: number
 }
 

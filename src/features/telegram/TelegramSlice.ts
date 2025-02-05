@@ -4,13 +4,13 @@ import { sendMessage } from "./TelegramAPI"
 import { SendMessage } from "./TelegramTypes"
 
 interface TelegramState {
-  status: Status
-  error: string | null
+  telegramStatus: Status
+  telegramError: string | null
 }
 
 const initialState: TelegramState = {
-  status: Status.IDLE,
-  error: null,
+  telegramStatus: Status.IDLE,
+  telegramError: null,
 }
 
 export const sendMessageThunk = createAsyncThunk(
@@ -27,15 +27,15 @@ const telegramSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(sendMessageThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.telegramStatus = Status.LOADING
+        state.telegramError = null
       })
       .addCase(sendMessageThunk.fulfilled, (state) => {
-        state.status = Status.SUCCEEDED
+        state.telegramStatus = Status.SUCCEEDED
       })
       .addCase(sendMessageThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || "Failed to send message"
+        state.telegramStatus = Status.FAILED
+        state.telegramError = action.error.message || "Failed to send message"
       })
   },
 })

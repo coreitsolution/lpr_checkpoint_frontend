@@ -21,7 +21,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const dispatch = useAppDispatch()
-  const { authData, status, error } = useSelector((state: RootState) => state.auth)
+  const { authData, authError } = useSelector((state: RootState) => state.auth)
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -38,10 +38,10 @@ const LoginPage = () => {
   }
 
   useEffect(() => {
-    if (error) {
-      PopupMessage("มีข้อผิดพลาดเกิดขึ้น", error, "error")
+    if (authError) {
+      PopupMessage("มีข้อผิดพลาดเกิดขึ้น", authError, "error")
     }
-  }, [error])
+  }, [authError])
 
   useEffect(() => {
     if (authData && authData.isAuthenticated) {

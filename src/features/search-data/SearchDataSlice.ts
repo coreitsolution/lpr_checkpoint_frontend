@@ -17,16 +17,16 @@ interface SearchDataState {
   specialPlateSearchData: SpecialPlateSearchResult | null
   specialSuspectPeopleSearchData: SpecialSuspectPeopleSearchResult | null
   dowloadPath: PdfDowload | null
-  status: Status
-  error: string | null
+  searchDataStatus: Status
+  searchDataError: string | null
 }
 
 const initialState: SearchDataState = {
   specialPlateSearchData: null,
   specialSuspectPeopleSearchData: null,
   dowloadPath: null,
-  status: Status.IDLE,
-  error: null,
+  searchDataStatus: Status.IDLE,
+  searchDataError: null,
 }
 
 export const postSpecialPlateSearchDataThunk = createAsyncThunk(
@@ -56,49 +56,55 @@ export const dowloadPdfSpecialPlateThunk = createAsyncThunk(
 const searchDataSlice = createSlice({
   name: "searchData",
   initialState,
-  reducers: {},
+  reducers: {
+    clearSearchData: (state) => {
+      state.searchDataStatus = Status.IDLE;
+      state.specialPlateSearchData = null;
+    },
+  },
   extraReducers: (builder) => {
     // Special Plates
     builder
       .addCase(postSpecialPlateSearchDataThunk.pending, (state) => {
-        state.status = Status.LOADING
+        state.searchDataStatus = Status.LOADING
       })
       .addCase(postSpecialPlateSearchDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.searchDataStatus = Status.SUCCEEDED
         state.specialPlateSearchData = action.payload
       })
       .addCase(postSpecialPlateSearchDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch special plates data."
+        state.searchDataStatus = Status.FAILED
+        state.searchDataError = action.error.message || "Failed to fetch special plates data."
       })
 
     builder
       .addCase(dowloadPdfSpecialPlateThunk.pending, (state) => {
-        state.status = Status.LOADING
+        state.searchDataStatus = Status.LOADING
       })
       .addCase(dowloadPdfSpecialPlateThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.searchDataStatus = Status.SUCCEEDED
         state.dowloadPath = action.payload
       })
       .addCase(dowloadPdfSpecialPlateThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch special plates data."
+        state.searchDataStatus = Status.FAILED
+        state.searchDataError = action.error.message || "Failed to fetch special plates data."
       })
     
     // Special Suspect People
     builder
       .addCase(fetchSpecialSuspectPeopleSearchDataThunk.pending, (state) => {
-        state.status = Status.LOADING
+        state.searchDataStatus = Status.LOADING
       })
       .addCase(fetchSpecialSuspectPeopleSearchDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.searchDataStatus = Status.SUCCEEDED
         state.specialSuspectPeopleSearchData = action.payload
       })
       .addCase(fetchSpecialSuspectPeopleSearchDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch special suspect people data."
+        state.searchDataStatus = Status.FAILED
+        state.searchDataError = action.error.message || "Failed to fetch special suspect people data."
       })
   }
 })
 
+export const { clearSearchData } = searchDataSlice.actions;
 export default searchDataSlice.reducer

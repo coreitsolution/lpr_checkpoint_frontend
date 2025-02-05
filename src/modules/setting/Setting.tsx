@@ -160,7 +160,7 @@ const Setting = () => {
       }
     }
     catch (error) {
-      PopupMessage("บันทึกข้อมูลไม่สำเร็จ", error instanceof Error ? error.message : String(error), "error")
+      PopupMessage("บันทึกข้อมูลไม่สำเร็จ", (error as { message: string }).message || "มีข้อผิดพลาดเกิดขึ้น", "error")
     }
     await fetchCameraSetting()
   }

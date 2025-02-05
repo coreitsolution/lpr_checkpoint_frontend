@@ -45,7 +45,7 @@ import {
 import { 
   fetchSettingsShortThunk,
 } from "../../features/settings/settingsSlice"
-import { fetchLastRecognitionsThunk } from "../../features/live-view-real-time/liveViewRealTimeSlice"
+import { fetchLastRecognitionsThunk, clearFilteredLiveViewRealTimeData } from "../../features/live-view-real-time/liveViewRealTimeSlice"
 
 // Types
 import { 
@@ -131,7 +131,7 @@ const CCTV = () => {
   )
 
   const setUpdateSpecialPlate = async(update: RealTimeLprData) => {
-    if (!update.isSpecialPlate) return
+    if (update.isSpecialPlate !== 1) return
     
     await fetchLastRecognitions()
     await dispatch(sendMessageThunk({ 
@@ -278,6 +278,12 @@ const CCTV = () => {
       setSelectedScreenValue(numValue)
     }
   }, [settingDataShort])
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearFilteredLiveViewRealTimeData())
+    }
+  }, [dispatch])
 
   return (
     <div className={`main-content pe-1 ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>

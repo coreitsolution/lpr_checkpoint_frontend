@@ -134,7 +134,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   useEffect(() => {
     if (lastRecognitionData) {
       setUpdateLastRecognition(lastRecognitionData)
-      if (lastRecognitionData.isSpecialPlate) {
+      if (lastRecognitionData.isSpecialPlate === 1) {
         setUpdateSpecialPlate(lastRecognitionData)
       }
     }

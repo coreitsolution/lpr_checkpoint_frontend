@@ -18,7 +18,7 @@ import Loading from "../../components/loading/Loading"
 import SearchFilter from "./search-filter/SearchFilter"
 
 // API
-import { fetchSpecialSuspectPeopleSearchDataThunk } from "../../features/search-data/SearchDataSlice"
+import { fetchSpecialSuspectPeopleSearchDataThunk, clearSearchData } from "../../features/search-data/SearchDataSlice"
 
 // Types
 import { FilterSpecialSuspectPeople } from "../../features/api/types"
@@ -46,15 +46,34 @@ const SuspectPeopleDetected = () => {
   const [specialSuspectPeopleSearchDataList, setSpecialSuspectPeopleSearchDataList] = useState<SpecialSuspectPeopleSearchData[]>([])
   // const [rowsPerPageOptions] = useState(SearchSpecialRowPerPages)
   const dispatch: AppDispatch = useDispatch()
-  const { specialSuspectPeopleSearchData } = useSelector(
+  const { specialSuspectPeopleSearchData, searchDataError, searchDataStatus } = useSelector(
     (state: RootState) => state.searchData
   )
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearSearchData())
+    }
+  }, [dispatch])
 
   useEffect(() => {
     if (specialSuspectPeopleSearchData) {
       setIsLoading(false)
     }
   }, [specialSuspectPeopleSearchData])
+
+  useEffect(() => {
+    if (searchDataError) {
+      setIsLoading(false)
+      PopupMessage("มีข้อผิดพลาดเกิดขึ้น", searchDataError, "error")
+    }
+  }, [searchDataError])
+
+  useEffect(() => {
+    if (searchDataStatus === "failed" && searchDataError) {
+      PopupMessage("มีข้อผิดพลาดเกิดขึ้น", searchDataError, "error")
+    }
+  }, [searchDataStatus, searchDataError])
 
   const setFilterData = async (filterData: FilterSpecialSuspectPeople) => {
     setIsLoading(true)

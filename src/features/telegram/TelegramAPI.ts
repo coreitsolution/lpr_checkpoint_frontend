@@ -10,6 +10,7 @@ export const sendMessage = async (sendMessage: SendMessage) => {
   const response = await fetchClient(combineURL(TELEGRAM_URL, "/send-message"), {
     method: "POST",
     body: JSON.stringify(sendMessage),
+    isTelegram: true,
   })
   return response
 }

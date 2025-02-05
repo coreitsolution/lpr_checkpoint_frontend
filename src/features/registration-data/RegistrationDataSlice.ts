@@ -12,16 +12,16 @@ import { Status } from "../../constants/statusEnum";
 interface RegistrationDataState {
   specialPlatesData: SpecialPlatesData | null;
   specialPlatesDetail: SpecialPlatesRespondsDetail[];
-  status: Status;
-  error: string | null;
+  registrationDataStatus: Status;
+  registrationDataError: string | null;
 }
 
 // Initial state
 const initialState: RegistrationDataState = {
   specialPlatesData: null,
   specialPlatesDetail: [],
-  status: Status.IDLE,
-  error: null,
+  registrationDataStatus: Status.IDLE,
+  registrationDataError: null,
 };
 
 // Async thunks
@@ -32,25 +32,40 @@ export const fetchSpecialPlateDataThunk = createAsyncThunk(
   }
 );
 
-export const postSpecialRegistrationDataThunk = createAsyncThunk(
+export const postSpecialRegistrationDataThunk = createAsyncThunk<SpecialPlatesRespondsDetail, NewSpecialPlates, { rejectValue: string }>(
   "registrationData/postSpecialRegistrationData",
-  async (newSetting: NewSpecialPlates) => {
-    return await postSpecialRegistrationData(newSetting);
+  async (newSetting: NewSpecialPlates, { rejectWithValue }) => {
+    try {
+      return await postSpecialRegistrationData(newSetting);
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to post special registration data.");
+    }
   }
 );
 
-export const deleteSpecialPlateDataThunk = createAsyncThunk(
+export const deleteSpecialPlateDataThunk = createAsyncThunk<number, number, { rejectValue: string }>(
   "registrationData/deleteSpecialRegistrationData",
-  async (id: number) => {
-    await deleteSpecialPlatesData(id);
-    return id;
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await deleteSpecialPlatesData(id);
+      return id;
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to delete special registration data.");
+    }
   }
 );
 
-export const putSpecialPlateDataThunk = createAsyncThunk(
+export const putSpecialPlateDataThunk = createAsyncThunk<SpecialPlatesRespondsDetail, SpecialPlatesDetail, { rejectValue: string }>(
   "registrationData/putSpecialRegistrationData",
-  async (updated: SpecialPlatesDetail) => {
-    return await putSpecialPlateData(updated);
+  async (updated: SpecialPlatesDetail, { rejectWithValue }) => {
+    try {
+      return await putSpecialPlateData(updated);
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to put special registration data.");
+    }
   }
 );
 
@@ -58,70 +73,76 @@ export const putSpecialPlateDataThunk = createAsyncThunk(
 const registrationDataSlice = createSlice({
   name: "registrationData",
   initialState,
-  reducers: {},
+  reducers: {
+    clearRegistrationData: (state) => {
+      state.registrationDataStatus = Status.IDLE;
+      state.registrationDataError = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Fetch special plates data
       .addCase(fetchSpecialPlateDataThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.registrationDataStatus = Status.LOADING;
+        state.registrationDataError = null;
       })
       .addCase(fetchSpecialPlateDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.registrationDataStatus = Status.SUCCEEDED;
         state.specialPlatesData = action.payload;
       })
       .addCase(fetchSpecialPlateDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch special plates data.";
+        state.registrationDataStatus = Status.FAILED;
+        state.registrationDataError = action.error.message || "Failed to fetch special plates data.";
       })
 
       // Post special registration data
       .addCase(postSpecialRegistrationDataThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.registrationDataStatus = Status.LOADING;
+        state.registrationDataError = null;
       })
       .addCase(postSpecialRegistrationDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.registrationDataStatus = Status.SUCCEEDED;
         state.specialPlatesDetail.push(action.payload);
       })
       .addCase(postSpecialRegistrationDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to post special registration data.";
+        state.registrationDataStatus = Status.FAILED;
+        state.registrationDataError = action.payload || "Failed to post special registration data.";
       })
 
       // Delete special registration data
       .addCase(deleteSpecialPlateDataThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.registrationDataStatus = Status.LOADING;
+        state.registrationDataError = null;
       })
       .addCase(deleteSpecialPlateDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.registrationDataStatus = Status.SUCCEEDED;
         state.specialPlatesDetail = state.specialPlatesDetail.filter(
           (data) => data.id !== action.payload
         );
       })
       .addCase(deleteSpecialPlateDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to delete special registration data.";
+        state.registrationDataStatus = Status.FAILED;
+        state.registrationDataError = action.payload || "Failed to delete special registration data.";
       })
 
       // Put special registration data
       .addCase(putSpecialPlateDataThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.registrationDataStatus = Status.LOADING;
+        state.registrationDataError = null;
       })
       .addCase(putSpecialPlateDataThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.registrationDataStatus = Status.SUCCEEDED;
         const index = state.specialPlatesDetail.findIndex((setting) => setting.id === action.payload.id);
         if (index !== -1) {
           state.specialPlatesDetail[index] = action.payload;
         }
       })
       .addCase(putSpecialPlateDataThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to update special registration data.";
+        state.registrationDataStatus = Status.FAILED;
+        state.registrationDataError = action.payload || "Failed to update special registration data.";
       })
   },
 });
 
+export const { clearRegistrationData } = registrationDataSlice.actions;
 export default registrationDataSlice.reducer;

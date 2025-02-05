@@ -59,7 +59,7 @@ export interface RealTimeLprData {
   plateImage: string
   detectionDatetime: string
   plateConfidence: string
-  isSpecialPlate: boolean
+  isSpecialPlate: number
   specialPlateId: number | null
   specialPlateClassTH: string
   map?: MapPosition[]

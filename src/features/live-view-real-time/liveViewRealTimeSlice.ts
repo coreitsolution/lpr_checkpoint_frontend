@@ -22,8 +22,8 @@ interface LiveViewRealTimesState {
   connectionData: ConnectionResult | null
   systemStatusData: SystemStatusResult | null
   dowloadPath: ZipDowload | null
-  status: Status
-  error: string | null
+  liveViewRealTimesStatus: Status
+  liveViewRealTimesError: string | null
 }
 
 const initialState: LiveViewRealTimesState = {
@@ -33,8 +33,8 @@ const initialState: LiveViewRealTimesState = {
   connectionData: null,
   systemStatusData: null,
   dowloadPath: null,
-  status: Status.IDLE,
-  error: null,
+  liveViewRealTimesStatus: Status.IDLE,
+  liveViewRealTimesError: null,
 }
 
 export const fetchLastRecognitionsThunk = createAsyncThunk(
@@ -80,15 +80,21 @@ export const dowloadFileThunk = createAsyncThunk(
 const liveViewRealTimesSlice = createSlice({
   name: "liveViewRealTimes",
   initialState,
-  reducers: {},
+  reducers: {
+    clearFilteredLiveViewRealTimeData: (state) => {
+      state.filteredLiveViewRealTimeData = null;
+      state.liveViewRealTimesStatus = Status.IDLE;
+      state.liveViewRealTimesError = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchLastRecognitionsThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.liveViewRealTimesStatus = Status.LOADING
+        state.liveViewRealTimesError = null
       })
       .addCase(fetchLastRecognitionsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.liveViewRealTimesStatus = Status.SUCCEEDED
         if (action.payload.isFiltered) {
           state.filteredLiveViewRealTimeData = action.payload.data
         } 
@@ -97,66 +103,67 @@ const liveViewRealTimesSlice = createSlice({
         }
       })
       .addCase(fetchLastRecognitionsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error =
+        state.liveViewRealTimesStatus = Status.FAILED
+        state.liveViewRealTimesError =
           action.error.message || "Failed to fetch liveViewRealTime"
       })
 
       .addCase(fetchVehicleCountThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.liveViewRealTimesStatus = Status.LOADING
+        state.liveViewRealTimesError = null
       })
       .addCase(fetchVehicleCountThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.liveViewRealTimesStatus = Status.SUCCEEDED
         state.vehicleCountData = action.payload
       })
       .addCase(fetchVehicleCountThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error =
+        state.liveViewRealTimesStatus = Status.FAILED
+        state.liveViewRealTimesError =
           action.error.message || "Failed to fetch vehicleCountData"
       })
 
       .addCase(fetchConnectionThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.liveViewRealTimesStatus = Status.LOADING
+        state.liveViewRealTimesError = null
       })
       .addCase(fetchConnectionThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.liveViewRealTimesStatus = Status.SUCCEEDED
         state.connectionData = action.payload
       })
       .addCase(fetchConnectionThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch connectionData"
+        state.liveViewRealTimesStatus = Status.FAILED
+        state.liveViewRealTimesError = action.error.message || "Failed to fetch connectionData"
       })
 
       .addCase(fetchSystemStatusThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.liveViewRealTimesStatus = Status.LOADING
+        state.liveViewRealTimesError = null
       })
       .addCase(fetchSystemStatusThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.liveViewRealTimesStatus = Status.SUCCEEDED
         state.systemStatusData = action.payload
       })
       .addCase(fetchSystemStatusThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error =
+        state.liveViewRealTimesStatus = Status.FAILED
+        state.liveViewRealTimesError =
           action.error.message || "Failed to fetch systemStatusData"
       })
 
       // Dowload file
       .addCase(dowloadFileThunk.pending, (state) => {
-        state.status = Status.LOADING
-        state.error = null
+        state.liveViewRealTimesStatus = Status.LOADING
+        state.liveViewRealTimesError = null
       })
       .addCase(dowloadFileThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED
+        state.liveViewRealTimesStatus = Status.SUCCEEDED
         state.dowloadPath = action.payload
       })
       .addCase(dowloadFileThunk.rejected, (state, action) => {
-        state.status = Status.FAILED
-        state.error = action.error.message || "Failed to fetch dowloadPath"
+        state.liveViewRealTimesStatus = Status.FAILED
+        state.liveViewRealTimesError = action.error.message || "Failed to fetch dowloadPath"
       })
   },
 })
 
+export const { clearFilteredLiveViewRealTimeData } = liveViewRealTimesSlice.actions;
 export default liveViewRealTimesSlice.reducer

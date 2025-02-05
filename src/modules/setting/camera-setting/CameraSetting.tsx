@@ -105,7 +105,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     subDistricts,
     districts,
     policeDivisions,
-    officerPrefixes,
+    personTitles,
     positions,
     streamEncodes
   } = useSelector((state: RootState) => state.dropdown)
@@ -113,7 +113,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
   const [districtsOptions, setDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
   const [policeDivisionsOptions, setPoliceDivisionsOptions] = useState<{ label: string ,value: number }[]>([])
-  const [officerPrefixesOptions, setOfficerPrefixesOptions] = useState<{ label: string ,value: number }[]>([])
+  const [personTitlesOptions, setPersonTitlesOptions] = useState<{ label: string ,value: number }[]>([])
   const [positionsOptions, setPositionsOptions] = useState<{ label: string ,value: number }[]>([])
   const [streamEncodesOptions, setStreamEncodesOptions] = useState<{ label: string ,value: number }[]>([])
 
@@ -123,7 +123,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       provinces?.data?.length > 0 &&
       policeDivisions?.data &&
       policeDivisions?.data?.length > 0 &&
-      officerPrefixes?.data && officerPrefixes?.data.length > 0 &&
+      personTitles?.data && personTitles?.data.length > 0 &&
       positions?.data && positions?.data.length > 0
     ) {
       if (isEditMode && selectedRow) {
@@ -173,7 +173,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     provinces,
     policeDivisions,
     districts,
-    officerPrefixes,
+    personTitles,
     positions,
     isEditMode,
     selectedRow,
@@ -277,14 +277,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   }, [policeDivisions])
 
   useEffect(() => {
-    if (officerPrefixes && officerPrefixes.data) {
-      const options = officerPrefixes.data.map((row) => ({
+    if (personTitles && personTitles.data) {
+      const options = personTitles.data.filter((row) => row.group === "police").map((row) => ({
         label: row.title_th,
         value: row.id,
       }))
-      setOfficerPrefixesOptions(options)
+      setPersonTitlesOptions(options)
     }
-  }, [officerPrefixes])
+  }, [personTitles])
 
   useEffect(() => {
     if (positions && positions.data) {
@@ -435,8 +435,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
           const updateCameraSetting = updateCameraSettings()
           if (updateCameraSetting) {
             await dispatch(putCameraSettingThunk(updateCameraSetting))
-            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-            closeDialog()
           } else {
             PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
           }
@@ -445,9 +443,8 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         const newCameraSetting = createCameraSettings()
         if (newCameraSetting) {
           await dispatch(postCameraSettingThunk(newCameraSetting))
-          PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-          closeDialog()
-        } else {
+        } 
+        else {
           PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
         }
       }
@@ -814,7 +811,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   sx={{ marginTop: "15px"}}
                   value={state.officer.namePrefixesSelect}
                   onChange={handleNamePrefixChange}
-                  options={officerPrefixesOptions}
+                  options={personTitlesOptions}
                   label="คำนำหน้า"
                   labelFontSize="16px"
                 />

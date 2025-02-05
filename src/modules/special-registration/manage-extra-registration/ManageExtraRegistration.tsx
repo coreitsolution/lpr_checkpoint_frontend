@@ -382,18 +382,6 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         visible: 1,
       }
 
-      let isSuccess = true
-
-      const handleSuccess = () => {
-        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-        closeDialog()
-      }
-
-      const handleError = () => {
-        isSuccess = false
-        PopupMessage("บันทึกไม่สำเร็จ", "มีข้อผิดพลาดเกิดขึ้น", "error")
-      }
-
       if (isEditMode && selectedRow) {
         let title = "ยันยันการแก้ไข"
         if (hasOnlyActiveChanged()) {
@@ -424,16 +412,9 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
           postSpecialRegistrationDataThunk(updatedFormData)
         ).unwrap()
       }
-
-      if (isSuccess) {
-        handleSuccess()
-      }
-      else {
-        handleError()
-      }
     } 
     catch (error) {
-      PopupMessage("บันทึกไม่สำเร็จ", (error as { message: string }).message, "error")
+      PopupMessage("บันทึกไม่สำเร็จ", (error as { message: string }).message || "มีข้อผิดพลาดเกิดขึ้น", "error")
     }
   }
 

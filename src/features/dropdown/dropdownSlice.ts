@@ -7,8 +7,7 @@ import {
   fetchPoliceDivisions,
   fetchDistricts,
   fetchSubDistricts,
-  fetchCommonPrefixes,
-  fetchOfficerPrefixes,
+  fetchPersonTitles,
   fetchPositions,
   fetchRegions,
   fetchStreamEncodes,
@@ -27,8 +26,7 @@ import {
   Districts,
   SubDistricts,
   OfficerPositions,
-  OfficerTitles,
-  CommonTitles,
+  PersonTitles,
   Regions,
   StreamEncodes,
   VehicleBodyTypes,
@@ -46,8 +44,7 @@ interface DropdownState {
   policeDivisions: PoliceDivisions | null;
   districts: Districts | null;
   subDistricts: SubDistricts | null;
-  commonPrefixes: CommonTitles | null;
-  officerPrefixes: OfficerTitles | null;
+  personTitles: PersonTitles | null;
   positions: OfficerPositions | null;
   regions: Regions | null;
   streamEncodes: StreamEncodes | null;
@@ -57,8 +54,8 @@ interface DropdownState {
   vehicleMakes: VehicleMakes | null;
   vehicleModels: VehicleModels | null;
   personTypes: PersonTypes | null;
-  status: Status;
-  error: string | null;
+  dropdownStatus: Status;
+  dropdownError: string | null;
 }
 
 const initialState: DropdownState = {
@@ -68,8 +65,7 @@ const initialState: DropdownState = {
   policeDivisions:null,
   districts: null,
   subDistricts: null,
-  commonPrefixes: null,
-  officerPrefixes: null,
+  personTitles: null,
   positions: null,
   regions: null,
   streamEncodes: null,
@@ -79,8 +75,8 @@ const initialState: DropdownState = {
   vehicleMakes: null,
   vehicleModels: null,
   personTypes: null,
-  status: Status.IDLE,
-  error: null,
+  dropdownStatus: Status.IDLE,
+  dropdownError: null,
 };
 
 export const fetchDataStatusThunk = createAsyncThunk(
@@ -131,18 +127,10 @@ export const fetchSubDistrictsThunk = createAsyncThunk(
   }
 );
 
-export const fetchCommonPrefixesThunk = createAsyncThunk(
-  "namePrefixes/fetchCommonPrefixes",
+export const fetchPersonTitlesThunk = createAsyncThunk(
+  "personTitles/fetchPersonTitles",
   async (param?: Record<string, string>) => {
-    const response = await fetchCommonPrefixes(param);
-    return response;
-  }
-);
-
-export const fetchOfficerPrefixesThunk = createAsyncThunk(
-  "namePrefixes/fetchOfficerPrefixes",
-  async (param?: Record<string, string>) => {
-    const response = await fetchOfficerPrefixes(param);
+    const response = await fetchPersonTitles(param);
     return response;
   }
 );
@@ -226,240 +214,226 @@ const dropdownSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchProvincesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchProvincesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.provinces = action.payload;
       })
       .addCase(fetchProvincesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch provinces";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch provinces";
       });
 
     builder
       .addCase(fetchDataStatusThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchDataStatusThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.dataStatus = action.payload;
       })
       .addCase(fetchDataStatusThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch dataStatus";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch dataStatus";
       });
 
     builder
       .addCase(fetchRegistrationTypesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchRegistrationTypesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.registrationTypes = action.payload;
       })
       .addCase(fetchRegistrationTypesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch registrationTypes";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch registrationTypes";
       });
 
     builder
       .addCase(fetchPoliceDivisionsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchPoliceDivisionsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.policeDivisions = action.payload;
       })
       .addCase(fetchPoliceDivisionsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch policeDivisions";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch policeDivisions";
       });
 
     builder
       .addCase(fetchDistrictsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchDistrictsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.districts = action.payload;
       })
       .addCase(fetchDistrictsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch districts";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch districts";
       });
     
     builder
       .addCase(fetchSubDistrictsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchSubDistrictsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.subDistricts = action.payload;
       })
       .addCase(fetchSubDistrictsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch subDistricts";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch subDistricts";
       });
 
     builder
-      .addCase(fetchCommonPrefixesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+      .addCase(fetchPersonTitlesThunk.pending, (state) => {
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
-      .addCase(fetchCommonPrefixesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
-        state.commonPrefixes = action.payload;
+      .addCase(fetchPersonTitlesThunk.fulfilled, (state, action) => {
+        state.dropdownStatus = Status.SUCCEEDED;
+        state.personTitles = action.payload;
       })
-      .addCase(fetchCommonPrefixesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch commonPrefixes";
-      });
-
-    builder
-      .addCase(fetchOfficerPrefixesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
-      })
-      .addCase(fetchOfficerPrefixesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
-        state.officerPrefixes = action.payload;
-      })
-      .addCase(fetchOfficerPrefixesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch officerPrefixes";
+      .addCase(fetchPersonTitlesThunk.rejected, (state, action) => {
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch personTitles";
       });
 
     builder
       .addCase(fetchPositionThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchPositionThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.positions = action.payload;
       })
       .addCase(fetchPositionThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch positions";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch positions";
       });
 
     builder
       .addCase(fetchRegionsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchRegionsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.regions = action.payload;
       })
       .addCase(fetchRegionsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch regions";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch regions";
       });
 
     builder
       .addCase(fetchStreamEncodesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchStreamEncodesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.streamEncodes = action.payload;
       })
       .addCase(fetchStreamEncodesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch stream encodes";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch stream encodes";
       });
 
     builder
       .addCase(fetchVehicleBodyTypesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchVehicleBodyTypesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.vehicleBodyTypes = action.payload;
       })
       .addCase(fetchVehicleBodyTypesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch vehicle body types";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch vehicle body types";
       });
 
     builder
       .addCase(fetchVehicleBodyTypesThThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchVehicleBodyTypesThThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.vehicleBodyTypesTh = action.payload;
       })
       .addCase(fetchVehicleBodyTypesThThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch vehicle body types only Thai";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch vehicle body types only Thai";
       });
 
     builder
       .addCase(fetchVehicleColorsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchVehicleColorsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.vehicleColors = action.payload;
       })
       .addCase(fetchVehicleColorsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch vehicle colors";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch vehicle colors";
       });
 
     builder
       .addCase(fetchVehicleMakesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchVehicleMakesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.vehicleMakes = action.payload;
       })
       .addCase(fetchVehicleMakesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch vehicle makes";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch vehicle makes";
       });
 
     builder
       .addCase(fetchVehicleModelsThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchVehicleModelsThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.vehicleModels = action.payload;
       })
       .addCase(fetchVehicleModelsThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch vehicle models";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch vehicle models";
       });
 
     builder
       .addCase(fetchPersonTypesThunk.pending, (state) => {
-        state.status = Status.LOADING;
-        state.error = null;
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
       })
       .addCase(fetchPersonTypesThunk.fulfilled, (state, action) => {
-        state.status = Status.SUCCEEDED;
+        state.dropdownStatus = Status.SUCCEEDED;
         state.personTypes = action.payload;
       })
       .addCase(fetchPersonTypesThunk.rejected, (state, action) => {
-        state.status = Status.FAILED;
-        state.error = action.error.message || "Failed to fetch personTypes";
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch personTypes";
       });
   },
 });
