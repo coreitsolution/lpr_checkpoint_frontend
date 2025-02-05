@@ -21,7 +21,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const dispatch = useAppDispatch()
-  const { authData, authError } = useSelector((state: RootState) => state.auth)
+  const { authData, authError, authStatus } = useSelector((state: RootState) => state.auth)
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -109,13 +109,13 @@ const LoginPage = () => {
               <motion.button
                 type="submit"
                 className={`mr-[10px] h-[50px] w-full text-white rounded-lg shadow transition ${
-                  status === 'loading' ? 'bg-gray-400' : 'bg-dodgerBlue hover:bg-blue-700'
+                  authStatus === 'loading' ? 'bg-gray-400' : 'bg-dodgerBlue hover:bg-blue-700'
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                disabled={status === 'loading'}
+                disabled={authStatus === 'loading'}
               >
-                {status === 'loading' ? 'Logging in...' : 'Login'}
+                {authStatus === 'loading' ? 'Logging in...' : 'Login'}
               </motion.button>
             </div>
           </form>

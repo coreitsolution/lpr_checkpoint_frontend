@@ -131,13 +131,18 @@ const CCTV = () => {
   )
 
   const setUpdateSpecialPlate = async(update: RealTimeLprData) => {
-    if (update.isSpecialPlate !== 1) return
-    
-    await fetchLastRecognitions()
-    await dispatch(sendMessageThunk({ 
-      chatId: TELEGRAM_CHAT_ID, 
-      message: `Special Plate found: ${update.plateGroup} ${update.plateNumber} ${update.regionNameTH} ${update.plateConfidence}% Type: ${update.specialPlateClassTH}` 
-    }))
+    try {
+      if (update.isSpecialPlate !== 1) return
+      
+      await fetchLastRecognitions()
+      await dispatch(sendMessageThunk({ 
+        chatId: TELEGRAM_CHAT_ID, 
+        message: `Special Plate found: ${update.plateGroup} ${update.plateNumber} ${update.regionNameTH} ${update.plateConfidence}% Type: ${update.specialPlateClassTH}` 
+      }))
+    } 
+    catch (error) {
+      console.error(error)
+    }
   }
 
   const fetchLastRecognitions = async () => {

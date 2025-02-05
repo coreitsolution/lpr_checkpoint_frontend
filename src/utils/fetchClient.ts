@@ -66,7 +66,7 @@ export const fetchClient = async <T>(
     const response = await fetch(`${endpoint}${queryString}`, {
       ...fetchOptions,
       headers,
-      credentials: "include",
+      ...(options.isTelegram ? {} : { credentials: "include" }),
     });
 
     if (!response.ok) {

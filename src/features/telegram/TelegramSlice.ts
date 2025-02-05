@@ -13,10 +13,15 @@ const initialState: TelegramState = {
   telegramError: null,
 }
 
-export const sendMessageThunk = createAsyncThunk(
+export const sendMessageThunk = createAsyncThunk<unknown, SendMessage, { rejectValue: string }>(
   "telegram/sendMessage",
-  async (body : SendMessage) => {
-    return await sendMessage(body)
+  async (body : SendMessage, { rejectWithValue }) => {
+    try {
+      return await sendMessage(body)
+    } 
+    catch (error) {
+      return rejectWithValue((error as { message: string }).message || "Failed to send message")  
+    }
   }
 )
 
@@ -35,7 +40,7 @@ const telegramSlice = createSlice({
       })
       .addCase(sendMessageThunk.rejected, (state, action) => {
         state.telegramStatus = Status.FAILED
-        state.telegramError = action.error.message || "Failed to send message"
+        state.telegramError = action.payload || "Failed to send message"
       })
   },
 })

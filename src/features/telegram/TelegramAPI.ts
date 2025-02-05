@@ -4,13 +4,18 @@ import { isDevEnv } from "../../config/environment"
 import { TELEGRAM_URL } from '../../config/apiConfig'
 
 export const sendMessage = async (sendMessage: SendMessage) => {
-  if (isDevEnv) {
-    return Promise.resolve()
+  try {
+    if (isDevEnv) {
+      return Promise.resolve()
+    }
+    const response = await fetchClient(combineURL(TELEGRAM_URL, "/send-message"), {
+      method: "POST",
+      body: JSON.stringify(sendMessage),
+      isTelegram: true,
+    })
+    return response
+  } 
+  catch (error) {
+    throw new Error(`Failed to send message: ${error}`)
   }
-  const response = await fetchClient(combineURL(TELEGRAM_URL, "/send-message"), {
-    method: "POST",
-    body: JSON.stringify(sendMessage),
-    isTelegram: true,
-  })
-  return response
 }
