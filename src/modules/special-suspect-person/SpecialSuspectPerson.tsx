@@ -3,13 +3,11 @@ import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { FILE_URL } from '../../config/apiConfig'
-import * as XLSX from "xlsx"
 import { SelectChangeEvent } from '@mui/material/Select'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
-import { fetchClient, combineURL } from "../../utils/fetchClient"
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
@@ -18,15 +16,9 @@ import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 // Types
 import {
   SuspectPeopleRespondsDetail,
-  ImportSuspectPeopleDetail,
-  NewSuspectPeople,
 } from '../../features/suspect-people/SuspectPeopleDataTypes'
 import { FilterSpecialPeople } from "../../features/api/types"
 import { DeleteRequestData } from "../../features/file-upload/fileUploadTypes"
-import { 
-  Districts,
-  SubDistricts,
-} from "../../features/dropdown/dropdownTypes"
 
 // API
 import {
@@ -35,7 +27,6 @@ import {
 import { 
   fetchSpecialSuspectPeopleDataThunk,
   deleteSpecialSuspectPeopleDataThunk,
-  postSpecialSuspectPeopleDataThunk
 } from "../../features/suspect-people/SuspectPeopleDataSlice"
 
  // Context
@@ -44,14 +35,14 @@ import { useHamburger } from "../../context/HamburgerContext"
 // Component
 import Loading from "../../components/loading/Loading"
 import SearchFilter from "./search-filter/SearchFilter"
-import ManageSpecialSuspectPerson from "./manage-special-suspect-person/ManageSpecialSuspectPerson"
 import PaginationComponent from "../../components/pagination/Pagination"
+
+// Modules
+import ManageSpecialSuspectPerson from "./manage-special-suspect-person/ManageSpecialSuspectPerson"
+import UploadFile from "./upload-file/UploadFile"
 
 // Constant
 import { SpecialRowPerPages } from "../../constants/dropdown"
-
-// Config
-import { API_URL } from '../../config/apiConfig'
 
 dayjs.extend(buddhistEra)
 
@@ -62,14 +53,13 @@ function SpecialSuspectPerson() {
   )
 
   const [isAddSuspectPersonOpen, setIsAddSuspectPersonOpen] = useState(false)
+  const [isFileImportOpen, setIsFileImportOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isSearch, setIsSearch] = useState(false)
   const [specialSuspectPeopleList, setSpecialSuspectPeopleList] = useState<SuspectPeopleRespondsDetail[]>([])
   const [selectedRow, setSelectedRow] = useState<SuspectPeopleRespondsDetail | null>(null)
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
-  const [fileImportError, setFileImportError] = useState<string>("")
-  const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [page, setPage] = useState(1)
   const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -77,7 +67,7 @@ function SpecialSuspectPerson() {
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
   const tableDataRef = useRef<HTMLDivElement>(null)
 
-  const { provinces, dataStatus, personTypes, personTitles } = useSelector(
+  const { dataStatus, personTypes, personTitles } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -222,6 +212,12 @@ function SpecialSuspectPerson() {
   }, [isAddSuspectPersonOpen])
 
   useEffect(() => {
+    if (!isFileImportOpen) {
+      fetchSpecialSuspectPeopleData('1', rowsPerPage.toString())
+    }
+  }, [isFileImportOpen])
+
+  useEffect(() => {
     if (specialSuspectPeopleData && specialSuspectPeopleData.data) {
       setSpecialSuspectPeopleList(specialSuspectPeopleData.data)
       setTotalPages(Math.ceil(specialSuspectPeopleData.data.length / rowsPerPage))
@@ -230,157 +226,6 @@ function SpecialSuspectPerson() {
       setSpecialSuspectPeopleList([])
     }
   }, [specialSuspectPeopleData])
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-  
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      const arrayBuffer = e.target?.result
-      const workbook = XLSX.read(arrayBuffer, { type: "array" })
-      const sheetName = workbook.SheetNames[0]
-      const sheet = workbook.Sheets[sheetName]
-      const jsonData: ImportSuspectPeopleDetail[] = XLSX.utils.sheet_to_json(sheet)
-  
-      const validatedData = (await Promise.all(
-        jsonData.map(async (row) => {
-          if (
-            !row.name_prefix ||
-            !row.firstname ||
-            !row.lastname ||
-            !row.nation_number ||
-            !row.address ||
-            !row.province_id ||
-            !row.district_id ||
-            !row.sub_district_id ||
-            !row.postal_code ||
-            !row.person_class_id ||
-            (row.person_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_date) ||
-            (row.person_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_expire_date) ||
-            (row.person_class_id.toString().toLowerCase() === "blacklist" && !row.behavior) ||
-            !row.case_owner_name ||
-            !row.case_owner_agency ||
-            !row.case_owner_phone
-          ) {
-            setFileImportError(
-              `name_prefix, firstname, lastname, nation_number, address, 
-              province_id, district_id, sub_district_id, postal_code, person_class_id, 
-              arrest_warrant_date, arrest_warrant_expire_date, behavior case_owner_name, case_owner_agency และ case_owner_phone เป็นช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้`
-            )
-            return null
-          }
-  
-          let query: Record<string, string> = {}
-          query["filter"] = `name_th:${row.district_id}`
-          const district = await fetchClient<Districts>(combineURL(API_URL, "/districts/get"), {
-            method: "GET",
-            queryParams: query,
-          });
-  
-          query["filter"] = `name_th:${row.sub_district_id}`
-          const subDistrict = await fetchClient<SubDistricts>(combineURL(API_URL, "/subdistricts/get"), {
-            method: "GET",
-            queryParams: query,
-          });
-    
-          return {
-            name_prefix: personTitles?.data?.find((prefix) => prefix.title_th === row.name_prefix.toString())?.id,
-            firstname: row.firstname,
-            lastname: row.lastname,
-            nation_number: row.nation_number,
-            address: row.address,
-            province_id: provinces?.data?.find((province) => province.name_th === row.province_id.toString())?.id,
-            district_id: district?.data?.find((district) => district.name_th === row.district_id.toString())?.id,
-            sub_district_id: subDistrict?.data?.find((subDistrict) => subDistrict.name_th === row.sub_district_id.toString())?.id,
-            postal_code: row.postal_code,
-            person_class_id: personTypes?.data?.find((type) => type.title_en.toLocaleLowerCase() === row.person_class_id.toString().toLocaleLowerCase())?.id,
-            case_number: row.case_number || "-",
-            arrest_warrant_date: row.arrest_warrant_date,
-            arrest_warrant_expire_date: row.arrest_warrant_expire_date,
-            behavior: row.behavior || "-",
-            case_owner_name: row.case_owner_name,
-            case_owner_agency: row.case_owner_agency,
-            case_owner_phone: row.case_owner_phone,
-            imagesData: "",
-            filesData: "",
-            active: dataStatus.find((status) => status.status.toLocaleLowerCase() === row.active.toString().toLocaleLowerCase())?.id,
-            visible: 1
-          }
-        })
-      )).filter(Boolean)
-  
-      if (validatedData && validatedData.length > 0) {
-        await addNewSpecialSuspectPerson(validatedData as ImportSuspectPeopleDetail[])
-      }
-      else {
-        PopupMessage("โหลดข้อมูลไม่สำเร็จ", fileImportError, "error")
-      }
-    }
-    reader.readAsArrayBuffer(file)
-
-    if (hiddenFileInput.current) {
-      hiddenFileInput.current.value = ""
-    }
-  }
-  
-  const parseExcelDate = (dateValue: any): string => {
-    if (typeof dateValue === "number") {
-      const date = new Date((dateValue - 25569) * 86400 * 1000)
-      return date.toISOString().split("T")[0] // Return as 'YYYY-MM-DD'
-    }
-    if (typeof dateValue === "string") {
-      const [day, month, year] = dateValue.split("/")
-      return `${year}-${month}-${day}`
-    }
-    throw new Error("Invalid date format")
-  }
-
-  const addNewSpecialSuspectPerson = async (validatedData: ImportSuspectPeopleDetail[]) => {
-    
-    for (const row of validatedData) {
-      try {
-  
-        const updatedFormData: NewSuspectPeople = {
-          arrest_warrant_date: parseExcelDate(row.arrest_warrant_date),
-          arrest_warrant_expire_date: parseExcelDate(row.arrest_warrant_expire_date),
-          title_id: row.name_prefix,
-          firstname: row.firstname,
-          lastname: row.lastname,
-          idcard_number: row.nation_number,
-          address: row.address,
-          province_id: row.province_id,
-          district_id: row.district_id,
-          subdistrict_id: row.sub_district_id,
-          zipcode: row.postal_code,
-          imagesData: [],
-          case_number: row.case_number,
-          behavior: row.behavior,
-          active: row.active,
-          case_owner_phone: row.case_owner_phone,
-          case_owner_name: row.case_owner_name,
-          person_class_id: row.person_class_id,
-          case_owner_agency: row.case_owner_agency,
-          filesData: [],
-          visible: 1,
-          notes: "",
-        }
-  
-        await dispatch(postSpecialSuspectPeopleDataThunk(updatedFormData)).unwrap()
-        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-        await fetchSpecialSuspectPeopleData(page.toString(), rowsPerPage.toString())
-      } 
-      catch (error) {
-        PopupMessage("", "เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error")
-      }
-    }
-  }
-
-  const handleClickImport = () => {
-    if (hiddenFileInput.current) {
-      hiddenFileInput.current.click()
-    }
-  }
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
     event.preventDefault()
@@ -434,7 +279,7 @@ function SpecialSuspectPerson() {
               <button 
                 type="button" 
                 className="flex justify-center items-center bg-white text-dodgerBlue w-[120px] h-[35px] rounded hover:bg-slate-200"
-                onClick={handleClickImport}
+                onClick={() => setIsFileImportOpen(true)}
               >
                 <Icon icon={Upload} size={20} color="dodgerBlue" />
                 <span className="ml-[8px] text-[15px]">นำเข้าข้อมูล</span>
@@ -447,15 +292,6 @@ function SpecialSuspectPerson() {
                 <Icon icon={Plus} size={20} color="#FFFFFF" />
                 <span className="ml-[8px] text-[15px]">เพิ่มบุคคลต้องสงสัย</span>
               </button>
-              <input
-                ref={hiddenFileInput}
-                name="files"
-                type="file"
-                id="file-input"
-                className="hidden"
-                onChange={handleFileUpload}
-                accept=".xlsx,.xls"
-              />
             </div>
           </div>
           <div id="body" className="mt-[5px] flex flex-col">
@@ -598,6 +434,25 @@ function SpecialSuspectPerson() {
                   selectedRow={selectedRow}
                   isEditMode={isEditMode}
                 />
+              </div>
+            </div>
+          </div>
+        </Dialog>
+        {/* Import File */}
+        <Dialog open={isFileImportOpen} onClose={() => {}} className="absolute z-30">
+          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] bg-black text-white w-[80vw] h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center">
+                <DialogTitle className="text-[28px]">นำเข้าข้อมูล</DialogTitle>
+                <button
+                  onClick={() => setIsFileImportOpen(false)} 
+                  className="text-white bg-transparent border-0 text-[28px] pr-6"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="px-5 pb-5">
+                <UploadFile closeDialog={() => setIsFileImportOpen(false)} />
               </div>
             </div>
           </div>

@@ -4,7 +4,6 @@ import ManageExtraRegistration from "./manage-extra-registration/ManageExtraRegi
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import { FILE_URL } from '../../config/apiConfig'
-import * as XLSX from "xlsx"
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import {
@@ -20,8 +19,6 @@ import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 // Types
 import {
   SpecialPlatesRespondsDetail,
-  ImportSpecialPlatesDetail,
-  NewSpecialPlates,
 } from '../../features/registration-data/RegistrationDataTypes'
 import { FilterSpecialRegistration } from "../../features/api/types"
 import { DeleteRequestData } from "../../features/file-upload/fileUploadTypes"
@@ -33,7 +30,6 @@ import {
 import { 
   fetchSpecialPlateDataThunk,
   deleteSpecialPlateDataThunk,
-  postSpecialRegistrationDataThunk
 } from "../../features/registration-data/RegistrationDataSlice"
 
  // Context
@@ -47,6 +43,9 @@ import PaginationComponent from "../../components/pagination/Pagination"
 // Constant
 import { SpecialRowPerPages } from "../../constants/dropdown"
 
+// Modules
+import UploadFile from "./upload-file/UploadFile"
+
 dayjs.extend(buddhistEra)
 
 function SpecialRegistration() {
@@ -56,14 +55,13 @@ function SpecialRegistration() {
   )
 
   const [isAddRegistationOpen, setIsAddRegistationOpen] = useState(false)
+  const [isFileImportOpen, setIsFileImportOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [specialRegistrationsList, setSpecialRegistrationsList] = useState<SpecialPlatesRespondsDetail[]>([])
   const [selectedRow, setSelectedRow] = useState<SpecialPlatesRespondsDetail | null>(null)
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
   const [isSearch, setIsSearch] = useState(false)
-  const [fileImportError, setFileImportError] = useState<string>("")
-  const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [page, setPage] = useState(1)
   const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -216,6 +214,12 @@ function SpecialRegistration() {
   }, [isAddRegistationOpen])
 
   useEffect(() => {
+    if (!isFileImportOpen) {
+      fetchSpecialPlateData('1', rowsPerPage.toString())
+    }
+  }, [isFileImportOpen])
+
+  useEffect(() => {
     if (specialPlatesData && specialPlatesData.data) {
       setSpecialRegistrationsList(specialPlatesData.data)
       if (specialPlatesData.countAll) {
@@ -227,121 +231,6 @@ function SpecialRegistration() {
     }
     setIsLoading(false)
   }, [specialPlatesData])
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-  
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const arrayBuffer = e.target?.result;
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const jsonData: ImportSpecialPlatesDetail[] = XLSX.utils.sheet_to_json(sheet);
-
-      const validatedData = jsonData.map((row) => {
-        if (
-          !row.plate_group ||
-          !row.plate_number ||
-          !row.province_id ||
-          !row.plate_class_id ||
-          (row.plate_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_date) ||
-          (row.plate_class_id.toString().toLowerCase() === "blacklist" && !row.arrest_warrant_expire_date) ||
-          (row.plate_class_id.toString().toLowerCase() === "blacklist" && !row.behavior) ||
-          !row.case_owner_name ||
-          !row.case_owner_agency ||
-          !row.case_owner_phone
-        ) {
-          setFileImportError(
-            "plate_group, plate_number, province_id, plate_class_id, arrest_warrant_date, arrest_warrant_expire_date, behavior, case_owner_name, case_owner_agency และ case_owner_phone เป็นช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้"
-          );
-          return null;
-        }
-  
-        return {
-          plate_group: row.plate_group,
-          plate_number: row.plate_number,
-          province_id: provinces?.data?.find((province) => province.name_th === row.province_id.toString())?.id,
-          plate_class_id: registrationTypes?.data?.find((type) => type.title_en.toLocaleLowerCase() === row.plate_class_id.toString().toLocaleLowerCase())?.id,
-          case_number: row.case_number || "-",
-          arrest_warrant_date: row.arrest_warrant_date,
-          arrest_warrant_expire_date: row.arrest_warrant_expire_date,
-          behavior: row.behavior || "-",
-          case_owner_name: row.case_owner_name,
-          case_owner_agency: row.case_owner_agency,
-          case_owner_phone: row.case_owner_phone,
-          imagesData: "",
-          filesData: "",
-          active: dataStatus.find((status) => status.status.toLocaleLowerCase() === row.active.toString().toLocaleLowerCase())?.id,
-          visible: 1
-        };
-      }).filter(Boolean);
-  
-      if (validatedData && validatedData.length > 0) {
-        await addNewSpecialRegistration(validatedData as ImportSpecialPlatesDetail[]);
-      }
-      else {
-        PopupMessage("โหลดข้อมูลไม่สำเร็จ", fileImportError, "error");
-      }
-    };
-    reader.readAsArrayBuffer(file);
-
-    if (hiddenFileInput.current) {
-      hiddenFileInput.current.value = ""
-    }
-  };
-  
-  const parseExcelDate = (dateValue: any): string => {
-    if (typeof dateValue === "number") {
-      const date = new Date((dateValue - 25569) * 86400 * 1000);
-      return date.toISOString().split("T")[0]; // Return as 'YYYY-MM-DD'
-    }
-    if (typeof dateValue === "string") {
-      const [day, month, year] = dateValue.split("/");
-      return `${year}-${month}-${day}`;
-    }
-    throw new Error("Invalid date format");
-  }
-
-  const addNewSpecialRegistration = async (validatedData: ImportSpecialPlatesDetail[]) => {
-    
-    for (const row of validatedData) {
-      try {
-
-        const updatedFormData: NewSpecialPlates = {
-          arrest_warrant_date: parseExcelDate(row.arrest_warrant_date),
-          arrest_warrant_expire_date: parseExcelDate(row.arrest_warrant_expire_date),
-          plate_group: row.plate_group,
-          plate_number: row.plate_number,
-          province_id: row.province_id,
-          imagesData: [],
-          case_number: row.case_number,
-          behavior: row.behavior,
-          active: row.active,
-          case_owner_phone: row.case_owner_phone,
-          case_owner_name: row.case_owner_name,
-          plate_class_id: row.plate_class_id,
-          case_owner_agency: row.case_owner_agency,
-          filesData: [],
-          visible: 1,
-        };
-  
-        await dispatch(postSpecialRegistrationDataThunk(updatedFormData)).unwrap();
-        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
-        await fetchSpecialPlateData(page.toString(), rowsPerPage.toString())
-      } 
-      catch (error) {
-        PopupMessage("", "เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error");
-      }
-    }
-  };
-
-  const handleClickImport = () => {
-    if (hiddenFileInput.current) {
-      hiddenFileInput.current.click()
-    }
-  };
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
     event.preventDefault()
@@ -395,7 +284,7 @@ function SpecialRegistration() {
               <button 
                 type="button" 
                 className="flex justify-center items-center bg-white text-dodgerBlue w-[120px] h-[35px] rounded hover:bg-slate-200"
-                onClick={handleClickImport}
+                onClick={() => setIsFileImportOpen(true)}
               >
                 <Icon icon={Upload} size={20} color="dodgerBlue" />
                 <span className="ml-[8px] text-[15px]">นำเข้าข้อมูล</span>
@@ -408,15 +297,6 @@ function SpecialRegistration() {
                 <Icon icon={Plus} size={20} color="#FFFFFF" />
                 <span className="ml-[8px] text-[15px]">เพิ่มทะเบียนพิเศษ</span>
               </button>
-              <input
-                ref={hiddenFileInput}
-                name="files"
-                type="file"
-                id="file-input"
-                className="hidden"
-                onChange={handleFileUpload}
-                accept=".xlsx,.xls"
-              />
             </div>
           </div>
           <div id="body" className="mt-[5px] flex flex-col">
@@ -551,6 +431,25 @@ function SpecialRegistration() {
                   selectedRow={selectedRow}
                   isEditMode={isEditMode}
                 />
+              </div>
+            </div>
+          </div>
+        </Dialog>
+        {/* Import File */}
+        <Dialog open={isFileImportOpen} onClose={() => {}} className="absolute z-30">
+          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] bg-black text-white w-[80vw] h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center">
+                <DialogTitle className="text-[28px]">นำเข้าข้อมูล</DialogTitle>
+                <button
+                  onClick={() => setIsFileImportOpen(false)} 
+                  className="text-white bg-transparent border-0 text-[28px] pr-6"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="px-5 pb-5">
+                <UploadFile closeDialog={() => setIsFileImportOpen(false)} />
               </div>
             </div>
           </div>

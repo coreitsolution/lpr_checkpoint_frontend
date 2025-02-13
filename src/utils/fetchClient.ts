@@ -1,10 +1,10 @@
-import { API_URL, TELEGRAM_TOKEN } from '../config/apiConfig';
+import { API_URL, SERVICE_1_TOKEN } from '../config/apiConfig';
 
 export interface FetchOptions extends RequestInit {
   queryParams?: Record<string, string>;
   skipAuth?: boolean;
   isFormData?: boolean;
-  isTelegram?: boolean;
+  isService1?: boolean;
 }
 
 let isRefreshing = false;
@@ -51,10 +51,11 @@ export const fetchClient = async <T>(
   const { queryParams, ...fetchOptions } = options;
 
   const executeRequest = async (token?: string) => {
+
     const headers: HeadersInit = {
       ...(options.isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(options.isTelegram ? 
-        { Authorization: `Bearer ${TELEGRAM_TOKEN}` } : 
+      ...(options.isService1 ? 
+        { Authorization: `Bearer ${SERVICE_1_TOKEN}` } : 
         token && !options.skipAuth ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     };
@@ -66,7 +67,7 @@ export const fetchClient = async <T>(
     const response = await fetch(`${endpoint}${queryString}`, {
       ...fetchOptions,
       headers,
-      ...(options.isTelegram ? {} : { credentials: "include" }),
+      ...(options.isService1 ? {} : { credentials: "include" }),
     });
 
     if (!response.ok) {

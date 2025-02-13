@@ -1,4 +1,4 @@
-import { API_URL, STREAM_URL } from '../../config/apiConfig';
+import { API_URL, STREAM_URL, SERVICE_1_URL } from '../../config/apiConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import {
@@ -138,7 +138,8 @@ export const restartStream = async () => {
   if (isDevEnv) {
 
   }
-  return await fetchClient(combineURL(STREAM_URL, "/live/restart-all"), {
+  return await fetchClient(combineURL(SERVICE_1_URL, "/services/restart-live"), {
     method: "POST",
+    isService1: true,
   })
 }

@@ -13,6 +13,7 @@ export interface FileUploadDetail {
   sizeMB: number
   title: string
   url: string 
+  createdAt?: string;
 }
 
 export interface MultipartRequestData {

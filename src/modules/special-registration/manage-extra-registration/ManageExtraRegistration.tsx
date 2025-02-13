@@ -404,7 +404,6 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         else {
           return
         }
-
       } 
       else {
         // Add new data
@@ -412,6 +411,8 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
           postSpecialRegistrationDataThunk(updatedFormData)
         ).unwrap()
       }
+      PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
+      closeDialog()
     } 
     catch (error) {
       PopupMessage("บันทึกไม่สำเร็จ", (error as { message: string }).message || "มีข้อผิดพลาดเกิดขึ้น", "error")

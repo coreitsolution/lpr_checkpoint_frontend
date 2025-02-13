@@ -4,6 +4,10 @@ import { motion } from 'framer-motion'
 import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer'
 import { BarPlot, LinePlot, AxisConfig, ChartsXAxis, ChartsYAxis, ChartsXAxisProps, ChartsGrid, axisClasses, chartsGridClasses } from '@mui/x-charts'
 import { Box } from '@mui/material'
+import {
+  Dialog,
+  DialogTitle
+} from "@mui/material"
 
 // Context
 import { useHamburger } from "../../context/HamburgerContext"
@@ -11,8 +15,12 @@ import { useHamburger } from "../../context/HamburgerContext"
 // Components
 import Loading from "../../components/loading/Loading"
 
+// Modules
+import ConnectionStatus from './filter/ConnectionStatus'
+
 const Chart = () => {
   const { isOpen } = useHamburger()
+  const [isConnectionStatusOpen, setIsConnectionStatusOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const progress = [
     { id: 1, car: "2ขต 7943 กรุงเทพทหานคร : Pickup/ Blcklist", duplicate: 55 },
@@ -267,7 +275,9 @@ const Chart = () => {
                 <button>
                   <img src="/icons/sync.png" alt="Refresh" className='w-[20px] h-[20px]' />
                 </button>
-                <button>
+                <button
+                  onClick={() => setIsConnectionStatusOpen(true)}
+                >
                   <img src="/icons/settings.png" alt="Setting" className='w-[20px] h-[20px]' />
                 </button>
                 <button>
@@ -275,6 +285,26 @@ const Chart = () => {
                 </button>
               </div>
             </div>
+            <Dialog open={isConnectionStatusOpen} onClose={() => {}} className="absolute z-30">
+              <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
+                <div className="space-y-4 border bg-[var(--background-color)] bg-black text-white w-[25vw] min-w-[450px] border-dodgerBlue rounded-[5px]">
+                  <div className="flex justify-between items-center">
+                    <DialogTitle className="text-[28px]">สถานะการเชื่อมต่อ</DialogTitle>
+                    <button
+                      onClick={() => setIsConnectionStatusOpen(false)} 
+                      className="text-white bg-transparent border-0 text-[28px] pr-6"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <div className="px-5 pb-5">
+                    <ConnectionStatus 
+                      closeDialog={() => setIsConnectionStatusOpen(false)} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </Dialog>
           </div>
           {/* Footer */}
           <div className='relative'>

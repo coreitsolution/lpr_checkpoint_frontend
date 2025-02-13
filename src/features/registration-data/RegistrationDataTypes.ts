@@ -1,3 +1,5 @@
+import { FileUploadDetail } from "../../features/file-upload/fileUploadTypes"
+
 export interface FileData {
   title: string
   url: string
@@ -44,8 +46,8 @@ export interface SpecialPlatesDetail {
   filesData: FileData[]
   visible: number
   active: number
-  createdAt?: string,
-  updatedAt?: string,
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface ImportSpecialPlatesDetail {
@@ -53,7 +55,9 @@ export interface ImportSpecialPlatesDetail {
   plate_group: string
   plate_number: string
   province_id: number
+  province?: string
   plate_class_id: number
+  plate_class?: string
   case_number: string
   arrest_warrant_date: string
   arrest_warrant_expire_date: string
@@ -64,9 +68,31 @@ export interface ImportSpecialPlatesDetail {
   imagesData: string
   filesData: string
   visible: number
+  activeString?: string
   active: number
-  createdAt?: string,
-  updatedAt?: string,
+  imagesUploadedData?: FileUploadDetail
+  fileUploadedData?: FileUploadDetail
+  createdAt?: string
+  updatedAt?: string
+  cannotImport?: boolean
+}
+
+export interface ImportSpecialPlates {
+  id: number
+  plate_group: string
+  plate_number: string
+  province: string
+  plate_class: string
+  case_number: string
+  arrest_warrant_date: string
+  arrest_warrant_expire_date: string
+  behavior: string
+  case_owner_name: string
+  case_owner_agency: string
+  case_owner_phone: string
+  imagesData: string
+  filesData: string
+  active: string
 }
 
 export interface SpecialPlatesRespondsDetail {
@@ -86,8 +112,8 @@ export interface SpecialPlatesRespondsDetail {
   special_plate_files: FileRespondsData[]
   visible: number
   active: number
-  createdAt?: string,
-  updatedAt?: string,
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type NewSpecialPlates = Omit<SpecialPlatesDetail, 'id'>

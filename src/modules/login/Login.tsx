@@ -33,6 +33,14 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!username) {
+      PopupMessage("กรุณากรอก username", "", "warning")
+      return
+    }
+    if (!password) {
+      PopupMessage("กรุณากรอก password", "", "warning")
+      return
+    }
     dispatch(clearError())
     dispatch(login({ username, password }))
   }

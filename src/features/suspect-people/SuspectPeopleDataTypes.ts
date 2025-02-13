@@ -1,3 +1,5 @@
+import { FileUploadDetail } from "../../features/file-upload/fileUploadTypes"
+
 export interface FileData {
   title: string
   url: string
@@ -56,16 +58,21 @@ export interface SuspectPeopleDetail {
 
 export interface ImportSuspectPeopleDetail {
   id: number
-  name_prefix: number
+  name_prefix_id: number
+  name_prefix: string
   firstname: string
   lastname: string
   nation_number: string
   address: string
   province_id: number
+  province?: string
   district_id: number
+  district?: string
   sub_district_id: number
+  sub_district?: string
   postal_code: string
   person_class_id: number
+  person_class?: string
   case_number: string
   arrest_warrant_date: string
   arrest_warrant_expire_date: string
@@ -76,9 +83,37 @@ export interface ImportSuspectPeopleDetail {
   imagesData: string
   filesData: string
   visible: number
+  activeString?: string
   active: number
+  imagesUploadedData?: FileUploadDetail
+  fileUploadedData?: FileUploadDetail
   createdAt?: string,
   updatedAt?: string,
+  cannotImport?: boolean
+}
+
+export interface ImportSuspectPeople {
+  id: number
+  name_prefix: string
+  firstname: string
+  lastname: string
+  nation_number: string
+  address: string
+  province: string
+  district: string
+  sub_district: string
+  postal_code: string
+  person_class: string
+  case_number: string
+  arrest_warrant_date: string
+  arrest_warrant_expire_date: string
+  behavior: string
+  case_owner_name: string
+  case_owner_agency: string
+  case_owner_phone: string
+  imagesData: string
+  filesData: string
+  active: string
 }
 
 export interface SuspectPeopleRespondsDetail {
