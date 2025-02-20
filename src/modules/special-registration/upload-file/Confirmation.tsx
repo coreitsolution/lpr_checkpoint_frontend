@@ -29,6 +29,9 @@ import { FILE_URL } from '../../../config/apiConfig'
 // Component
 import Loading from "../../../components/loading/Loading"
 
+// Utils
+import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+
 dayjs.extend(buddhistEra)
 
 interface ConfirmationProps {
@@ -44,11 +47,6 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
   )
   const [isLoading, setIsLoading] = useState(false)
 
-  const getFileNameWithoutExtension = (filePath: string): string => {
-    const fileName = filePath.split('/').pop()?.split('\\').pop() || ""
-    return fileName.split('.').slice(0, -1).join('.') || fileName 
-  }
-
   const convertedData = useMemo(() => {
     if (!textsDataList.length) return []
     
@@ -62,7 +60,8 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
         getFileNameWithoutExtension(file.originalName) === getFileNameWithoutExtension(data.filesData)
       )
 
-      const province = provinces?.data?.find((province) => province.name_th === data.province)
+      const provinceName = data.province === "กทม" || data.province === "กทม." ? "กรุงเทพมหานคร" : data.province
+      const province = provinces?.data?.find((province) => province.name_th === provinceName)
       const registrationType = registrationTypes?.data?.find((type) => type.title_en.toLowerCase() === data.plate_class.toLowerCase())
       const status = dataStatus.find((status) => status.status.toLowerCase() === data.active.toLowerCase())
       

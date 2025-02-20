@@ -180,7 +180,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
 
   useEffect(() => {
     setIsLoading(true)
-    // fetchLastRecognitions()
     fetchVehicleCount()
     fetchSystemStatus()
     // dispatch(fetchConnectionThunk())
@@ -190,7 +189,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     }, 500)
 
     const interval = setInterval(() => {
-      // fetchLastRecognitions()
       fetchVehicleCount()
       fetchSystemStatus()
       // dispatch(fetchConnectionThunk())

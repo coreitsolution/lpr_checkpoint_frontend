@@ -26,6 +26,12 @@ import {
 // Types
 import { DeleteRequestData, FileUploadDetail } from "../../features/file-upload/fileUploadTypes"
 
+// Utils
+import { getFileNameWithoutExtension } from "../../utils/comonFunction"
+
+// Component
+import Loading from "../../components/loading/Loading"
+
 dayjs.extend(buddhistEra)
 
 interface FilesUploadProps {
@@ -37,6 +43,7 @@ const FilesUpload: React.FC<FilesUploadProps> = ({setFilesDataList, filesDataLis
   const dispatch: AppDispatch = useDispatch()
   const hiddenFilesInput = useRef<HTMLInputElement | null>(null)
   const [filesData, setFilesData] = useState<FileUploadDetail[]>(filesDataList)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setFilesDataList(filesData)
@@ -46,10 +53,33 @@ const FilesUpload: React.FC<FilesUploadProps> = ({setFilesDataList, filesDataLis
     const files = event.target.files
     if (!files) return
 
-    const fileArray = Array.from(files)
+    let fileArray = Array.from(files);
+    const fileNames = new Set<string>();
+    const duplicateFiles: string[] = [];
 
+    fileArray = fileArray.filter((file) => {
+      const fileName = getFileNameWithoutExtension(file.name)
+      if (fileNames.has(fileName)) {
+        duplicateFiles.push(fileName);
+        return false;
+      }
+      fileNames.add(fileName);
+      return true;
+    });
+
+    if (duplicateFiles.length > 0) {
+      PopupMessage(
+        "เกิดข้อผิดพลาด", 
+        `พบไฟล์ชื่อซ้ำ: ${duplicateFiles.join(", ")}. กรุณาเปลี่ยนชื่อไฟล์ไม่ให้ซ้ำกัน`, 
+        "error"
+      );
+      return;
+    }
+
+    console.time("handleFileUpload")
     try {
       const formData = new FormData()
+      setIsLoading(true)
       fileArray.forEach(file => {
         formData.append("files", file) // Append each file individually
       })
@@ -66,10 +96,13 @@ const FilesUpload: React.FC<FilesUploadProps> = ({setFilesDataList, filesDataLis
 
         setFilesData(uploadedFiles)
       }
+      setIsLoading(false)
     }
     catch (error) {
+      setIsLoading(false)
       PopupMessage("เกิดข้อผิดพลาดในการอัพโหลดไฟล์", error instanceof Error ? error.message : String(error), "error")
     }
+    console.timeEnd("handleFileUpload")
 
     if (hiddenFilesInput.current) {
       hiddenFilesInput.current.value = ""
@@ -109,6 +142,7 @@ const FilesUpload: React.FC<FilesUploadProps> = ({setFilesDataList, filesDataLis
 
   return (
     <div id='files-upload'>
+      {isLoading && <Loading />}
       <div className='flex flex-col h-full'>
         <div className='flex justify-end'>
           <button

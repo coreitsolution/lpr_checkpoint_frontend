@@ -3,9 +3,11 @@ import { PopupMessage, PopupMessageWithCancel } from "../../../utils/popupMessag
 import { format, parse } from "date-fns"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../../app/store"
-import { FILE_URL } from '../../../config/apiConfig'
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
+
+// Config
+import { FILE_URL } from '../../../config/apiConfig'
 
 // Components
 import { Checkbox } from "../../../components/ui/checkbox"
@@ -16,10 +18,6 @@ import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePickerBuddhist"
 
 // API
-import {
-  fetchDistrictsThunk,
-  fetchSubDistrictsThunk,
-} from "../../../features/dropdown/dropdownSlice"
 import {
   putSpecialSuspectPeopleDataThunk,
   postSpecialSuspectPeopleDataThunk,
@@ -38,6 +36,7 @@ import {
   NewSuspectPeople,
 } from "../../../features/suspect-people/SuspectPeopleDataTypes"
 import { DeleteRequestData } from "../../../features/file-upload/fileUploadTypes"
+import { DistrictsDetail, SubDistrictsDetail } from "../../../features/dropdown/dropdownTypes";
 
 // Icon
 import { Icon } from "../../../components/icons/Icon"
@@ -96,9 +95,11 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   const [districtsOptions, setDistrictsOptions] = useState<{ label: string; value: number }[]>([]);
   const [commonPrefixOptions, setCommonPrefixOptions] = useState<{ label: string; value: number }[]>([]);
   const [isBlackListType, setIsBlackListType] = useState(true)
-
+  const [districtsList, setDistrictsList] = useState<DistrictsDetail[]>([])
+  const [subDistrictsList, setSubDistrictsList] = useState<SubDistrictsDetail[]>([])
+    
   const dispatch: AppDispatch = useDispatch()
-  const { provinces, personTypes, districts, subDistricts, personTitles } = useSelector(
+  const { provinces, personTypes, personTitles, districts, subDistricts } = useSelector(
     (state: RootState) => state.dropdown
   )
 
@@ -123,24 +124,24 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   }, [provinces])
 
   useEffect(() => {
-    if (districts && districts.data) {
-      const options = districts.data.map((row) => ({
+    if (districtsList) {
+      const options = districtsList.map((row) => ({
         label: row.name_th,
         value: row.id,
       }));
       setDistrictsOptions(options);
     }
-  }, [districts]);
+  }, [districtsList]);
 
   useEffect(() => {
-    if (subDistricts && subDistricts.data) {
-      const options = subDistricts.data.map((row) => ({
+    if (subDistrictsList) {
+      const options = subDistrictsList.map((row) => ({
         label: row.name_th,
         value: row.id,
       }));
       setSubDistrictsOptions(options);
     }
-  }, [subDistricts]);
+  }, [subDistrictsList]);
 
   useEffect(() => {
     if (personTitles && personTitles.data) {
@@ -252,16 +253,17 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      let query: Record<string, string> = {}
       if (formData.province_id) {
-        query["filter"] = `province_id:${formData.province_id}`
-        query["orderBy"] = `name_th`
-        await dispatch(fetchDistrictsThunk(query));
+        const res = districts?.data?.filter((district) => district.province_id === formData.province_id)
+        if (res) {
+          setDistrictsList(res)
+        }
       }
       if (formData.district_id) {
-        query["filter"] = `district_id:${formData.district_id},province_id:${formData.province_id}`
-        query["orderBy"] = `name_th`
-        await dispatch(fetchSubDistrictsThunk(query));
+        const res = subDistricts?.data?.filter((district) => district.district_id === formData.district_id && district.province_id === formData.province_id)
+        if (res) {
+          setSubDistrictsList(res)
+        }
       }
     };
     fetchData();

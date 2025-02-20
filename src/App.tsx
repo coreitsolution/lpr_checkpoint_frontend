@@ -24,6 +24,8 @@ import {
   fetchVehicleModelsThunk,
   fetchVehicleBodyTypesThThunk,
   fetchPersonTypesThunk,
+  fetchDistrictsThunk,
+  fetchSubDistrictsThunk,
 } from "./features/dropdown/dropdownSlice"
 
 // Screen
@@ -60,6 +62,12 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
       dispatch(fetchProvincesThunk({
         "orderBy": "name_th",
       }));
+      dispatch(fetchDistrictsThunk({
+        "orderBy": "name_th",
+      }));
+      dispatch(fetchSubDistrictsThunk({
+        "orderBy": "name_th",
+      }));
       dispatch(fetchDataStatusThunk());
       dispatch(fetchRegistrationTypesThunk({
         "filter": "visible:1"
@@ -81,7 +89,7 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
       dispatch(fetchPersonTypesThunk({
         "filter": "visible:1"
       }));
-      websocketService.connect(WEB_SOCKET_SERVICE);
+      websocketService.connect(WEB_SOCKET_SERVICE || "");
     }
   }, [dispatch, navigate, authData])
 

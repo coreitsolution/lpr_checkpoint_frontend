@@ -84,6 +84,7 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
           }
           if (updateData) {
             await dispatch(putCameraSettingThunk(updateData))
+            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
           } 
           else {
             PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", 'error')

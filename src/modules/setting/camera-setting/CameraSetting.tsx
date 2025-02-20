@@ -14,6 +14,7 @@ import {
 } from "../../../features/camera-settings/cameraSettingsTypes"
 import { SearchResult } from "../../../types/index"
 import { StreamEncodesDetail } from "../../../features/dropdown/dropdownTypes"
+import { DistrictsDetail, SubDistrictsDetail } from "../../../features/dropdown/dropdownTypes";
 
 // Components
 import ToggleButton from "../../../components/toggle-button/ToggleButton"
@@ -23,10 +24,6 @@ import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import SelectBox from '../../../components/select-box/SelectBox'
 
 // API
-import {
-  fetchDistrictsThunk,
-  fetchSubDistrictsThunk,
-} from "../../../features/dropdown/dropdownSlice"
 import {
   postCameraSettingThunk,
   putCameraSettingThunk,
@@ -102,12 +99,12 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   const dispatch: AppDispatch = useDispatch()
   const {
     provinces,
-    subDistricts,
-    districts,
     policeDivisions,
     personTitles,
     positions,
-    streamEncodes
+    streamEncodes,
+    districts,
+    subDistricts,
   } = useSelector((state: RootState) => state.dropdown)
   const [provincesOptions, setProvincesOptions] = useState<{ label: string ,value: number }[]>([])
   const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
@@ -116,7 +113,9 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   const [personTitlesOptions, setPersonTitlesOptions] = useState<{ label: string ,value: number }[]>([])
   const [positionsOptions, setPositionsOptions] = useState<{ label: string ,value: number }[]>([])
   const [streamEncodesOptions, setStreamEncodesOptions] = useState<{ label: string ,value: number }[]>([])
-
+  const [districtsList, setDistrictsList] = useState<DistrictsDetail[]>([])
+  const [subDistrictsList, setSubDistrictsList] = useState<SubDistrictsDetail[]>([])
+  
   useEffect(() => {
     if (
       provinces?.data &&
@@ -172,7 +171,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   }, [
     provinces,
     policeDivisions,
-    districts,
     personTitles,
     positions,
     isEditMode,
@@ -221,16 +219,17 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   
   useEffect(() => {
     const fetchData = async () => {
-      let query: Record<string, string> = {}
       if (state.provinceSelect) {
-        query["filter"] = `province_id:${state.provinceSelect}`
-        query["orderBy"] = `name_th`
-        await dispatch(fetchDistrictsThunk(query))
+        const res = districts?.data?.filter((district) => district.province_id === state.provinceSelect)
+        if (res) {
+          setDistrictsList(res)
+        }
       }
       if (state.districtsSelect) {
-        query["filter"] = `district_id:${state.districtsSelect},province_id:${state.provinceSelect}`
-        query["orderBy"] = `name_th`
-        await dispatch(fetchSubDistrictsThunk(query))
+        const res = subDistricts?.data?.filter((district) => district.district_id === state.districtsSelect && district.province_id === state.provinceSelect)
+        if (res) {
+          setSubDistrictsList(res)
+        }
       }
     }
     fetchData()
@@ -247,24 +246,24 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   }, [provinces])
 
   useEffect(() => {
-    if (districts && districts.data) {
-      const options = districts.data.map((row) => ({
+    if (districtsList) {
+      const options = districtsList.map((row) => ({
         label: row.name_th,
         value: row.id,
       }))
       setDistrictsOptions(options)
     }
-  }, [districts])
+  }, [districtsList])
 
   useEffect(() => {
-    if (subDistricts && subDistricts.data) {
-      const options = subDistricts.data.map((row) => ({
+    if (subDistrictsList) {
+      const options = subDistrictsList.map((row) => ({
         label: row.name_th,
         value: row.id,
       }))
       setSubDistrictsOptions(options)
     }
-  }, [subDistricts])
+  }, [subDistrictsList])
 
   useEffect(() => {
     if (policeDivisions && policeDivisions.data) {
@@ -435,6 +434,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
           const updateCameraSetting = updateCameraSettings()
           if (updateCameraSetting) {
             await dispatch(putCameraSettingThunk(updateCameraSetting))
+            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
           } else {
             PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
           }
@@ -443,6 +443,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         const newCameraSetting = createCameraSettings()
         if (newCameraSetting) {
           await dispatch(postCameraSettingThunk(newCameraSetting))
+          PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
         } 
         else {
           PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")

@@ -33,3 +33,8 @@ export const isEquals = (a: any, b: any) => {
 export const isNumber = (value: string) => {
   return /^[0-9]*$/.test(value)
 }
+
+export const getFileNameWithoutExtension = (filePath: string): string => {
+  const fileName = filePath.split('/').pop()?.split('\\').pop() || ""
+  return fileName.split('.').slice(0, -1).join('.') || fileName 
+}

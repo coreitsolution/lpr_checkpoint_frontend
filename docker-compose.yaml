@@ -5,11 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: HH/lpr-checkpoint-frontend:latest
     container_name: lpr-checkpoint-frontend
     ports:
-      - "5173:80"
-    environment:
-      - NODE_ENV=production
+      - "3001:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
 volumes:

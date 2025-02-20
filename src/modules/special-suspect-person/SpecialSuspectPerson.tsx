@@ -65,6 +65,7 @@ function SpecialSuspectPerson() {
   const [totalPages, setTotalPages] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(SpecialRowPerPages[SpecialRowPerPages.length - 1])
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
+  const [isFileImportClose, setIsFileImportClose] = useState(false)
   const tableDataRef = useRef<HTMLDivElement>(null)
 
   const { dataStatus, personTypes, personTitles } = useSelector(
@@ -127,7 +128,7 @@ function SpecialSuspectPerson() {
         }
 
         await dispatch(deleteSpecialSuspectPeopleDataThunk(id))
-        PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
+        // PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
         await fetchSpecialSuspectPeopleData(page.toString(), rowsPerPage.toString())
       } 
       catch (error) {
@@ -265,6 +266,15 @@ function SpecialSuspectPerson() {
     }
   }
 
+  const handleFileImportOpen = () => {
+    setIsFileImportOpen(true)
+    setIsFileImportClose(false)
+  }
+
+  const handleCloseDialog = () => {
+    setIsFileImportClose(true)
+  }
+
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
@@ -279,7 +289,7 @@ function SpecialSuspectPerson() {
               <button 
                 type="button" 
                 className="flex justify-center items-center bg-white text-dodgerBlue w-[120px] h-[35px] rounded hover:bg-slate-200"
-                onClick={() => setIsFileImportOpen(true)}
+                onClick={handleFileImportOpen}
               >
                 <Icon icon={Upload} size={20} color="dodgerBlue" />
                 <span className="ml-[8px] text-[15px]">นำเข้าข้อมูล</span>
@@ -445,14 +455,14 @@ function SpecialSuspectPerson() {
               <div className="flex justify-between items-center">
                 <DialogTitle className="text-[28px]">นำเข้าข้อมูล</DialogTitle>
                 <button
-                  onClick={() => setIsFileImportOpen(false)} 
+                  onClick={handleCloseDialog} 
                   className="text-white bg-transparent border-0 text-[28px] pr-6"
                 >
                   &times;
                 </button>
               </div>
               <div className="px-5 pb-5">
-                <UploadFile closeDialog={() => setIsFileImportOpen(false)} />
+                <UploadFile closeDialog={() => setIsFileImportOpen(false)} isFileImportClose={isFileImportClose} />
               </div>
             </div>
           </div>

@@ -136,7 +136,7 @@ const CCTV = () => {
       
       await fetchLastRecognitions()
       await dispatch(sendMessageThunk({ 
-        chatId: TELEGRAM_CHAT_ID, 
+        chatId: TELEGRAM_CHAT_ID || "", 
         message: `Special Plate found: ${update.plateGroup} ${update.plateNumber} ${update.regionNameTH} ${update.plateConfidence}% Type: ${update.specialPlateClassTH}` 
       }))
     } 

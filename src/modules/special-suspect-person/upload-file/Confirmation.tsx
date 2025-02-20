@@ -9,8 +9,8 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import IconButton from "@mui/material/IconButton"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../../app/store"
 
 // Icon
 import { Icon } from '../../../components/icons/Icon'
@@ -23,17 +23,15 @@ import {
 } from '../../../features/suspect-people/SuspectPeopleDataTypes'
 import { FileUploadDetail } from "../../../features/file-upload/fileUploadTypes"
 
-// API
-import {
-  fetchDistrictsThunk,
-  fetchSubDistrictsThunk,
-} from "../../../features/dropdown/dropdownSlice"
-
 // Config
 import { FILE_URL } from '../../../config/apiConfig'
 
 // Component
 import Loading from "../../../components/loading/Loading"
+
+// Utils
+import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+import { PopupMessage } from "../../../utils/popupMessage"
 
 dayjs.extend(buddhistEra)
 
@@ -45,92 +43,84 @@ interface ConfirmationProps {
 }
 
 const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataList, imagesDataList, textsDataList}) => {
-  const { provinces, dataStatus, personTypes, personTitles } = useSelector(
+  const { provinces, dataStatus, personTypes, personTitles, districts, subDistricts } = useSelector(
     (state: RootState) => state.dropdown
   )
-  const dispatch: AppDispatch = useDispatch()
   const [convertedData, setConvertedData] = useState<ImportSuspectPeopleDetail[]>([]);
   const [isLoading, setIsLoading] = useState(false)
-
-  const getFileNameWithoutExtension = (filePath: string): string => {
-    const fileName = filePath.split('/').pop()?.split('\\').pop() || ""
-    return fileName.split('.').slice(0, -1).join('.') || fileName 
-  }
 
   useEffect(() => {
     if (!textsDataList.length) return;
     
     const fetchData = async () => {
-      setIsLoading(true)
-      const results = await Promise.all(textsDataList.map(async (data) => { 
-        const matchedImage = imagesDataList.find((image) => 
-          getFileNameWithoutExtension(image.originalName) === getFileNameWithoutExtension(data.imagesData)
-        )
-        
-        const matchedFile = filesDataList.find((file) => 
-          getFileNameWithoutExtension(file.originalName) === getFileNameWithoutExtension(data.filesData)
-        )
-  
-        const province = provinces?.data?.find((province) => province.name_th === data.province)
-        const personType = personTypes?.data?.find((type) => type.title_en.toLowerCase() === data.person_class.toLowerCase())
-        const status = dataStatus.find((status) => status.status.toLowerCase() === data.active.toLowerCase())
-        const personTitle = personTitles?.data?.find((title) => title.title_th.toLowerCase() === data.name_prefix.toLowerCase())
+      try {
+        setIsLoading(true)
 
-        let district, sub_district
-        if (province?.id) {
-          const res = await dispatch(fetchDistrictsThunk({
-            filter: `province_id:${province.id},name_th:${data.district}`
-          })).unwrap();
-  
-          if (res.data) {
-            district = res.data[0]
+        const results = await Promise.all(textsDataList.map(async (data) => { 
+          const matchedImage = imagesDataList.find((image) => 
+            getFileNameWithoutExtension(image.originalName) === getFileNameWithoutExtension(data.imagesData)
+          )
+          
+          const matchedFile = filesDataList.find((file) => 
+            getFileNameWithoutExtension(file.originalName) === getFileNameWithoutExtension(data.filesData)
+          )
+    
+          const provinceName = data.province === "กทม" || data.province === "กทม." ? "กรุงเทพมหานคร" : data.province
+          const province = provinces?.data?.find((province) => province.name_th === provinceName)
+          const personType = personTypes?.data?.find((type) => type.title_en.toLowerCase() === data.person_class.toLowerCase())
+          const status = dataStatus.find((status) => status.status.toLowerCase() === data.active.toLowerCase())
+          const personTitle = personTitles?.data?.find((title) => title.title_th.toLowerCase() === data.name_prefix.toLowerCase())
+
+          let district, sub_district
+          if (province?.id) {
+            district = districts?.data?.find((district) => district.name_th === data.district && district.province_id === province.id)
           }
-        }
-        if (district?.id) {
-          const res = await dispatch(fetchSubDistrictsThunk({
-            filter: `district_id:${district.id},province_id:${province?.id},name_th:${data.sub_district}`
-          })).unwrap();
-          if (res.data) {
-            sub_district = res.data[0]
+          if (district?.id) {
+            sub_district = subDistricts?.data?.find((subDistrict) => subDistrict.name_th === data.sub_district && subDistrict.province_id === province?.id && subDistrict.district_id === district.id)
           }
-        }
-  
-        return {
-          id: data.id,
-          name_prefix_id: personTitle?.id || 0,
-          name_prefix: personTitle?.title_th || "ไม่พบข้อมูล",
-          firstname: data.firstname,
-          lastname: data.lastname,
-          nation_number: data.nation_number,
-          address: data.address,
-          province: province?.name_th || "ไม่พบข้อมูล",
-          province_id: province?.id || 0,
-          district: district?.name_th || "ไม่พบข้อมูล",
-          district_id: district?.id || 0,
-          sub_district: sub_district?.name_th || "ไม่พบข้อมูล",
-          sub_district_id: sub_district?.id || 0,
-          postal_code: data.postal_code,
-          person_class: personType?.title_en || "ไม่พบข้อมูล",
-          person_class_id: personType?.id || 0,
-          case_number: data.case_number,
-          arrest_warrant_date: data.arrest_warrant_date,
-          arrest_warrant_expire_date: data.arrest_warrant_expire_date,
-          behavior: data.behavior,
-          case_owner_name: data.case_owner_name,
-          case_owner_agency: data.case_owner_agency,
-          case_owner_phone: data.case_owner_phone,
-          imagesData: data.imagesData,
-          filesData: data.filesData,
-          visible: 1,
-          activeString: status?.status || "ไม่พบข้อมูล",
-          active: status?.id || 0,
-          imagesUploadedData: matchedImage,
-          fileUploadedData: matchedFile,
-          cannotImport: !province || !personType || !district || !sub_district || !status
-        }
-      }));
-      setConvertedData(results);
-      setIsLoading(false)
+    
+          return {
+            id: data.id,
+            name_prefix_id: personTitle?.id || 0,
+            name_prefix: personTitle?.title_th || "ไม่พบข้อมูล",
+            firstname: data.firstname,
+            lastname: data.lastname,
+            nation_number: data.nation_number,
+            address: data.address,
+            province: province?.name_th || "ไม่พบข้อมูล",
+            province_id: province?.id || 0,
+            district: district?.name_th || "ไม่พบข้อมูล",
+            district_id: district?.id || 0,
+            sub_district: sub_district?.name_th || "ไม่พบข้อมูล",
+            sub_district_id: sub_district?.id || 0,
+            postal_code: data.postal_code,
+            person_class: personType?.title_en || "ไม่พบข้อมูล",
+            person_class_id: personType?.id || 0,
+            case_number: data.case_number,
+            arrest_warrant_date: data.arrest_warrant_date,
+            arrest_warrant_expire_date: data.arrest_warrant_expire_date,
+            behavior: data.behavior,
+            case_owner_name: data.case_owner_name,
+            case_owner_agency: data.case_owner_agency,
+            case_owner_phone: data.case_owner_phone,
+            imagesData: data.imagesData,
+            filesData: data.filesData,
+            visible: 1,
+            activeString: status?.status || "ไม่พบข้อมูล",
+            active: status?.id || 0,
+            imagesUploadedData: matchedImage,
+            fileUploadedData: matchedFile,
+            cannotImport: !province || !personType || !district || !sub_district || !status
+          }  
+        }));
+
+        setConvertedData(results)
+        setIsLoading(false)
+      }
+      catch (error) {
+        PopupMessage("เกิดข้อผิดพลาดในการบันทึกข้อมูล", error instanceof Error ? error.message : String(error), "error")
+        setIsLoading(false)
+      }
     };
     fetchData();
   }, [textsDataList, provinces, personTypes, personTitles, dataStatus, imagesDataList, filesDataList]);

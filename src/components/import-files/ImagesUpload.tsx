@@ -29,6 +29,12 @@ import { DeleteRequestData, FileUploadDetail } from "../../features/file-upload/
 // Config
 import { FILE_URL } from '../../config/apiConfig'
 
+// Utils
+import { getFileNameWithoutExtension } from "../../utils/comonFunction"
+
+// Component
+import Loading from "../../components/loading/Loading"
+
 dayjs.extend(buddhistEra)
 
 interface ImagesUploadProps {
@@ -41,6 +47,7 @@ const ImagesUpload: React.FC<ImagesUploadProps> = ({setImagesDataList, imagesDat
   const hiddenImageInput = useRef<HTMLInputElement | null>(null)
   const [filesData, setFilesData] = useState<FileUploadDetail[]>(imagesDataList)
   const [isSimpleMode, setIsSimpleMode] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setImagesDataList(filesData)
@@ -50,10 +57,32 @@ const ImagesUpload: React.FC<ImagesUploadProps> = ({setImagesDataList, imagesDat
     const files = event.target.files
     if (!files) return
 
-    const fileArray = Array.from(files)
+    let fileArray = Array.from(files);
+    const fileNames = new Set<string>();
+    const duplicateFiles: string[] = [];
 
+    fileArray = fileArray.filter((file) => {
+      const fileName = getFileNameWithoutExtension(file.name)
+      if (fileNames.has(fileName)) {
+        duplicateFiles.push(fileName);
+        return false;
+      }
+      fileNames.add(fileName);
+      return true;
+    });
+
+    if (duplicateFiles.length > 0) {
+      PopupMessage(
+        "เกิดข้อผิดพลาด", 
+        `พบไฟล์ชื่อซ้ำ: ${duplicateFiles.join(", ")}. กรุณาเปลี่ยนชื่อไฟล์ไม่ให้ซ้ำกัน`, 
+        "error"
+      );
+      return;
+    }
+    console.time("handleImageUpload")
     try {
       const formData = new FormData()
+      setIsLoading(true)
       fileArray.forEach(file => {
         formData.append("files", file) // Append each file individually
       })
@@ -70,11 +99,13 @@ const ImagesUpload: React.FC<ImagesUploadProps> = ({setImagesDataList, imagesDat
 
         setFilesData(uploadedFiles)
       }
+      setIsLoading(false)
     }
     catch (error) {
+      setIsLoading(false)
       PopupMessage("เกิดข้อผิดพลาดในการอัพโหลดไฟล์", error instanceof Error ? error.message : String(error), "error")
     }
-
+    console.timeEnd("handleImageUpload")
     if (hiddenImageInput.current) {
       hiddenImageInput.current.value = ""
     }
@@ -113,6 +144,7 @@ const ImagesUpload: React.FC<ImagesUploadProps> = ({setImagesDataList, imagesDat
 
   return (
     <div id='images-upload'>
+      {isLoading && <Loading />}
       <div className='flex flex-col h-full'>
         <div className='flex justify-end'>
           <button
@@ -205,15 +237,17 @@ const ImagesUpload: React.FC<ImagesUploadProps> = ({setImagesDataList, imagesDat
             </div>
           ) :
           (
-            <div className='flex mt-4 h-[55vh] overflow-y-auto flex-wrap pt-2'>
+            <div className='flex mt-4 h-[55vh] overflow-y-auto flex-wrap pt-2 space-x-2'>
               {
                 filesData && filesData.map((data, index) => (
-                  <div className='flex flex-col relative justify-center h-[110px] w-[110px] text-center'>
-                    <img src={`${FILE_URL}${data.url}`} alt={`image-${index + 1}`} className='w-[100px] h-[100px]' />
+                  <div key={`divImage-${index + 1}`} className='flex flex-col relative justify-center h-[130px] w-[100px] text-center'>
+                    <div className='flex flex-none w-[100px] h-[100px]'>
+                      <img src={`${FILE_URL}${data.url}`} alt={`image-${index + 1}`} className='w-full h-full' />
+                    </div>
                     <p title={`${index + 1}.${data.originalName}`} className='truncate'>{`${index + 1}.${data.originalName}`}</p>
                     <button
                       type="button"
-                      className="absolute z-[52] top-[-5px] right-[0px] text-center text-white bg-red-500 rounded-full w-[20px] h-[20px] flex items-center justify-center hover:cursor-pointer"
+                      className="absolute z-[52] top-[-5px] right-[-5px] text-center text-white bg-red-500 rounded-full w-[20px] h-[20px] flex items-center justify-center hover:cursor-pointer"
                       onClick={() => handleDeleteImage(index, data.url)}
                     >
                       &times;

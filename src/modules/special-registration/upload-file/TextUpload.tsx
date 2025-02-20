@@ -22,6 +22,10 @@ import {
 
 // Utils
 import { PopupMessage } from "../../../utils/popupMessage"
+import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+
+// Component
+import Loading from "../../../components/loading/Loading"
 
 dayjs.extend(buddhistEra)
 
@@ -33,6 +37,7 @@ interface TextUploadProps {
 const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}) => {
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [textsData, setTextsData] = useState<ImportSpecialPlates[]>(textsDataList)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setTextsDataList(textsData)
@@ -50,6 +55,7 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
   
     const reader = new FileReader();
     reader.onload = async (e) => {
+      setIsLoading(true)
       const arrayBuffer = e.target?.result;
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
       const sheetName = workbook.SheetNames[0];
@@ -61,6 +67,11 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
         "plate_group", "plate_number", "province", "plate_class",
         "case_owner_name", "case_owner_agency", "case_owner_phone"
       ];
+
+      const fileNames = new Set<string>();
+      const duplicateFiles: string[] = [];
+      const imageNames = new Set<string>();
+      const duplicateImages: string[] = [];
 
       // Validate data
       const validatedData = jsonData.map((row, index) => {
@@ -78,6 +89,24 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
           fileImportError = `ช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้: ${missingFields.join(", ")}`;
           return null;
         }
+
+        // Check duplicate image
+        const imageName = getFileNameWithoutExtension(row.filesData)
+        if (fileNames.has(imageName)) {
+          duplicateImages.push(imageName);
+          fileImportError = `พบไฟล์ชื่อซ้ำ: ${duplicateImages.join(", ")}. กรุณาเปลี่ยนชื่อไฟล์ไม่ให้ซ้ำกัน`
+          return null;
+        }
+        imageNames.add(imageName);
+
+        // Check duplicate filename
+        const fileName = getFileNameWithoutExtension(row.filesData)
+        if (fileNames.has(fileName)) {
+          duplicateFiles.push(fileName);
+          fileImportError = `พบไฟล์ชื่อซ้ำ: ${duplicateImages.join(", ")}. กรุณาเปลี่ยนชื่อไฟล์ไม่ให้ซ้ำกัน`
+          return null;
+        }
+        fileNames.add(fileName);
 
         return {
           id: index + 1,
@@ -104,6 +133,7 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
       else if (!fileImportError && validatedData && validatedData.length > 0) {
         setTextsData(validatedData as ImportSpecialPlates[]);
       }
+      setIsLoading(false)
     };
     reader.readAsArrayBuffer(file);
 
@@ -141,6 +171,7 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
 
   return (
     <div id='text-upload'>
+      {isLoading && <Loading />}
       <div className='flex flex-col h-full'>
         <div className='flex justify-end'>
           <button
