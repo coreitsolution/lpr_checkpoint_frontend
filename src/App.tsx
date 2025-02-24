@@ -129,9 +129,9 @@ function App() {
           <Route path="checkpoint/cctv" element={<CCTV />} />
           <Route path="checkpoint/settings" element={<Setting />} />
           <Route path="checkpoint/special-registration-detected" element={<SpecialRegistrationDetected />} />
-          <Route path="checkpoint/suspect-people-detected" element={<SuspectPeopleDetected />} />
+          {/* <Route path="checkpoint/suspect-people-detected" element={<SuspectPeopleDetected />} /> */}
           <Route path="checkpoint/special-suspect-person" element={<SpecialSuspectPerson />} />
-          <Route path="checkpoint/chart" element={<Chart />} />
+          {/* <Route path="checkpoint/chart" element={<Chart />} /> */}
         </Route>
       </Routes>
     </div>

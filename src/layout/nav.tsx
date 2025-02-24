@@ -68,11 +68,11 @@ function Nav() {
   const navItems = [
     { path: "/checkpoint/cctv", icon: "cctv", label: "cctv" },
     { path: "/checkpoint/special-registration-detected", icon: "search-nav", label: "search" },
-    {
-      path: "/checkpoint/suspect-people-detected",
-      icon: "magnifying-glass",
-      label: "magnifying-glass",
-    },
+    // {
+    //   path: "/checkpoint/suspect-people-detected",
+    //   icon: "magnifying-glass",
+    //   label: "magnifying-glass",
+    // },
     {
       path: "/checkpoint/special-registration",
       icon: "special-plate",
@@ -84,8 +84,8 @@ function Nav() {
       label: "special-suspect-person",
     },
     { path: "/checkpoint/settings", icon: "settings", label: "settings" },
-    { path: "/checkpoint/user-manage", icon: "add-user", label: "add-user" },
-    { path: "/checkpoint/chart", icon: "bar-chart", label: "bar-chart" },
+    // { path: "/checkpoint/user-manage", icon: "add-user", label: "add-user" },
+    // { path: "/checkpoint/chart", icon: "bar-chart", label: "bar-chart" },
   ];
 
   useEffect(() => {
@@ -167,9 +167,9 @@ function Nav() {
             <div className="bg-gradient-to-b from-aqua2 to-blueC p-[2px] rounded-full">
               <img 
                 ref={imgRef}
-                src={`https://randomuser.me/api/portraits/women/1.jpg`} 
+                src={`/icons/user.png`} 
                 alt="User" 
-                className="w-12 h-12 rounded-full" 
+                className="w-11 h-11 bg-black rounded-full" 
                 onClick={handleButtonClick}
               />
             </div>

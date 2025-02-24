@@ -18,6 +18,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa"
 import { PopupMessage } from "../../utils/popupMessage"
 
 const LoginPage = () => {
+  const version = __APP_VERSION__
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const dispatch = useAppDispatch()
@@ -158,7 +159,7 @@ const LoginPage = () => {
           <label
             className="text-greyChateau"
           >
-            <span className='text-[15px]'>Ver 1.0.0</span>
+            <span className='text-[15px]'>{`Ver ${version}`}</span>
           </label>
         </div>
       </motion.div>
