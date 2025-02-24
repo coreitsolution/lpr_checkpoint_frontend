@@ -34,9 +34,9 @@ import SpecialRegistration from './modules/special-registration/SpecialRegistrat
 import CCTV from './modules/cctv/CCTV'
 import Setting from './modules/setting/Setting'
 import SpecialRegistrationDetected from './modules/special-registration-detected/SpecialRegistrationDetected'
-import SuspectPeopleDetected from './modules/suspect-people-detected/SuspectPeopleDetected'
+// import SuspectPeopleDetected from './modules/suspect-people-detected/SuspectPeopleDetected'
 import SpecialSuspectPerson from './modules/special-suspect-person/SpecialSuspectPerson'
-import Chart from './modules/chart/Chart'
+// import Chart from './modules/chart/Chart'
 
 // Components
 import FullScreenButton from './components/full-screen-button/FullScreenButton'
