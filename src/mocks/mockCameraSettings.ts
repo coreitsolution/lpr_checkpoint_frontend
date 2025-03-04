@@ -7,7 +7,7 @@ Array.from({length:10}, (_, i) => (
     cam_id: `CAM-10${i}`,
     cam_uid: "UID98765",
     checkpoint_name:  (i + 1) % 2 === 0 ? "Checkpoint A" : (i + 1) % 3 === 0 ? "Checkpoint C" : "Checkpoint B",
-    division_id: 101,
+    organization: "Lpr",
     province_id: 10,
     district_id: 20,
     sub_district_id: 30,

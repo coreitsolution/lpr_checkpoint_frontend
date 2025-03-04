@@ -195,7 +195,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [dispatch])
+  }, [])
 
   useEffect(() => {
     if (connectionData) {

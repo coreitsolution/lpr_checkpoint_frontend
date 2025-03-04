@@ -53,7 +53,7 @@ const LoginPage = () => {
   }, [authError])
 
   useEffect(() => {
-    if (authData && authData.isAuthenticated) {
+    if (authData && authData.isAuthenticated && (authData.token && authData.token !== "undefined")) {
       navigate('/checkpoint')
     }
   }, [authData, navigate])
@@ -120,7 +120,7 @@ const LoginPage = () => {
                 className={`mr-[10px] h-[50px] w-full text-white rounded-lg shadow transition ${
                   authStatus === 'loading' ? 'bg-gray-400' : 'bg-dodgerBlue hover:bg-blue-700'
                 }`}
-                whileHover={{ scale: 1.05 }}
+                whileHover={authStatus === 'loading' ? {} : { scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 disabled={authStatus === 'loading'}
               >

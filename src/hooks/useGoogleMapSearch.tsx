@@ -9,7 +9,7 @@ export const useMapSearch = (map: google.maps.Map | null) => {
   const [searchError, setSearchError] = useState<string | null>(null)
   const markerManager = useMarkerManager(map)
 
-  const searchPlace = useCallback(async (query: string) => {
+  const searchPlace = useCallback(async (query: string, isCurrentLocation = false) => {
     setSearchResults([])
     if (!map) return
     
@@ -17,6 +17,21 @@ export const useMapSearch = (map: google.maps.Map | null) => {
     setSearchError(null)
     
     try {
+      // Check current location
+      if (isCurrentLocation) {
+        const coordinates = parseCoordinates(query)
+        if (coordinates) {
+          const result: SearchResult = {
+            name: `${coordinates.lat}, ${coordinates.lng}`,
+            location: coordinates
+          }
+          setSearchResults([result])
+          map.panTo(coordinates)
+          map.setZoom(17)
+          return
+        }
+      }
+
       // First check if input is coordinates
       const coordinates = parseCoordinates(query)
       if (coordinates) {

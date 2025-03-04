@@ -57,7 +57,7 @@ export interface CameraDetailSettings {
   cam_uid: string
   checkpoint_name: string
   alpr_cam_id: number
-  division_id: number
+  organization: string
   province_id: number
   district_id: number
   sub_district_id: number
@@ -95,7 +95,7 @@ export interface CameraDetailSettings {
 export interface NewCameraDetailSettings {
   cam_id: string
   checkpoint_name: string
-  division_id: number
+  organization: string
   province_id: number
   district_id: number
   sub_district_id: number

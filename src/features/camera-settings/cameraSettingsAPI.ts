@@ -121,6 +121,7 @@ export const startStream = async (uid: StartStopStream) => {
   return await fetchClient(combineURL(STREAM_URL, "/live/start"), {
     method: "POST",
     body: JSON.stringify(uid),
+    isStream: true,
   })
 }
 
@@ -131,6 +132,7 @@ export const stopStream = async (uid: StartStopStream) => {
   return await fetchClient(combineURL(STREAM_URL, "/live/stop"), {
     method: "POST",
     body: JSON.stringify(uid),
+    isStream: true,
   })
 }
 

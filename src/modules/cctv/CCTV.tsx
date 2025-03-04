@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
 import {
   Button,
-  keyframes,
+  // keyframes,
   Dialog,
   DialogTitle
 } from "@mui/material"
@@ -27,14 +27,16 @@ import LPRData from "/icons/search-car.png"
 import { useHamburger } from "../../context/HamburgerContext"
 
 // Icon
-import ReplayCircleFilledIcon from '@mui/icons-material/ReplayCircleFilled';
+// import ReplayCircleFilledIcon from '@mui/icons-material/ReplayCircleFilled';
+import { Icon } from '../../components/icons/Icon'
+import { Play, Square } from 'lucide-react'
 
 // API
 import { 
   fetchCameraSettingsThunk,
   postStartStreamThunk,
   postStopStreamThunk,
-  postRestartStreamThunk,
+  // postRestartStreamThunk,
 } from "../../features/camera-settings/cameraSettingsSlice"
 import { 
   fetchSpecialPlateDataThunk,
@@ -89,26 +91,26 @@ const CCTV = () => {
   const dropdownRefs = useRef<(HTMLDivElement | null)[]>([])
   const startButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const stopButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const restartButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  // const restartButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [activeStreamUrls, setActiveStreamUrls] = useState<Record<number, { id: number, url: string, name:string}>>({})
   const [streamLPRMapping, setStreamLPRMapping] = useState<Record<string, RealTimeLprData>>({})
   const [streamLPRData, setStreamLPRData] = useState<RealTimeLprData | null>(null)
   const [isCarDetectOpen, setIsCarDetectOpen] = useState(false)
   const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
-  const [isRestartStreamDisabled, setIsRestartStreamDisabled] = useState(false)
-  const [isRestartStreamAnimating, setIsRestartStreamAnimating] = useState(false)
+  // const [isRestartStreamDisabled, setIsRestartStreamDisabled] = useState(false)
+  // const [isRestartStreamAnimating, setIsRestartStreamAnimating] = useState(false)
   const [lprDetectHistoryList, setLprDetectHistoryList] = useState<LastRecognitionData[]>([])
   const [latestLprDetect, setLatestLprDetect] = useState<LastRecognitionData | null>(null)
 
-  const spinAnimation = keyframes`
-    0% {
-      transform: scaleX(-1) rotate(0deg);
-    }
-    100% {
-      transform: scaleX(-1) rotate(-360deg);
-    }
-  `;
+  // const spinAnimation = keyframes`
+  //   0% {
+  //     transform: scaleX(-1) rotate(0deg);
+  //   }
+  //   100% {
+  //     transform: scaleX(-1) rotate(-360deg);
+  //   }
+  // `;
 
   useLayoutEffect(() => {
     setIsLoading(false)
@@ -195,25 +197,25 @@ const CCTV = () => {
     }
   }
 
-  const handleRestartButtonClick = useCallback(async (event: React.MouseEvent) => {
-    event.stopPropagation()
-    setIsRestartStreamDisabled(true);
-    setIsRestartStreamAnimating(true);
-    try {
-      await dispatch(postRestartStreamThunk())
-    }
-    catch (error) {
-      console.error(error)
-    } 
-    finally {
-      setTimeout(() => {
-        setIsRestartStreamDisabled(false);
-        setIsRestartStreamAnimating(false);
-      }, 30000)
-    }
-  }, [dispatch])
+  // const handleRestartButtonClick = useCallback(async (event: React.MouseEvent) => {
+  //   event.stopPropagation()
+  //   setIsRestartStreamDisabled(true);
+  //   setIsRestartStreamAnimating(true);
+  //   try {
+  //     await dispatch(postRestartStreamThunk())
+  //   }
+  //   catch (error) {
+  //     console.error(error)
+  //   } 
+  //   finally {
+  //     setTimeout(() => {
+  //       setIsRestartStreamDisabled(false);
+  //       setIsRestartStreamAnimating(false);
+  //     }, 30000)
+  //   }
+  // }, [dispatch])
 
-  const handleStartButtonClick = useCallback(async (event: React.MouseEvent, index: number) => {
+  const handleStartButtonClick = async (event: React.MouseEvent, index: number) => {
     event.stopPropagation() 
     
     try {
@@ -223,19 +225,19 @@ const CCTV = () => {
     catch (error) {
       console.error(error)
     }
-  }, [dispatch])
+  }
 
-  const handleStopButtonClick = useCallback(async (event: React.MouseEvent, index: number) => {
+  const handleStopButtonClick = async (event: React.MouseEvent, index: number) => {
     event.stopPropagation()
     
     try {
       const uid: StartStopStream = { cam_uid: cameraDetailSettingData[index].cam_uid }
       await dispatch(postStopStreamThunk(uid))
     }
-    catch {
-
+    catch (error) {
+      console.error(error)
     }
-  }, [dispatch])
+  }
 
   const handleCameraSelect = (selectedId: number, cameraIndex: number) => {
     const selectedCamera = cameraDetailSettingData.find(
@@ -254,12 +256,13 @@ const CCTV = () => {
     dispatch(fetchSpecialPlateDataThunk({
       "filter": "deleted:0"
     }))
-  }, [dispatch])
-
-  useEffect(() => {
     dispatch(fetchCameraSettingsThunk())
     dispatch(fetchSettingsShortThunk())
-  }, [dispatch])
+
+    return () => {
+      dispatch(clearFilteredLiveViewRealTimeData())
+    }
+  }, [])
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside)
@@ -283,12 +286,6 @@ const CCTV = () => {
       setSelectedScreenValue(numValue)
     }
   }, [settingDataShort])
-
-  useEffect(() => {
-    return () => {
-      dispatch(clearFilteredLiveViewRealTimeData())
-    }
-  }, [dispatch])
 
   return (
     <div className={`main-content pe-1 ${isOpen ? "pl-[130px]" : "pl-[2px]"} transition-all duration-500`}>
@@ -348,30 +345,30 @@ const CCTV = () => {
                     <Button
                       ref={(el) => (startButtonRefs.current[index] = el)}
                       onClick={(e) => handleStartButtonClick(e, index)}
-                      className="relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean"
+                      className="relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean space-x-1"
                       sx={{
                         textTransform: 'none',
                         marginRight: '5px',
-                        display: "none",
                       }}
                     >
+                      <Icon icon={Play} size={15} color="#FFFFFF" />
                       <span className='text-[14px] text-white'>Start</span>
                     </Button>
 
                     <Button
                       ref={(el) => (stopButtonRefs.current[index] = el)}
                       onClick={(e) => handleStopButtonClick(e, index)}
-                      className="hidden relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean"
+                      className="relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean space-x-1"
                       sx={{
                         textTransform: 'none',
                         marginRight: '5px',
-                        display: "none",
                       }}
                     >
+                      <Icon icon={Square} size={15} color="#FFFFFF" />
                       <span className='text-[14px] text-white'>Stop</span>
                     </Button>
 
-                    <Button
+                    {/* <Button
                       ref={(el) => (restartButtonRefs.current[index] = el)}
                       onClick={(e) => handleRestartButtonClick(e)}
                       className="relative z-10 h-[26px] bg-gradient-to-b from-dodgerBlue to-darkCerulean"
@@ -390,9 +387,8 @@ const CCTV = () => {
                         />
                       }
                     >
-                      {/* <Icon icon={RotateCw} size={16} color="white"></Icon> */}
                       <span className='text-[14px] text-white '>Restart Live</span>
-                    </Button>
+                    </Button> */}
 
                     <Button
                       ref={(el) => (buttonRefs.current[index] = el)}

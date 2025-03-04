@@ -42,6 +42,9 @@ import { PopupMessage } from "../../../utils/popupMessage"
 // Constants
 import { DEFAULT_DETECTION_AREA } from "../../../constants/detectionArea"
 
+// Utils
+import { formatPhone } from "../../../utils/comonFunction"
+
 interface CameraSettingProps {
   closeDialog: () => void
   selectedRow: CameraDetailSettings | null
@@ -63,14 +66,14 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     isLocationSettingOpen: false,
     isSensorSettingOpen: false,
     provinceSelect: 0 as number | '',
-    policeDivisionsSelect: -1,
+    organization: "",
     districtsSelect:  0 as number | '',
     subDistrictsSelect: 0,
     checkpoint: "",
     checkpointId: "",
     route: "",
     rtspLiveView: "",
-    streamEncodeSelect: 0,
+    streamEncodeSelect: '' as number | '',
     streamEncode: {} as StreamEncodesDetail,
     apiServer: "",
     rtspProcess: "",
@@ -82,11 +85,11 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       longitude: "",
     },
     officer: {
-      namePrefixesSelect: 0,
+      namePrefixesSelect: 0 as number | '',
       name: "",
       surname: "",
       phone: "",
-      positionsSelect: 0,
+      positionsSelect: 0 as number | '',
     },
     toggles: {
       startService: false,
@@ -99,7 +102,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   const dispatch: AppDispatch = useDispatch()
   const {
     provinces,
-    policeDivisions,
     personTitles,
     positions,
     streamEncodes,
@@ -109,7 +111,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   const [provincesOptions, setProvincesOptions] = useState<{ label: string ,value: number }[]>([])
   const [subDistrictsOptions, setSubDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
   const [districtsOptions, setDistrictsOptions] = useState<{ label: string ,value: number }[]>([])
-  const [policeDivisionsOptions, setPoliceDivisionsOptions] = useState<{ label: string ,value: number }[]>([])
   const [personTitlesOptions, setPersonTitlesOptions] = useState<{ label: string ,value: number }[]>([])
   const [positionsOptions, setPositionsOptions] = useState<{ label: string ,value: number }[]>([])
   const [streamEncodesOptions, setStreamEncodesOptions] = useState<{ label: string ,value: number }[]>([])
@@ -120,8 +121,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     if (
       provinces?.data &&
       provinces?.data?.length > 0 &&
-      policeDivisions?.data &&
-      policeDivisions?.data?.length > 0 &&
       personTitles?.data && personTitles?.data.length > 0 &&
       positions?.data && positions?.data.length > 0
     ) {
@@ -135,7 +134,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
           provinceSelect: selectedRow.province_id,
           districtsSelect: selectedRow.district_id,
           subDistrictsSelect: selectedRow.sub_district_id,
-          policeDivisionsSelect: selectedRow.division_id,
+          organization: selectedRow.organization,
           checkpoint: selectedRow.checkpoint_name,
           checkpointId: selectedRow.cam_id,
           route: selectedRow.route,
@@ -170,7 +169,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     }
   }, [
     provinces,
-    policeDivisions,
     personTitles,
     positions,
     isEditMode,
@@ -266,16 +264,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   }, [subDistrictsList])
 
   useEffect(() => {
-    if (policeDivisions && policeDivisions.data) {
-      const options = policeDivisions.data.map((row) => ({
-        label: row.title_th,
-        value: row.id,
-      }))
-      setPoliceDivisionsOptions(options)
-    }
-  }, [policeDivisions])
-
-  useEffect(() => {
     if (personTitles && personTitles.data) {
       const options = personTitles.data.filter((row) => row.group === "police").map((row) => ({
         label: row.title_th,
@@ -307,24 +295,87 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
 
   const createCameraSettings = (): NewCameraDetailSettings | null => {
     const defaultDetectionArea = DEFAULT_DETECTION_AREA
+    
+    const requiredFields: (keyof typeof state)[] = [
+      "checkpointId",
+      "checkpoint",
+      "location",
+      "rtspProcess",
+      "rtspLiveView",
+      "streamEncodeSelect",
+      "officer",
+    ];
+
+    const fieldErrorMessages: Record<string, string> = {
+      checkpointId: "ID (จุดตรวจ)",
+      checkpoint: "Check point (ด่านตรวจ)",
+      "location.latitude": "Location Latitude",
+      "location.longitude": "Location longitude",
+      rtspProcess: "RTSP Process",
+      rtspLiveView: "RTSP Live View",
+      streamEncodeSelect: "Stream Encode",
+      "officer.namePrefixesSelect": "คำนำหน้า",
+      "officer.name": "ชื่อ",
+      "officer.surname": "นามสกุล",
+      "officer.phone": "เบอร์โทร",
+      "officer.positionsSelect": "ตำแหน่ง",
+    };
+
+    const skipField = [
+      "organization",
+      "province_id",
+      "district_id",
+      "sub_district_id",
+      "route",
+      "api_server_url",
+      "pc_serial_number",
+      "license_key",
+      "detection_area",
+    ]
+
+    for (const field of requiredFields) {
+      const value = state[field as keyof typeof state]
+
+      if (typeof value === "object" && value !== null) {
+        for (const key in value) {
+          const nestedKey = `${field}.${key}`;
+          if (!value[key as keyof typeof value]) {
+            PopupMessage(
+              "พบข้อผิดพลาด",
+              `กรุณากรอกข้อมูลในช่อง '${fieldErrorMessages[nestedKey] || nestedKey}'`,
+              "error"
+            );
+            return null;
+          }
+        }
+      }
+      else if (!value && !skipField.includes(field)) {
+        PopupMessage(
+          "พบข้อผิดพลาด",
+          `กรุณากรอกข้อมูลในช่อง '${fieldErrorMessages[field]}'`,
+          "error"
+        )
+        return null
+      }
+    }
 
     const cameraSettings: NewCameraDetailSettings = {
       cam_id: state.checkpointId,
       checkpoint_name: state.checkpoint,
       latitude: Number(state.location.latitude),
       longitude: Number(state.location.longitude),
-      division_id: Number(state.policeDivisionsSelect),
-      province_id: Number(state.provinceSelect),
-      district_id: Number(state.districtsSelect),
-      sub_district_id: Number(state.subDistrictsSelect),
-      route: state.route,
+      organization: state.organization || "",
+      province_id: state.provinceSelect ? Number(state.provinceSelect) : 0,
+      district_id: state.districtsSelect ? Number(state.districtsSelect) : 0,
+      sub_district_id: state.subDistrictsSelect ? Number(state.subDistrictsSelect) : 0,
+      route: state.route || "",
       rtsp_live_url: state.rtspLiveView,
       rtsp_process_url: state.rtspProcess,
-      stream_encode_id: state.streamEncodeSelect,
-      api_server_url: state.apiServer,
-      pc_serial_number: state.pcSerialNumber,
-      license_key: state.license,
-      officer_title_id: Number(state.officer.namePrefixesSelect),
+      stream_encode_id: state.streamEncodeSelect ? Number(state.streamEncodeSelect) : 0,
+      api_server_url: state.apiServer || "",
+      pc_serial_number: state.pcSerialNumber || "",
+      license_key: state.license || "",
+      officer_title_id: state.officer.namePrefixesSelect ? Number(state.officer.namePrefixesSelect) : 0,
       officer_firstname: state.officer.name,
       officer_lastname: state.officer.surname,
       officer_position_id: Number(state.officer.positionsSelect),
@@ -334,63 +385,95 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       active: 1,
     }
 
-    const isValid = Object.keys(cameraSettings).every((key) => {
-      const value = cameraSettings[key as keyof NewCameraDetailSettings]
-      if (
-        value == null ||
-        value === "" ||
-        (typeof value === "object" && Object.keys(value).length === 0)
-      ) {
-        console.error(`Invalid or empty field: ${key}`, value)
-        return false
-      }
-      return true
-    })
-
-    if (!isValid) {
-      console.error("Camera settings data is invalid.")
-      return null
-    }
-
     return cameraSettings
   }
 
   const updateCameraSettings = (): CameraDetailSettings | null => {
     if (!selectedRow?.id) {
-      console.error("The selected row does not have a valid 'id'.")
-      return null
+      console.error("The selected row does not have a valid 'id'.");
+      return null;
     }
-    // Check each value for emptiness or missing values
+  
+    const requiredFields: (keyof typeof state)[] = [
+      "checkpointId",
+      "checkpoint",
+      "location",
+      "rtspProcess",
+      "rtspLiveView",
+      "streamEncodeSelect",
+      "officer",
+    ];
+  
+    const fieldErrorMessages: Record<string, string> = {
+      checkpointId: "ID (จุดตรวจ)",
+      checkpoint: "Check point (ด่านตรวจ)",
+      "location.latitude": "Location Latitude",
+      "location.longitude": "Location Longitude",
+      rtspProcess: "RTSP Process",
+      rtspLiveView: "RTSP Live View",
+      streamEncodeSelect: "Stream Encode",
+      "officer.namePrefixesSelect": "คำนำหน้า",
+      "officer.name": "ชื่อ",
+      "officer.surname": "นามสกุล",
+      "officer.phone": "เบอร์โทร",
+      "officer.positionsSelect": "ตำแหน่ง",
+    };
+  
+    for (const field of requiredFields) {
+      const value = state[field as keyof typeof state];
+  
+      if (typeof value === "object" && value !== null) {
+        for (const key in value) {
+          const nestedKey = `${field}.${key}`;
+          if (!value[key as keyof typeof value]) {
+            PopupMessage(
+              "พบข้อผิดพลาด",
+              `กรุณากรอกข้อมูลในช่อง '${fieldErrorMessages[nestedKey] || nestedKey}'`,
+              "error"
+            );
+            return null;
+          }
+        }
+      } else if (!value) {
+        PopupMessage(
+          "พบข้อผิดพลาด",
+          `กรุณากรอกข้อมูลในช่อง '${fieldErrorMessages[field] || field}'`,
+          "error"
+        );
+        return null;
+      }
+    }
+  
     const cameraSettings: CameraDetailSettings = {
       id: selectedRow.id,
       cam_id: state.checkpointId,
       cam_uid: selectedRow.cam_uid,
       alpr_cam_id: selectedRow.alpr_cam_id,
       checkpoint_name: state.checkpoint,
-      division_id: state.policeDivisionsSelect,
-      province_id: state.provinceSelect ? state.provinceSelect : 0,
-      district_id: state.districtsSelect ? state.districtsSelect : 0,
-      sub_district_id: state.subDistrictsSelect,
+      organization: state.organization || "",
+      province_id: state.provinceSelect ? Number(state.provinceSelect) : 0,
+      district_id: state.districtsSelect ? Number(state.districtsSelect) : 0,
+      sub_district_id: state.subDistrictsSelect ? Number(state.subDistrictsSelect) : 0,
       detecion_count: selectedRow.detecion_count,
-      route: state.route,
+      route: state.route || "",
       latitude: state.location.latitude,
       longitude: state.location.longitude,
       rtsp_live_url: state.rtspLiveView,
       rtsp_process_url: state.rtspProcess,
-      stream_encode_id: state.streamEncodeSelect,
-      stream_encode: state.streamEncode,
-      api_server_url: state.apiServer,
+      stream_encode_id: state.streamEncodeSelect ? Number(state.streamEncodeSelect) : 0,
+      stream_encode: state.streamEncode || "",
+      api_server_url: state.apiServer || "",
       live_server_url: selectedRow.live_server_url,
       live_stream_url: selectedRow.live_stream_url,
       wsport: selectedRow.wsport,
-      pc_serial_number: state.pcSerialNumber,
-      license_key: state.license,
-      officer_title_id: state.officer.namePrefixesSelect,
+      pc_serial_number: state.pcSerialNumber || "",
+      license_key: state.license || "",
+      officer_title_id: state.officer.namePrefixesSelect ? Number(state.officer.namePrefixesSelect) : 0,
       officer_firstname: state.officer.name,
       officer_lastname: state.officer.surname,
-      officer_position_id: state.officer.positionsSelect,
+      officer_position_id: state.officer.positionsSelect ? Number(state.officer.positionsSelect) : 0,
       officer_phone: state.officer.phone,
-      detection_area: selectedRow.detection_area,
+      detection_area: selectedRow.detection_area || "",
       streaming: selectedRow.streaming,
       visible: selectedRow.visible,
       active: selectedRow.active,
@@ -399,63 +482,55 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       last_check: selectedRow.last_check,
       createdAt: selectedRow.createdAt,
       updatedAt: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
-    }
-
-    const isValid = Object.entries(cameraSettings).every(([key, value]) => {
-      if (key === "last_online" || key === "last_check" || key === "detecion_count") {
-        return true
-      }
-      if (value == null || value === "" || value === 0) {
-        console.error(`Invalid or empty field: ${key}`, value)
-        return false
-      }
-      return true
-    })
-
-    if (!isValid) {
-      PopupMessage("พบข้อผิดพลาด", "ข้อมูลการตั้งค่ากล้องไม่ถูกต้อง", "error")
-      return null
-    }
-
-    return cameraSettings
-  }
+    };
+  
+    return cameraSettings;
+  };
+  
 
   const handleSubmit = useCallback(async () => {
     try {
       if (isEditMode && selectedRow) {
         if (!hasChanges()) {
-          PopupMessage(
-            "ไม่พบการเปลี่ยนแปลง",
-            "ข้อมูลไม่มีการเปลี่ยนแปลง",
-            "warning"
-          )
-          return
-        } else {
-          const updateCameraSetting = updateCameraSettings()
-          if (updateCameraSetting) {
-            await dispatch(putCameraSettingThunk(updateCameraSetting))
-            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-          } else {
-            PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
-          }
+          PopupMessage("ไม่พบการเปลี่ยนแปลง", "ข้อมูลไม่มีการเปลี่ยนแปลง", "warning");
+          return;
         }
-      } else {
-        const newCameraSetting = createCameraSettings()
-        if (newCameraSetting) {
-          await dispatch(postCameraSettingThunk(newCameraSetting))
-          PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
-        } 
-        else {
-          PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", "error")
+    
+        const updateCameraSetting = updateCameraSettings();
+        if (!updateCameraSetting) {
+          return;
         }
+    
+        const result = await dispatch(putCameraSettingThunk(updateCameraSetting));
+        
+        if (putCameraSettingThunk.rejected.match(result)) {
+          PopupMessage("พบข้อผิดพลาด", result.payload || "เกิดข้อผิดพลาดในการอัปเดต", "error");
+          return;
+        }
+    
+        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
+        closeDialog();
+      } 
+      else {
+        const newCameraSetting = createCameraSettings();
+        if (!newCameraSetting) {
+          return;
+        }
+    
+        const result = await dispatch(postCameraSettingThunk(newCameraSetting));
+    
+        if (postCameraSettingThunk.rejected.match(result)) {
+          PopupMessage("พบข้อผิดพลาด", result.payload || "เกิดข้อผิดพลาดในการบันทึก", "error");
+          return;
+        }
+    
+        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success");
+        closeDialog();
       }
-    } catch (error) {
-      PopupMessage(
-        "พบข้อผิดพลาด",
-        `ไม่สามารถสร้างการตั้งค่ากล้องได้: ${error}`,
-        "error"
-      )
-    }
+    } 
+    catch (error) {
+      PopupMessage("พบข้อผิดพลาด", `ไม่สามารถสร้างการตั้งค่ากล้องได้: ${error}`, "error");
+    }    
   }, [dispatch, state])
 
   const handleTextChange = (key: keyof typeof state, value: string) => {
@@ -480,24 +555,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       ...prev,
       officer: { ...prev.officer, [key]: value },
     }))
-  }
-
-  const handlePoliceDivisionChange = (
-    event: React.SyntheticEvent,
-    value: { value: any ,label: string } | null
-  ) => {
-    event.preventDefault()
-    if (value) {
-      handleDropdownChange("policeDivisionsSelect", value.value)
-      if (provinces && provinces.data) {
-        const province_id = provinces.data.find((data) => data.police_region_id === value.value)?.id
-        handleDropdownChange("provinceSelect", province_id ? province_id as any : '')
-      }
-    }
-    else {
-      handleDropdownChange("policeDivisionsSelect", '')
-      handleDropdownChange("provinceSelect", '')
-    }
   }
 
   const handleProvinceChange = (
@@ -553,6 +610,17 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     handleDropdownOfficerChange("positionsSelect", value ? value.value : '')
   }
 
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target.value;
+    const cleaned = input.replace(/\D/g, '');
+    
+    if (cleaned.length <= 10) {
+      const formatted = formatPhone(cleaned)
+      handleTextOfficerChange("phone", formatted)
+    }
+    return cleaned
+  }
+
   return (
     <div id="camera-setting">
       <div className="bg-black text-white p-[30px] border-[1px] border-dodgerBlue w-full">
@@ -560,126 +628,12 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
         {/* Header */}
         <div className="border-b-[1px] border-dodgerBlue pb-[20px]">
           <div className="flex justify-between mb-[20px]">
-            <label className="text-[20px]">ข้อมูลกล้อง</label>
-            <div>
-              <ToggleButton
-                onChange={(checked) => handleToggle("startService", checked)}
-                checked={state.toggles.startService}
-              />
-              <label className="ml-[16px]">Start Service</label>
-            </div>
+            <label className="text-[20px]">ข้อมูลด่าน</label>
           </div>
           <div className="grid grid-cols-2 lt1443:grid-cols-1 gap-[60px]">
             {/* First Column */}
             <div>
-              <div className="my-[10px]">
-                <TextBox
-                  id="checkpoint-id"
-                  label="ID (จุดตรวจ)"
-                  placeHolder=""
-                  className="w-full"
-                  value={state.checkpointId}
-                  onChange={(event) =>
-                    handleTextChange("checkpointId", event.target.value)
-                  }
-                />
-              </div>
               <div className="grid grid-cols-2 gap-5 my-[10px]">
-                <AutoComplete 
-                  id="police-division-select"
-                  sx={{ marginTop: "15px"}}
-                  value={state.policeDivisionsSelect}
-                  onChange={handlePoliceDivisionChange}
-                  options={policeDivisionsOptions}
-                  label="Police Division (ภาค)*"
-                  labelFontSize="16px"
-                />
-                <AutoComplete 
-                  id="provice-select"
-                  sx={{ marginTop: "15px"}}
-                  value={state.provinceSelect}
-                  onChange={handleProvinceChange}
-                  options={provincesOptions}
-                  label="Province (จังหวัด)"
-                  labelFontSize="16px"
-                />
-              </div>
-              <div className="my-[10px]">
-                <TextBox
-                  id="route"
-                  label="Route (ถนน)"
-                  placeHolder=""
-                  className="w-full"
-                  value={state.route}
-                  onChange={(event) =>
-                    handleTextChange("route", event.target.value)
-                  }
-                />
-              </div>
-              <div className="my-[10px]">
-                <TextBox
-                  id="rtsp-live-view"
-                  label="RTSP Live View"
-                  placeHolder=""
-                  className="w-full"
-                  value={state.rtspLiveView}
-                  onChange={(event) =>
-                    handleTextChange("rtspLiveView", event.target.value)
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-5 my-[10px]">
-                <SelectBox
-                  sx={{ marginTop: "15px"}}
-                  id="stream-encode-select"
-                  label="Stream Encode"
-                  value={state.streamEncodeSelect}
-                  onChange={(event) =>
-                    {
-                      handleDropdownChange("streamEncodeSelect", event.target.value)
-                      const selectedStreamEncode = streamEncodes?.data?.find((item) => item.id === Number(event.target.value))
-                      if (selectedStreamEncode) {
-                        setState((prev) => ({ ...prev, streamEncode: selectedStreamEncode }))
-                      }
-                    }
-                  }
-                  options={streamEncodesOptions}
-                />
-                <TextBox
-                  id="api-server"
-                  label="API Server"
-                  placeHolder=""
-                  className="w-full"
-                  value={state.apiServer}
-                  onChange={(event) =>
-                    handleTextChange("apiServer", event.target.value)
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-5 my-[10px] mt-[40px]">
-                <div>
-                  <ToggleButton
-                    onChange={(checked) =>
-                      handleToggle("apiServerStatus", checked)
-                    }
-                    checked={state.toggles.apiServerStatus}
-                  />
-                  <label className="ml-[16px]">API Server Status</label>
-                </div>
-                <div>
-                  <ToggleButton
-                    onChange={(checked) =>
-                      handleToggle("syncDataStatus", checked)
-                    }
-                    checked={state.toggles.syncDataStatus}
-                  />
-                  <label className="ml-[16px]">Sync Data Status </label>
-                </div>
-              </div>
-            </div>
-            {/* Seconds Column */}
-            <div>
-              <div className="my-[10px]">
                 <TextBox
                   id="checkpoint"
                   label="Check point (ด่านตรวจ)"
@@ -688,6 +642,16 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   value={state.checkpoint}
                   onChange={(event) =>
                     handleTextChange("checkpoint", event.target.value)
+                  }
+                />
+                <TextBox
+                  id="organization"
+                  label="ชื่อสำนักงานหรือสาขา"
+                  placeHolder=""
+                  className="w-full"
+                  value={state.organization}
+                  onChange={(event) =>
+                    handleTextChange("organization", event.target.value)
                   }
                 />
               </div>
@@ -711,6 +675,30 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   label="Sub District (ตำบล)"
                   labelFontSize="16px"
                   disabled={state.districtsSelect === 0 || state.districtsSelect === "" ? true : false}
+                />
+              </div>
+            </div>
+            {/* Second Column */}
+            <div>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
+                <TextBox
+                  id="route"
+                  label="Route (ถนน)"
+                  placeHolder=""
+                  className="w-full"
+                  value={state.route}
+                  onChange={(event) =>
+                    handleTextChange("route", event.target.value)
+                  }
+                />
+                <AutoComplete 
+                  id="provice-select"
+                  sx={{ marginTop: "15px"}}
+                  value={state.provinceSelect}
+                  onChange={handleProvinceChange}
+                  options={provincesOptions}
+                  label="Province (จังหวัด)"
+                  labelFontSize="16px"
                 />
               </div>
               <div className="grid grid-cols-[auto_auto_50px] gap-5 my-[10px]">
@@ -750,6 +738,47 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        <div className="border-b-[1px] border-dodgerBlue py-[20px]">
+          <div className="flex justify-between mb-[20px]">
+            <label className="text-[20px]">ข้อมูลกล้อง</label>
+            <div>
+              <ToggleButton
+                onChange={(checked) => handleToggle("startService", checked)}
+                checked={state.toggles.startService}
+              />
+              <label className="ml-[16px]">Start Service</label>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 lt1443:grid-cols-1 gap-[60px]">
+            {/* First Column */}
+            <div>
+              <div className="my-[10px]">
+                <TextBox
+                  id="checkpoint-id"
+                  label="ID (จุดตรวจ)"
+                  placeHolder=""
+                  className="w-full"
+                  value={state.checkpointId}
+                  onChange={(event) =>
+                    handleTextChange("checkpointId", event.target.value)
+                  }
+                />
+              </div>
+              <div className="my-[10px]">
+                <TextBox
+                  id="rtsp-live-view"
+                  label="RTSP Live View"
+                  placeHolder=""
+                  className="w-full"
+                  value={state.rtspLiveView}
+                  onChange={(event) =>
+                    handleTextChange("rtspLiveView", event.target.value)
+                  }
+                />
+              </div>
               <div className="my-[10px]">
                 <TextBox
                   id="rtsp-process"
@@ -759,6 +788,37 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   value={state.rtspProcess}
                   onChange={(event) =>
                     handleTextChange("rtspProcess", event.target.value)
+                  }
+                />
+              </div>
+            </div>
+            {/* Seconds Column */}
+            <div>
+              <div className="grid grid-cols-2 gap-5 my-[10px]">
+                <SelectBox
+                  sx={{ marginTop: "15px"}}
+                  id="stream-encode-select"
+                  label="Stream Encode"
+                  value={state.streamEncodeSelect}
+                  onChange={(event) =>
+                    {
+                      handleDropdownChange("streamEncodeSelect", event.target.value)
+                      const selectedStreamEncode = streamEncodes?.data?.find((item) => item.id === Number(event.target.value))
+                      if (selectedStreamEncode) {
+                        setState((prev) => ({ ...prev, streamEncode: selectedStreamEncode }))
+                      }
+                    }
+                  }
+                  options={streamEncodesOptions}
+                />
+                <TextBox
+                  id="api-server"
+                  label="API Server"
+                  placeHolder=""
+                  className="w-full"
+                  value={state.apiServer}
+                  onChange={(event) =>
+                    handleTextChange("apiServer", event.target.value)
                   }
                 />
               </div>
@@ -784,7 +844,25 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-5 my-[10px] mt-[40px]">
+              <div className="grid grid-cols-3 gap-5 my-[10px] mt-[40px]">
+                <div>
+                  <ToggleButton
+                    onChange={(checked) =>
+                      handleToggle("apiServerStatus", checked)
+                    }
+                    checked={state.toggles.apiServerStatus}
+                  />
+                  <label className="ml-[16px]">API Server Status</label>
+                </div>
+                <div>
+                  <ToggleButton
+                    onChange={(checked) =>
+                      handleToggle("syncDataStatus", checked)
+                    }
+                    checked={state.toggles.syncDataStatus}
+                  />
+                  <label className="ml-[16px]">Sync Data Status </label>
+                </div>
                 <div>
                   <ToggleButton
                     onChange={(checked) =>
@@ -834,9 +912,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   placeHolder=""
                   className="w-full"
                   value={state.officer.phone}
-                  onChange={(event) =>
-                    handleTextOfficerChange("phone", event.target.value)
-                  }
+                  onChange={handlePhoneChange}
                 />
               </div>
             </div>
@@ -859,7 +935,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                   value={state.officer.positionsSelect}
                   onChange={handlePositionsChange}
                   options={positionsOptions}
-                  label="คำนำหน้า"
+                  label="ตำแหน่ง"
                   labelFontSize="16px"
                 />
               </div>

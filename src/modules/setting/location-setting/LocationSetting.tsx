@@ -63,11 +63,23 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPo
     }
   }
 
+  const showPosition = (pos: GeolocationPosition) => {
+    const latLng = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+    searchPlace(latLng, true);
+  };
+
   useEffect(() => {
     if (location && location.latitude && location.longitude && searchResults.length === 0 && !isSearching) {
       const latLng = `${location.latitude}, ${location.longitude}`
       setSearchText(latLng)
       searchPlace(latLng)
+    }
+    else if (navigator.geolocation && searchResults.length === 0 && !isSearching) {
+      navigator.geolocation.getCurrentPosition(
+        showPosition,
+        (error) => console.error("Error fetching location:", error),
+        { enableHighAccuracy: true }
+      );
     }
   }, [location, searchPlace, searchResults, isSearching])
 

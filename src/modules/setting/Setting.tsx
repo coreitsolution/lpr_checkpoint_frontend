@@ -71,14 +71,14 @@ const Setting = () => {
     dispatch(fetchSettingsThunk({
       "filter": "key:live_view_count"
     }))
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
   }, [dispatch])
 
   useEffect(() => {
     if (cameraSettings && cameraSettings.data) {
       setCameraDetailSettingData(cameraSettings.data)
-      setTimeout(() => {
-        setIsLoading(false)
-      }, 500)
     }
   }, [cameraSettings])
 
