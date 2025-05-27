@@ -36,6 +36,7 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
   const [clearCanvas, setClearCanvas] = useState(false)
   const [sensorSettingData, setSensorSettingData] = useState<DetectionArea | null>(null)
   const [originalData, setOriginalData] = useState<DetectionArea | null>(null)
+  const [isRestarting, setIsRestarting] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
   const dispatch: AppDispatch = useDispatch()
 
@@ -97,6 +98,25 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
     }
   }, [dispatch, sensorSettingData, selectedRow])
 
+  const onRestartClick = useCallback(async (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault()
+    setIsRestarting(true)
+    
+    try {
+      if (selectedRow) {
+        await dispatch(putCameraSettingThunk(selectedRow))
+        PopupMessage("Restart Engine เสร็จสิ้น", "", "success")
+        setTimeout(() => {
+          setIsRestarting(false)
+        }, 30000)
+      }
+    } 
+    catch (error) {
+      PopupMessage("พบข้อผิดพลาด", `Restart Engine ผิดพลาด: ${error}`, 'error')
+      setIsRestarting(false)
+    }
+  }, [dispatch, selectedRow])
+
   return (
     <div id='sensor-setting'>
       <div className="bg-black text-white p-[5px] w-full">
@@ -111,37 +131,45 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
               disabled={true}
             />
           </div>
-          <div className='flex items-end justify-end'>
+          <div className='flex items-end justify-end space-x-2'>
             {/* Clear Button */}
             <button 
               type="button" 
-              className="flex items-center justify-center bg-white w-[90px] h-[40px] rounded mr-[10px]" 
+              className="flex items-center justify-center bg-white w-[90px] h-[40px] rounded" 
               onClick={() => handleClearCanvas()}
             >
               <img src="/icons/clear.png" alt="Clear" className='w-[20px] h-[20px]' />
               <span className='ml-[5px] text-dodgerBlue'>Clear</span>
             </button>
-            {/* Submit Button */}
+            {/* Start Button */}
             <button 
               type="button" 
-              className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
-              onClick={(e) => handleSubmitClick(e)}
+              className={`flex items-center justify-center w-[150px] h-[40px] rounded 
+                ${ !isDrawingEnabled ? "bg-dodgerBlue" : "bg-dodgerBlue/30"}
+                disabled:bg-celti
+              `} 
+              onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
+              disabled={isDrawingEnabled || sensorSettingData !== null}
             >
-              <Icon icon={Save} size={20} color='white' />
-              <span className='ml-[5px]'>Submit</span>
+              <img src="/icons/start.png" alt="Start" className='w-[20px] h-[20px]' />
+              <span className='ml-[5px]'>Start Plot Sensor</span>
             </button>
           </div>
         </div>
         <div className='p-5 border-[1px] border-dodgerBlue mb-[30px]'>
           <div className='relative mb-[10px]'>
             <img
-              src={selectedRow?.sample_image_url ? `${FILE_URL}${selectedRow.sample_image_url}` : undefined}
+              src={`${FILE_URL}${selectedRow?.sample_image_url}`}
               alt="Sensor Image"
-              className={`w-full h-[450px] ${!selectedRow?.sample_image_url ? "bg-white" : ""}`}
+              className={`w-full h-[450px]`}
               ref={imgRef}
+              onError={(e) => {
+                e.currentTarget.src = "/images/no-image.png"
+                e.currentTarget.classList.add("object-cover")
+              }}
             />
             { !selectedRow?.sample_image_url && (
-              <label className='absolute inset-0 flex items-center justify-center text-black'>กล้องยังไม่สามารถจับภาพได้</label>
+              <label className='absolute inset-0 flex items-center justify-center text-black bg-white'>กล้องยังไม่สามารถจับภาพได้</label>
             ) }
             {imgRef.current && (
               <DrawingCanvas
@@ -154,48 +182,34 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
             )}  
           </div>
           <div className='flex justify-center'>
-            <div className='flex justify-between w-[60%]'>
-              {/* Start Button */}
-              <button 
-                type="button" 
-                className={`flex items-center justify-center w-[90px] h-[40px] rounded mr-[10px] 
-                  ${ !isDrawingEnabled ? "bg-dodgerBlue" : "bg-dodgerBlue/30"}
-                  disabled:bg-celti
-                `} 
-                onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
-                disabled={isDrawingEnabled || sensorSettingData !== null}
-              >
-                <img src="/icons/start.png" alt="Start" className='w-[20px] h-[20px]' />
-                <span className='ml-[5px]'>Start</span>
-              </button>
-              {/* Stop Button */}
-              <button 
-                type="button" 
-                className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
-              >
-                <img src="/icons/stop.png" alt="Stop" className='w-[20px] h-[20px]' />
-                <span className='ml-[5px]'>Stop</span>
-              </button>
-              {/* Restart Button */}
-              <button 
-                type="button" 
-                className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
-              >
-                <img src="/icons/restart.png" alt="Restart" className='w-[20px] h-[20px]' />
-                <span className='ml-[5px]'>Restart</span>
-              </button>
-              {/* Apply Button */}
-              <button 
-                type="button" 
-                className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
-              >
-                <img src="/icons/apply.png" alt="Apply" className='w-[20px] h-[20px]' />
-                <span className='ml-[5px]'>Apply</span>
-              </button>
-            </div>
+            {/* Restart Button */}
+            <button
+              type="button"
+              disabled={isRestarting}
+              className={`flex items-center justify-center w-[90px] h-[40px] rounded mr-[10px] 
+                ${isRestarting ? 'bg-gray-400 cursor-not-allowed' : 'bg-dodgerBlue'}
+              `}
+              onClick={onRestartClick}
+            >
+              <img
+                src={isRestarting ? "/icons/restart-disable.png" : "/icons/restart.png"}
+                alt="Restart"
+                className={`w-[20px] h-[20px] ${isRestarting ? 'animate-spin' : ''}`}
+              />
+              <span className="ml-[5px]">Restart</span>
+            </button>
           </div>
         </div>
-        <div className='flex justify-end'>
+        <div className='flex space-x-2 justify-end'>
+          {/* Submit Button */}
+          <button 
+            type="button" 
+            className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded" 
+            onClick={(e) => handleSubmitClick(e)}
+          >
+            <Icon icon={Save} size={20} color='white' />
+            <span className='ml-[5px]'>Submit</span>
+          </button>
           <button 
             type="button" 
             className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded" 

@@ -9,6 +9,14 @@ services:
     container_name: lpr-checkpoint-frontend
     ports:
       - "3001:80"
+    environment:
+      - VITE_BASE_URL=http://backend:3000
+      - VITE_IMAGE_BASE_URL=http://backend:3101
+      - VITE_FILE_UPLOAD_BASE_URL=http://backend:3000
+      - VITE_STREAM_BASE_URL=http://backend:3103
+      - VITE_TELEGRAM_BASE_URL=http://backend:3050
+      - VITE_SERVICE_1_BASE_URL=http://backend:3109
+      - VITE_WEB_SOCKET_SERVICE_REALTIME=ws://backend:8085
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

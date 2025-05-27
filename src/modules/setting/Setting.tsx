@@ -19,7 +19,7 @@ import { useHamburger } from "../../context/HamburgerContext"
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Copy } from 'lucide-react'
 
 // Component
 import Loading from "../../components/loading/Loading"
@@ -27,6 +27,7 @@ import Loading from "../../components/loading/Loading"
 // API
 import { 
   fetchCameraSettingsThunk,
+  postCameraSettingThunk,
   deleteCameraSettingThunk,
 } from "../../features/camera-settings/cameraSettingsSlice"
 import { 
@@ -62,6 +63,7 @@ const Setting = () => {
     {name: "แสดงผล 3 หน้าจอ", value: 3},
     {name: "แสดงผล 4 หน้าจอ", value: 4},
   ])
+  const [rowSelected, setRowSelected] = useState<number[]>([])
 
   const [isLoading, setIsLoading] = useState(false)
 
@@ -173,6 +175,47 @@ const Setting = () => {
     }, 500)
   }
 
+  const onCopySelectedClick = async () => {
+    const selectedCameras = cameraDetailSettingData.filter(item => rowSelected.includes(item.id));
+
+    try {
+      for (const camera of selectedCameras) {
+        const newCamera = { 
+          ...camera, 
+          id: undefined,
+          cam_id: camera.cam_id + "_copy",
+          latitude: camera.latitude ? Number(camera.latitude) : 0,
+          longitude: camera.longitude ? Number(camera.longitude) : 0,
+        };
+        await dispatch(postCameraSettingThunk(newCamera));
+      }
+    }
+    catch (error) {
+      PopupMessage("พบข้อผิดพลาด", `ไม่สามารถคัดลอกกล้องได้: ${error}`, 'error')
+      return;
+    }
+    finally {
+      setRowSelected([]);
+      await fetchCameraSetting();
+    }
+  }
+
+  const onDeleteSelectedClick = async () => {
+    try {
+      for (const id of rowSelected) {
+        await dispatch(deleteCameraSettingThunk(id));
+      }
+      PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
+    } 
+    catch (error) {
+      PopupMessage("พบข้อผิดพลาด", `ไม่สามารถลบกล้องได้: ${error}`, 'error')
+    }
+    finally {
+      setRowSelected([]);
+      await fetchCameraSetting();
+    }
+  }
+
   return (
     <div id="setting" className={`main-content pe-6 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-300`}>
       {isLoading && <Loading />}
@@ -193,20 +236,64 @@ const Setting = () => {
       <div>
         <div className='flex justify-between'>
           <label className='text-[25px] text-white'>รายการกล้อง</label>
-          <div className={`${cameraDetailSettingData.length < 4 ? "bg-dodgerBlue" : "bg-nobel"} rounded-[5px]`}>
-            <Button
-              onClick={() => handleCameraButtonClick(true)}
-              disabled={cameraDetailSettingData.length >= 4 ? true : false}
+          <div className='flex gap-2'>
+            <div 
+              className={`${rowSelected.length > 0 ? "bg-dodgerBlue cursor-pointer" : "bg-nobel cursor-not-allowed"} rounded-[5px]`}
+              title='คัดลอกกล้องที่เลือก'
             >
-              <Icon icon={Plus} size={25} color="white" />
-              <span className='ml-[5px] text-white text-[15px]'>กล้อง</span>
-            </Button>
+              <Button
+                onClick={() => onCopySelectedClick()}
+                disabled={rowSelected.length > 0 ? false : true}
+              >
+                <Icon icon={Copy} size={25} color="white" />
+                <span className='ml-[5px] text-white text-[15px]'>คัดลอก</span>
+              </Button>
+            </div>
+            <div 
+              className={`${cameraDetailSettingData.length < 4 ? "bg-dodgerBlue cursor-pointer" : "bg-nobel cursor-not-allowed"} rounded-[5px]`}
+              title='เพิ่มกล้อง'
+            >
+              <Button
+                onClick={() => handleCameraButtonClick(true)}
+                disabled={cameraDetailSettingData.length >= 4 ? true : false}
+              >
+                <Icon icon={Plus} size={25} color="white" />
+                <span className='ml-[5px] text-white text-[15px]'>กล้อง</span>
+              </Button>
+            </div>
+            <div 
+              className={`${rowSelected.length > 0 ? "bg-coralRed cursor-pointer" : "bg-nobel cursor-not-allowed"} rounded-[5px]`}
+              title='ลบกล้องที่เลือก'
+            >
+              <Button
+                onClick={() => onDeleteSelectedClick()}
+                disabled={rowSelected.length > 0 ? false : true}
+              >
+                <Icon icon={Trash2} size={25} color="white" />
+                <span className='ml-[5px] text-white text-[15px]'>ลบ</span>
+              </Button>
+            </div>
           </div>
         </div>
         <div className="rounded-lg overflow-y-auto h-[68vh] mt-[15px]">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80 text-[15px] text-white">
               <tr>
+                <th className="px-4 py-2 flex items-center justify-center">
+                  <input 
+                    type="checkbox" 
+                    className='w-5 h-5 cursor-pointer'
+                    checked={rowSelected.length === cameraDetailSettingData.length}
+                    onChange={() => {
+                      if (rowSelected.length === cameraDetailSettingData.length) {
+                        setRowSelected([])
+                      } 
+                      else {
+                        setRowSelected(cameraDetailSettingData.map(item => item.id))
+                      }
+                    }}
+                  />
+                </th>
                 <th className="px-4 py-2">ลำดับ</th>
                 <th className="px-4 py-2">สถานะกล้อง</th>
                 <th className="px-4 py-2">จุดตรวจ (ID)</th>
@@ -219,14 +306,31 @@ const Setting = () => {
             <tbody>
               {cameraDetailSettingData.map((camera, index) => (
                 <tr key={camera.id} className="border-b h-[30px] text-[15px] text-white">
-                  <td className="px-4 py-2 text-center bg-celtic">{index + 1}</td>
-                  <td className="px-4 py-2 text-center bg-tuna">
+                  <td className="px-4 py-2 text-center bg-celtic">
+                    <div className="flex items-center justify-center">
+                      <input 
+                        type="checkbox" 
+                        className="w-5 h-5 cursor-pointer"
+                        checked={rowSelected.includes(camera.id)}
+                        onChange={() => {
+                          if (rowSelected.includes(camera.id)) {
+                            setRowSelected(rowSelected.filter(item => item !== camera.id))
+                          } 
+                          else {
+                            setRowSelected([...rowSelected, camera.id])
+                          }
+                        }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 text-center bg-tuna">{index + 1}</td>
+                  <td className="px-4 py-2 text-center bg-celtic">
                     {renderStatus(camera.alive)}
                   </td>
-                  <td className="px-4 py-2 bg-celtic">{camera.cam_id}</td>
-                  <td className="px-4 py-2 bg-tuna">{camera.latitude + ", " + camera.longitude}</td>
-                  <td className="px-4 py-2 text-end bg-celtic">{formatNumber(camera.detecion_count)}</td>
-                  <td className="px-4 py-2 bg-tuna flex justify-center">
+                  <td className="px-4 py-2 bg-tuna">{camera.cam_id}</td>
+                  <td className="px-4 py-2 bg-celtic">{camera.latitude + ", " + camera.longitude}</td>
+                  <td className="px-4 py-2 text-end bg-tuna">{formatNumber(camera.detecion_count)}</td>
+                  <td className="px-4 py-2 bg-celtic flex justify-center">
                     <Button onClick={() => handleSensorSettingClick(camera)}>
                       <img 
                         src={`/icons/sensor-setting${camera.detection_area !== "" ? "-green" : ""}.png`}
@@ -235,7 +339,7 @@ const Setting = () => {
                       />
                     </Button>
                   </td>
-                  <td className="px-4 py-2 bg-celtic">
+                  <td className="px-4 py-2 bg-tuna">
                     <div className="flex justify-center gap-2">
                       <button 
                         className="text-blue-500 hover:text-blue-700"

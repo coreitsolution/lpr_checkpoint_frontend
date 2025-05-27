@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react"
 import { MapProps } from "../../types/index"
 import { DEFAULT_DIMENSIONS, DEFAULT_MAP_CONFIG } from "../../constants/map"
-import { useGoogleMap } from "../../hooks/useGoogleMap"
+import { useMap } from "../../hooks/useOpenStreetMap"
 
 // Components
 import Loading from "../../components/loading/Loading"
@@ -17,7 +17,7 @@ const BaseMap: React.FC<MapProps> = ({
   onMapLoad,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null)
-  const { initMap, isLoading, error, mapInstance } = useGoogleMap({
+  const { initMap, isLoading, error, mapInstance } = useMap({
     panControl: panControl,
     zoomControl: zoomControl, 
     mapTypeControl: mapTypeControl,

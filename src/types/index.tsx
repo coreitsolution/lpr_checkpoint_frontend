@@ -1,3 +1,5 @@
+import { Marker, LatLngExpression, Map as LeafletMap } from 'leaflet';
+
 export interface FilesData {
   id: number | null
   extra_registration_id: number | null
@@ -68,7 +70,7 @@ export interface MapProps {
   mapTypeControl?: boolean
   streetViewControl?: boolean
   fullscreenControl?: boolean
-  onMapLoad?: (mapInstance: google.maps.Map | null) => void
+  onMapLoad?: (mapInstance: LeafletMap | null) => void
 }
 
 export interface MapConfig {
@@ -87,7 +89,7 @@ export interface MapConfig {
 
 export interface SearchResult {
   name: string
-  location: google.maps.LatLngLiteral
+  location: LatLngExpression
   placeId?: string
 }
 
@@ -97,7 +99,7 @@ export type CoordinateFormat = {
 }
 
 export interface MarkerManager {
-  currentMarker: google.maps.marker.AdvancedMarkerElement | null
-  clearMarker: () => void
-  createMarker: (location: google.maps.LatLngLiteral) => Promise<void>
+  currentMarker: Marker | null;
+  clearMarker: () => void;
+  createMarker: (location: LatLngExpression) => void | Promise<void>;
 }

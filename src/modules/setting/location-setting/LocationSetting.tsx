@@ -1,4 +1,5 @@
 import React, {useState, useCallback, useEffect} from 'react'
+import { Map as LeafletMap } from 'leaflet';
 
 // Components
 import TextBox from '../../../components/text-box/TextBox'
@@ -6,7 +7,7 @@ import BaseMap from '../../../components/base-map/BaseMap'
 import Loading from "../../../components/loading/Loading"
 
 // Hooks
-import { useMapSearch } from "../../../hooks/useGoogleMapSearch"
+import { useMapSearch } from "../../../hooks/useOpenStreetMapSearch"
 
 // Types
 import { SearchResult } from '../../../types/index'
@@ -16,15 +17,15 @@ import { PopupMessage } from "../../../utils/popupMessage"
 
 interface LocationSettingProps {
   closeDialog: () => void
-  comfirmPoint: (result: SearchResult) => void
+  confirmPoint: (result: SearchResult) => void
   location?: {
     latitude: string,
     longitude: string,
   }
 }
-const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPoint, location}) => {
+const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, confirmPoint, location}) => {
   const [searchText, setSearchText] = useState("")
-  const [map, setMap] = useState<google.maps.Map | null>(null)
+  const [map, setMap] = useState<LeafletMap | null>(null)
 
   const {
     searchPlace,
@@ -33,7 +34,7 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPo
     searchResults,
   } = useMapSearch(map)
 
-  const handleMapLoad = useCallback((mapInstance: google.maps.Map | null) => {
+  const handleMapLoad = useCallback((mapInstance: LeafletMap | null) => {
     setMap(mapInstance)
   }, [])
 
@@ -55,7 +56,7 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, comfirmPo
 
   const handlePointButton = () => {
     if (searchResults && searchResults.length > 0) {
-      comfirmPoint(searchResults[0])
+      confirmPoint(searchResults[0])
       closeDialog()
     }
     else {

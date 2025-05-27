@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import path from "path"
 import Icons from "unplugin-icons/vite"
+import pkg from './package.json';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -22,6 +23,9 @@ export default defineConfig({
     },
   },
   define: {
-    '__APP_VERSION__': JSON.stringify(process.env.npm_package_version),
+    __APP_VERSION__: JSON.stringify(pkg.version)
   },
+  optimizeDeps: {
+    exclude: ['chunk-4JOE6WWI.js']
+  }
 })

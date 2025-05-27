@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./map.scss";
+import L, { Map as LeafletMap, Polyline } from "leaflet";
 import { MapPosition } from "../../features/api/types";
 
 interface Coordinate {
@@ -23,142 +24,102 @@ function Map({
   isCompare = false,
 }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<LeafletMap | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
-  async function initMap(): Promise<void> {
-    var { Map } = (await google.maps.importLibrary(
-      "maps"
-    )) as google.maps.MapsLibrary;
-    var { AdvancedMarkerElement } = (await google.maps.importLibrary(
-      "marker"
-    )) as google.maps.MarkerLibrary;
-
+  useEffect(() => {
     if (!mapRef.current) return;
 
-    var map = new Map(mapRef.current, {
-      mapId: "6ff586e93e18149f",
-      center: { lat: 13, lng: 100 },
-      zoom: 5,
-    });
+    // Prevent re-initializing map
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+    }
 
-    drawDirectionAndMarker(map, AdvancedMarkerElement);
-  }
+    const map = L.map(mapRef.current).setView([13, 100], 5);
+    mapInstanceRef.current = map;
 
-  const drawDirectionAndMarker = (map: google.maps.Map, AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement) => {
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map);
+
+    drawDirectionAndMarker(map);
+
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      map.remove();
+    };
+  }, [isCompare]);
+
+  const drawDirectionAndMarker = (map: LeafletMap) => {
     const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFA500", "#800080"];
 
     if (isCompare && compareCoordinates.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
+      const bounds = L.latLngBounds([]);
 
       compareCoordinates.forEach((coordinateSet, index) => {
-        const path: google.maps.LatLng[] = [];
-        const color = colors[index % colors.length];
-
-        coordinateSet.forEach((coord, coordIndex) => {
-          const position = new google.maps.LatLng(coord.lat, coord.lng);
-          bounds.extend(position);
-          path.push(position);
-
-          // if (
-          //   !isFullScreen &&
-          //   coordIndex !== 0 &&
-          //   coordIndex !== coordinateSet.length - 1
-          // ) {
-          //   return;
-          // }
-
-          const label = document.createElement("div");
-          label.className = "price-tag";
-          label.style.backgroundColor = color;
-
-          if (coordIndex === 0) {
-            label.textContent = `Start`;
-          } else if (coordIndex === coordinateSet.length - 1) {
-            label.textContent = `Stop`;
-          } else {
-            label.textContent = `${coordIndex + 1}`;
-          }
-
-          new AdvancedMarkerElement({
-            position,
-            map,
-            collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
-            content: label,
-          });
+        const latlngs = coordinateSet.map((c) => {
+          const latlng = L.latLng(c.lat, c.lng);
+          bounds.extend(latlng);
+          return latlng;
         });
 
-        new google.maps.Polyline({
-          path,
-          map,
-          strokeColor: color,
-          strokeOpacity: 0.8,
-          strokeWeight: 3,
+        const color = colors[index % colors.length];
+
+        // Draw polyline
+        L.polyline(latlngs, {
+          color,
+          weight: 3,
+          opacity: 0.8,
+        }).addTo(map);
+
+        // Add custom markers
+        coordinateSet.forEach((coord, coordIndex) => {
+          let label = coordIndex === 0 ? "Start" :
+                      coordIndex === coordinateSet.length - 1 ? "Stop" :
+                      `${coordIndex + 1}`;
+
+          const divIcon = L.divIcon({
+            className: "price-tag",
+            html: `<div style="background-color: ${color};">${label}</div>`,
+          });
+
+          L.marker([coord.lat, coord.lng], { icon: divIcon }).addTo(map);
         });
       });
 
       map.fitBounds(bounds);
-    } 
-    else if (coordinates && coordinates.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      const path: google.maps.LatLng[] = [];
-      const color = "#FF0000";
-
-      coordinates.forEach( async (coord) => {
-        const position = new google.maps.LatLng(coord.lat, coord.lng);
-        bounds.extend(position);
-        path.push(position);
-        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
-
-        const container = document.createElement("div")
-        container.style.position = "relative"
-        container.style.display = "flex"
-        container.style.alignItems = "center"
-        container.style.justifyContent = "center"
-        container.style.backgroundColor = "transparent"
-
-        const mapPinIcon = document.createElement("img")
-        mapPinIcon.src = '/svg/map-pin-icon.svg'
-        mapPinIcon.style.width = "30px"
-        mapPinIcon.style.height = "40px"
-
-        container.appendChild(mapPinIcon)
-
-        new AdvancedMarkerElement({
-          map,
-          position: coord,
-          content: container
-        });
+    } else if (coordinates && coordinates.length > 0) {
+      const bounds = L.latLngBounds([]);
+      const latlngs = coordinates.map((c) => {
+        const latlng = L.latLng(c.lat, c.lng);
+        bounds.extend(latlng);
+        return latlng;
       });
 
-      new google.maps.Polyline({
-        path,
-        map,
-        strokeColor: color,
-        strokeOpacity: 0.8,
-        strokeWeight: 3,
+      // Draw polyline
+      L.polyline(latlngs, {
+        color: "#FF0000",
+        weight: 3,
+        opacity: 0.8,
+      }).addTo(map);
+
+      coordinates.forEach((coord) => {
+        const icon = L.icon({
+          iconUrl: "/svg/map-pin-icon.svg",
+          iconSize: [30, 40],
+        });
+
+        L.marker([coord.lat, coord.lng], { icon }).addTo(map);
       });
 
       map.fitBounds(bounds);
     }
   };
-
-  useEffect(() => {
-    initMap();
-
-    // Event listener for fullscreen change
-    const handleFullscreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-      if (document.fullscreenElement) {
-      }
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-    // Cleanup event listener on unmount
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, [isCompare]);
 
   return (
     <div
@@ -168,11 +129,11 @@ function Map({
         width: width,
         height: height,
         position: "absolute",
-        top: isFullScreen ? 0 : '20px',
+        top: isFullScreen ? 0 : "20px",
         left: isFullScreen ? 0 : undefined,
         zIndex: 1,
       }}
-    ></div>
+    />
   );
 }
 

@@ -8,6 +8,8 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { HamburgerProvider } from "./context/HamburgerContext.tsx";
 import { StyledEngineProvider } from '@mui/material/styles';
+import 'leaflet/dist/leaflet.css';
+import "leaflet-boundary-canvas";
 
 // Create a dark theme
 const darkTheme = createTheme({

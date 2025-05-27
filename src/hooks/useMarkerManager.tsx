@@ -1,56 +1,61 @@
 import { useState } from 'react';
+import L, { Marker, Map as LeafletMap, LatLngExpression } from 'leaflet';
 import { MarkerManager } from '../types';
 
-export const useMarkerManager = (map: google.maps.Map | null): MarkerManager => {
-  const [currentMarker, setCurrentMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+export const useMarkerManager = (map: LeafletMap | null): MarkerManager => {
+  const [currentMarker, setCurrentMarker] = useState<Marker | null>(null);
 
   const clearMarker = () => {
     if (currentMarker) {
-      currentMarker.map = null;
+      map?.removeLayer(currentMarker);
       setCurrentMarker(null);
     }
   };
 
-  const createMarker = async (location: google.maps.LatLngLiteral) => {
+  const createMarker = (location: LatLngExpression) => {
     if (!map) return;
 
     clearMarker();
 
-    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
-    const container = document.createElement("div")
-    container.style.position = "relative"
-    container.style.display = "flex"
-    container.style.alignItems = "center"
-    container.style.justifyContent = "center"
-    container.style.backgroundColor = "transparent"
+    const latLng = L.latLng(location);
+    const lat = latLng.lat.toFixed(5);
+    const lng = latLng.lng.toFixed(5);
 
-    const mapPinIcon = document.createElement("img")
-    mapPinIcon.src = '/svg/map-pin-icon.svg'
-    mapPinIcon.style.width = "30px"
-    mapPinIcon.style.height = "40px"
+    const htmlContent = `
+      <div style="
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        background-color: transparent;
+        width: auto; 
+        height: auto;
+        pointer-events: none;
+      ">
+        <img src="/svg/map-pin-icon.svg" style="width: 30px; height: 40px;" />
+        <div style="
+          color: white; 
+          background-color: black; 
+          padding: 5px 10px; 
+          border-radius: 5px; 
+          font-size: 14px; 
+          box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
+          margin-top: 4px;
+          pointer-events: none;
+          width: 150px;
+        ">
+          ${lat}, ${lng}
+        </div>
+      </div>
+    `;
 
-    const label = document.createElement("label")
-    label.textContent = `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
-    label.style.color = "white"
-    label.style.width = "150px"
-    label.style.backgroundColor = "black"
-    label.style.padding = "5px 10px"
-    label.style.borderRadius = "5px"
-    label.style.fontSize = "14px"
-    label.style.boxShadow = "0px 2px 6px rgba(0, 0, 0, 0.3)"
-    label.style.left = "20px"
-    label.style.bottom = "-20px"
-    label.style.position = "absolute"
 
-    container.appendChild(mapPinIcon)
-    container.appendChild(label)
-    
-    const marker = new AdvancedMarkerElement({
-      map,
-      position: location,
-      content: container
+    const icon = L.divIcon({
+      html: htmlContent,
+      className: '',
+      iconAnchor: [15, 40],
     });
 
+    const marker = L.marker(location, { icon }).addTo(map);
     setCurrentMarker(marker);
   };
 

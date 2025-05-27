@@ -6,6 +6,7 @@ import {
   DialogTitle
 } from "@mui/material"
 import { format } from "date-fns"
+import L from 'leaflet';
 
 // Types
 import {
@@ -176,8 +177,30 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   ])
 
   const hasChanges = () => {
-    return JSON.stringify(state) !== JSON.stringify(originalData)
-  }
+    if (!originalData || !state) return false;
+    return (
+      originalData.cam_id !== state.checkpointId ||
+      originalData.checkpoint_name !== state.checkpoint ||
+      originalData.organization !== state.organization ||
+      originalData.province_id !== state.provinceSelect ||
+      originalData.district_id !== state.districtsSelect ||
+      originalData.sub_district_id !== state.subDistrictsSelect ||
+      originalData.route !== state.route ||
+      originalData.latitude !== state.location.latitude ||
+      originalData.longitude !== state.location.longitude ||
+      originalData.rtsp_live_url !== state.rtspLiveView ||
+      originalData.rtsp_process_url !== state.rtspProcess ||
+      originalData.stream_encode_id !== state.streamEncodeSelect ||
+      originalData.api_server_url !== state.apiServer ||
+      originalData.pc_serial_number !== state.pcSerialNumber ||
+      originalData.license_key !== state.license ||
+      originalData.officer_title_id !== state.officer.namePrefixesSelect ||
+      originalData.officer_firstname !== state.officer.name ||
+      originalData.officer_lastname !== state.officer.surname ||
+      originalData.officer_position_id !== state.officer.positionsSelect ||
+      originalData.officer_phone !== state.officer.phone
+    );
+  };
 
   const handleToggle = (key: keyof typeof state.toggles, value: boolean) => {
     setState((prev) => ({
@@ -204,13 +227,16 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     setState((prev) => ({ ...prev, [key]: value }))
   }
 
-  const comfirmPoint = (result: SearchResult) => {
+  const confirmPoint = (result: SearchResult) => {
+    const latLng = L.latLng(result.location);
+    const lat = latLng.lat.toFixed(5);
+    const lng = latLng.lng.toFixed(5);
     setState((prev) => ({
       ...prev,
       location: {
         ...prev.location,
-        latitude: result.location.lat.toString(),
-        longitude: result.location.lng.toString(),
+        latitude: lat.toString(),
+        longitude: lng.toString(),
       },
     }))
   }
@@ -265,7 +291,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
 
   useEffect(() => {
     if (personTitles && personTitles.data) {
-      const options = personTitles.data.filter((row) => row.group === "police").map((row) => ({
+      const options = personTitles.data.map((row) => ({
         label: row.title_th,
         value: row.id,
       }))
@@ -307,7 +333,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     ];
 
     const fieldErrorMessages: Record<string, string> = {
-      checkpointId: "ID (จุดตรวจ)",
+      checkpointId: "ID (กล้อง)",
       checkpoint: "Check point (ด่านตรวจ)",
       "location.latitude": "Location Latitude",
       "location.longitude": "Location longitude",
@@ -405,7 +431,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
     ];
   
     const fieldErrorMessages: Record<string, string> = {
-      checkpointId: "ID (จุดตรวจ)",
+      checkpointId: "ID (กล้อง)",
       checkpoint: "Check point (ด่านตรวจ)",
       "location.latitude": "Location Latitude",
       "location.longitude": "Location Longitude",
@@ -425,6 +451,9 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
       if (typeof value === "object" && value !== null) {
         for (const key in value) {
           const nestedKey = `${field}.${key}`;
+          if (key === "positionsSelect" && value[key as keyof typeof value] === 0) {
+            continue;
+          }
           if (!value[key as keyof typeof value]) {
             PopupMessage(
               "พบข้อผิดพลาด",
@@ -758,7 +787,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
               <div className="my-[10px]">
                 <TextBox
                   id="checkpoint-id"
-                  label="ID (จุดตรวจ)"
+                  label="ID (กล้อง)"
                   placeHolder=""
                   className="w-full"
                   value={state.checkpointId}
@@ -980,7 +1009,7 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
                 closeDialog={() =>
                   handleButtonClick("isLocationSettingOpen", false)
                 }
-                comfirmPoint={comfirmPoint}
+                confirmPoint={confirmPoint}
                 location={state.location}
               />
             </div>
