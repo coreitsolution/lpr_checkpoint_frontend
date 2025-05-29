@@ -1,4 +1,5 @@
-import { API_URL, SERVICE_1_TOKEN } from '../config/apiConfig';
+// Config
+import { getUrls } from '../config/runtimeConfig';
 
 export interface FetchOptions extends RequestInit {
   queryParams?: Record<string, string>;
@@ -29,6 +30,7 @@ const processQueue = (error: any, token?: string) => {
 // Separate refresh token API call
 const refreshTokenRequest = async (): Promise<{ accessToken: string }> => {
   try {
+    const { API_URL } = getUrls();
     const response = await fetch(`${API_URL}/users/refresh`, {
       method: 'POST',
       headers: {
@@ -93,6 +95,7 @@ export const fetchClient = async <T>(
 
   const executeRequest = async (token?: string): Promise<T> => {
     try {
+      const { SERVICE_1_TOKEN } = getUrls();
       const headers: HeadersInit = {
         ...(options.isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(options.isService1 || options.isStream ? 

@@ -29,7 +29,7 @@ import { PopupMessage } from "../../utils/popupMessage"
 import { reformatString } from "../../utils/comonFunction"
 
 // Config
-import { FILE_URL } from '../../config/apiConfig'
+import { getUrls } from '../../config/runtimeConfig';
 
 // Constant
 import { SEPECIAL_SUSPECT_PEOPLE_FILE_NAME } from "../../constants/filename"
@@ -46,6 +46,7 @@ const SuspectPeopleDetected = () => {
   const [specialSuspectPeopleSearchDataList, setSpecialSuspectPeopleSearchDataList] = useState<SpecialSuspectPeopleSearchData[]>([])
   // const [rowsPerPageOptions] = useState(SearchSpecialRowPerPages)
   const dispatch: AppDispatch = useDispatch()
+  const { FILE_URL } = getUrls();
   const { specialSuspectPeopleSearchData, searchDataError, searchDataStatus } = useSelector(
     (state: RootState) => state.searchData
   )

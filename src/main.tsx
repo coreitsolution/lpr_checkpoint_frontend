@@ -8,6 +8,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { HamburgerProvider } from "./context/HamburgerContext.tsx";
 import { StyledEngineProvider } from '@mui/material/styles';
+import { loadConfig } from './config/runtimeConfig';
 import 'leaflet/dist/leaflet.css';
 import "leaflet-boundary-canvas";
 
@@ -20,18 +21,25 @@ const darkTheme = createTheme({
   },
 });
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Provider store={store}>
-      <ThemeProvider theme={darkTheme}>
-        <Router>
-          <StyledEngineProvider injectFirst>
-            <HamburgerProvider>
-              <App />
-            </HamburgerProvider>
-          </StyledEngineProvider>
-        </Router>
-      </ThemeProvider>
-    </Provider>
-  </StrictMode>
-)
+loadConfig().then(() => {
+  const root = document.getElementById('root');
+  if (root) {
+    createRoot(root).render(
+      <StrictMode>
+        <Provider store={store}>
+          <ThemeProvider theme={darkTheme}>
+            <Router>
+              <StyledEngineProvider injectFirst>
+                <HamburgerProvider>
+                  <App />
+                </HamburgerProvider>
+              </StyledEngineProvider>
+            </Router>
+          </ThemeProvider>
+        </Provider>
+      </StrictMode>
+    );
+  }
+}).catch(err => {
+  console.error('Failed to load config.json', err);
+});

@@ -3,7 +3,7 @@ import { PopupMessage, PopupMessageWithCancel } from "../../../utils/popupMessag
 import { format, parse } from "date-fns"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../../app/store"
-import { FILE_URL } from '../../../config/apiConfig'
+import { getUrls } from '../../../config/runtimeConfig';
 
 // Components
 import { Checkbox } from "../../../components/ui/checkbox"
@@ -81,6 +81,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
   const [isBlackListType, setIsBlackListType] = useState(true)
 
   const dispatch: AppDispatch = useDispatch()
+  const { FILE_URL } = getUrls();
   const { provinces, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )

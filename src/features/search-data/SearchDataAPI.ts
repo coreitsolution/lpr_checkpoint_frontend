@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import { SpecialPlateSearchResult, SpecialSuspectPeopleSearchResult } from './SearchDataTypes';
@@ -12,6 +12,7 @@ let mockSpecialSuspectPeopleSearchData = [...specialSuspectPeopleSearchData]
 export const postSpecialPlateSearchData = async (
   body: FilterSpecialPlatesBody
 ): Promise<SpecialPlateSearchResult> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     
     return Promise.resolve({ data: mockSpecialPlateSearchData, countAll: 100 });
@@ -27,6 +28,7 @@ export const postSpecialPlateSearchData = async (
 };
 
 export const dowloadPdfSpecialPlate = async (): Promise<PdfDowload> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data: PdfDowload = {
       filePath: "/pdf/example.pdf"
@@ -41,6 +43,7 @@ export const dowloadPdfSpecialPlate = async (): Promise<PdfDowload> => {
 export const fetchSpecialSuspectPeopleSearchData = async (
   param?: Record<string, string>
 ): Promise<SpecialSuspectPeopleSearchResult> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     let filters: Record<string, string> = {};
 
@@ -115,6 +118,7 @@ export const fetchSpecialSuspectPeopleSearchData = async (
 export const dowloadPdfSpecialSuspectPeople = async (
   data: DetactSpecialPlate
 ): Promise<PdfDowload> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data: PdfDowload = {
       filePath: "/pdf/example.pdf"

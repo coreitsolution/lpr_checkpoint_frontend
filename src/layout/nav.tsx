@@ -20,6 +20,7 @@ import {
 import {
   logout
 } from "../features/auth/authSlice"
+import { getUserInfo } from "../features/auth/authAPI";
 
 dayjs.extend(buddhistEra);
 
@@ -30,6 +31,7 @@ function Nav() {
   const [checkpoint, setCheckpoint] = useState<string>("ด่าน: ")
   const { isOpen, toggleMenu } = useHamburger()
   const [dropdownVisible, setDropdownVisible] = useState(false)
+  const [userInfo, setUserInfo] = useState<any>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
   const dispatch: AppDispatch = useDispatch()
@@ -42,6 +44,20 @@ function Nav() {
     const interval = setInterval(() => {
       setCurrentTime(dayjs(new Date()).format('DD-MM-BBBB HH:mm:ss'))
     }, 1000)
+
+    const fetchUserInfo = async () => {
+      try {
+        const userInfo = await getUserInfo();
+        if (userInfo && userInfo.data && userInfo.data.length > 0) {
+          setUserInfo(userInfo.data[0]);
+        }
+      } 
+      catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    fetchUserInfo();
 
     return () => clearInterval(interval)
   }, [dispatch])
@@ -150,8 +166,8 @@ function Nav() {
               </div>
             </div>
             <div className="flex w-full">
-              <div className="grid grid-cols-[150px] mb-[4px]">
-                <p className="text-[20px] text-center">{checkpoint}</p>
+              <div className="flex flex-col items-center justify-center space-y-1 w-[300px]">
+                <p className="text-[20px] text-center overflow-hidden whitespace-nowrap text-ellipsis w-full" title={checkpoint}>{checkpoint}</p>
                 <p className="text-[15px] h-[25px] text-cyan-300">
                   {currentTime}
                 </p>
@@ -162,7 +178,9 @@ function Nav() {
 
         {/* User Section */}
         <div className="flex items-center space-x-5 mr-[50px] text-white">
-          <p className="text-[20px]">นางสาวธรพร ศรีสมร</p>
+          <div className="flex items-center justify-center w-[150px]">
+            <p className="text-center text-[20px] overflow-hidden whitespace-nowrap text-ellipsis w-full" title={userInfo?.username ?? "User"}>{userInfo?.username ?? "User"}</p>
+          </div>
           <div className="relative">
             <div className="bg-gradient-to-b from-aqua2 to-blueC p-[2px] rounded-full">
               <img 

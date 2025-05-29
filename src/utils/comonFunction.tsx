@@ -38,3 +38,9 @@ export const getFileNameWithoutExtension = (filePath: string): string => {
   const fileName = filePath.split('/').pop()?.split('\\').pop() || ""
   return fileName.split('.').slice(0, -1).join('.') || fileName 
 }
+
+export const getCookieValue = (name: string) => {
+  const cookies = document.cookie.split('; ');
+  const cookie = cookies.find(row => row.startsWith(`${name}=`));
+  return cookie ? cookie.split('=')[1] : null;
+}

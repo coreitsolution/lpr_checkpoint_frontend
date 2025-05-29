@@ -27,7 +27,7 @@ import {
 import { DeleteRequestData, FileUploadDetail } from "../../features/file-upload/fileUploadTypes"
 
 // Config
-import { FILE_URL } from '../../config/apiConfig'
+import { getUrls } from '../../config/runtimeConfig';
 
 // Utils
 import { getFileNameWithoutExtension } from "../../utils/comonFunction"
@@ -44,6 +44,7 @@ interface ImagesUploadProps {
 
 const ImagesUpload: React.FC<ImagesUploadProps> = ({setImagesDataList, imagesDataList}) => {
   const dispatch: AppDispatch = useDispatch()
+  const { FILE_URL } = getUrls();
   const hiddenImageInput = useRef<HTMLInputElement | null>(null)
   const [filesData, setFilesData] = useState<FileUploadDetail[]>(imagesDataList)
   const [isSimpleMode, setIsSimpleMode] = useState<boolean>(false)

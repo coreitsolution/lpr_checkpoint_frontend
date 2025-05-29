@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 
 // Config
-import { FILE_URL } from '../../../config/apiConfig'
+import { getUrls } from '../../../config/runtimeConfig';
 
 // Components
 import { Checkbox } from "../../../components/ui/checkbox"
@@ -99,6 +99,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   const [subDistrictsList, setSubDistrictsList] = useState<SubDistrictsDetail[]>([])
     
   const dispatch: AppDispatch = useDispatch()
+  const { FILE_URL } = getUrls();
   const { provinces, personTypes, personTitles, districts, subDistricts } = useSelector(
     (state: RootState) => state.dropdown
   )

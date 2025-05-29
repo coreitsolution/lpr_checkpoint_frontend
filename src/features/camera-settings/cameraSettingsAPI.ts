@@ -1,4 +1,4 @@
-import { API_URL, STREAM_URL, SERVICE_1_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import {
@@ -15,6 +15,7 @@ let mockData = {data:[...cameraDetailSettingsData]}
 let mockDataDetail = [...cameraDetailSettingsData]
 
 export const fetchCameraSettings = async (param?: Record<string, string>): Promise<CameraSettings> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     return Promise.resolve(mockData)
   }
@@ -27,6 +28,7 @@ export const fetchCameraSettings = async (param?: Record<string, string>): Promi
 export const postCameraSetting = async (
   newSetting: NewCameraDetailSettings
 ): Promise<CameraDetailSettings> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const ids = mockDataDetail.map((setting) => setting.id)
@@ -75,6 +77,7 @@ export const postCameraSetting = async (
 export const putCameraSetting = async (
   updatedSetting: CameraDetailSettings
 ): Promise<CameraDetailSettings> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const index = mockDataDetail.findIndex(
@@ -98,6 +101,7 @@ export const putCameraSetting = async (
 }
 
 export const deleteCameraSetting = async (id: number): Promise<void> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const index = mockDataDetail.findIndex((setting) => setting.id === id)
     if (index !== -1) {
@@ -115,6 +119,7 @@ export const deleteCameraSetting = async (id: number): Promise<void> => {
 }
 
 export const startStream = async (uid: StartStopStream) => {
+  const { STREAM_URL } = getUrls();
   if (isDevEnv) {
 
   }
@@ -126,6 +131,7 @@ export const startStream = async (uid: StartStopStream) => {
 }
 
 export const stopStream = async (uid: StartStopStream) => {
+  const { STREAM_URL } = getUrls();
   if (isDevEnv) {
 
   }
@@ -137,6 +143,7 @@ export const stopStream = async (uid: StartStopStream) => {
 }
 
 export const restartStream = async () => {
+  const { SERVICE_1_URL } = getUrls();
   if (isDevEnv) {
 
   }

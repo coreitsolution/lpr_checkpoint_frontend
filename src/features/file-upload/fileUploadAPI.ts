@@ -1,9 +1,10 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import { FileUploadDetail, FileUpload, FileDelete, DeleteRequestData } from "./fileUploadTypes"
 
 export const postFilesData = async (newFile: FormData): Promise<FileUpload> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const fileData: FileUploadDetail[] = [{
@@ -35,6 +36,7 @@ export const postFilesData = async (newFile: FormData): Promise<FileUpload> => {
 }
 
 export const deleteFilesData = async (url: DeleteRequestData): Promise<FileDelete> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const fileData: DeleteRequestData = {

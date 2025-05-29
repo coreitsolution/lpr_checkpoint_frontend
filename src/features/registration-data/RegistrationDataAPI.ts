@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import { NewSpecialPlates, SpecialPlatesData, SpecialPlatesRespondsDetail, SpecialPlatesDetail } from "./RegistrationDataTypes"
@@ -7,6 +7,7 @@ import { specialRegistrationdata } from "../../mocks/mockRegistrationData"
 let mockSpecialRegistrationData = [...specialRegistrationdata]
 
 export const fetchSpecialPlatesData = async (param?: Record<string, string>): Promise<SpecialPlatesData> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       countAll: mockSpecialRegistrationData.length,
@@ -21,6 +22,7 @@ export const fetchSpecialPlatesData = async (param?: Record<string, string>): Pr
 }
 
 export const postSpecialRegistrationData = async (newSetting: NewSpecialPlates): Promise<SpecialPlatesRespondsDetail> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const ids = mockSpecialRegistrationData.map(setting => setting.id)
@@ -51,6 +53,7 @@ export const postSpecialRegistrationData = async (newSetting: NewSpecialPlates):
 }
 
 export const deleteSpecialPlatesData = async (id: number): Promise<void> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const index = mockSpecialRegistrationData.findIndex((data) => data.id === id)
@@ -75,6 +78,7 @@ export const deleteSpecialPlatesData = async (id: number): Promise<void> => {
 }
 
 export const putSpecialPlateData = async (updated: SpecialPlatesDetail): Promise<SpecialPlatesRespondsDetail> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const index = mockSpecialRegistrationData.findIndex((data) => data.id === updated.id)

@@ -43,7 +43,7 @@ import FullScreenButton from './components/full-screen-button/FullScreenButton'
 import AuthListener from './components/auth-listener/AuthListener'
 
 // Config
-import { WEB_SOCKET_SERVICE } from './config/apiConfig'
+import { getUrls } from './config/runtimeConfig';
 
 // utils
 import { websocketService } from './utils/websocketService'
@@ -51,6 +51,7 @@ import { websocketService } from './utils/websocketService'
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const { WEB_SOCKET_SERVICE } = getUrls();
   const { authData } = useSelector((state: RootState) => state.auth)
   
   useEffect(() => {

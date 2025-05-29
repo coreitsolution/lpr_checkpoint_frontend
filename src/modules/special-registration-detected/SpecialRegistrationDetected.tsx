@@ -33,7 +33,7 @@ import { reformatString } from "../../utils/comonFunction"
 import { PopupMessage } from "../../utils/popupMessage"
 
 // Config
-import { FILE_URL } from '../../config/apiConfig'
+import { getUrls } from '../../config/runtimeConfig';
 
 // Constant
 import { SEPECIAL_PLATE_FILE_NAME } from "../../constants/filename"
@@ -56,6 +56,7 @@ const SpecialRegistrationDetected = () => {
   const tdRefs = useRef<(HTMLTableCellElement | null)[]>([])
   const [carouselData, setCarouselData] = useState<{plate: string, vehicleImage: string, plateImage: string} | null>(null)
   const tableDataRef = useRef<HTMLDivElement>(null)
+  const { FILE_URL } = getUrls();
 
   const dispatch: AppDispatch = useDispatch()
   const { specialPlateSearchData, searchDataStatus, searchDataError } = useSelector(

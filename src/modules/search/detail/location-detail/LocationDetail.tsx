@@ -12,7 +12,7 @@ import { RealTimeLprData } from "../../../../features/live-view-real-time/liveVi
 import { reformatString } from "../../../../utils/comonFunction"
 
 // Config
-import { FILE_URL } from '../../../../config/apiConfig'
+import { getUrls } from '../../../../config/runtimeConfig';
 
 // Component
 import Loading from "../../../../components/loading/Loading"
@@ -29,6 +29,7 @@ export default function LocationDetailDialog({
   isCompare = false,
 }: LocationDialog) {
   const [isLoading, setIsLoading] = useState(false)
+  const { FILE_URL } = getUrls();
 
   useEffect(() => {
     setIsLoading(true)

@@ -60,12 +60,13 @@ import { LastRecognitionData, RealTimeLprData } from "../../features/live-view-r
 import { reformatString, isNumber } from "../../utils/comonFunction"
 
 // Config
-import { IMAGE_URL, TELEGRAM_CHAT_ID } from '../../config/apiConfig'
+import { getUrls } from '../../config/runtimeConfig';
 
 dayjs.extend(buddhistEra)
 
 const CCTV = () => {
   const dispatch: AppDispatch = useDispatch()
+  const { IMAGE_URL, TELEGRAM_CHAT_ID } = getUrls();
   const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
   )

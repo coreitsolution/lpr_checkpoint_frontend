@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment";
 import { 
@@ -34,6 +34,7 @@ import { vehicleModels } from '../../mocks/mockVehicleModels';
 import { personTypes } from "../../mocks/mockPersonTypes";
 
 export const fetchRegions = async (param?: Record<string, string>): Promise<Regions> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: mockRegions
@@ -47,6 +48,7 @@ export const fetchRegions = async (param?: Record<string, string>): Promise<Regi
 };
 
 export const fetchRegistrationTypes = async (param?: Record<string, string>): Promise<RegistrationTypes> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     return Promise.resolve(registrationTypes);
   }
@@ -65,6 +67,7 @@ export const fetchDataStatus = async (): Promise<DataStatusData[]> => {
 };
 
 export const fetchProvinces = async (param?: Record<string, string>): Promise<Provinces> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: provincesDetail.sort((a, b) => { return a.name_th.localeCompare(b.name_th)})
@@ -78,6 +81,7 @@ export const fetchProvinces = async (param?: Record<string, string>): Promise<Pr
 };
 
 export const fetchPoliceDivisions = async (param?: Record<string, string>): Promise<PoliceDivisions> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: policeDivisions
@@ -91,6 +95,7 @@ export const fetchPoliceDivisions = async (param?: Record<string, string>): Prom
 };
 
 export const fetchDistricts = async (param?: Record<string, string>): Promise<Districts> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const filters: Record<string, string> = param?.filter
     ? param.filter.split(",").reduce((acc, filterStr) => {
@@ -126,6 +131,7 @@ export const fetchDistricts = async (param?: Record<string, string>): Promise<Di
 };
 
 export const fetchSubDistricts = async (param?: Record<string, string>): Promise<SubDistricts> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const filters: Record<string, string> = param?.filter
     ? param.filter.split(",").reduce((acc, filterStr) => {
@@ -164,6 +170,7 @@ export const fetchSubDistricts = async (param?: Record<string, string>): Promise
 };
 
 export const fetchPersonTitles = async (param?: Record<string, string>): Promise<PersonTitles> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: personDetail
@@ -177,6 +184,7 @@ export const fetchPersonTitles = async (param?: Record<string, string>): Promise
 };
 
 export const fetchPositions = async (param?: Record<string, string>): Promise<OfficerPositions> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: positions
@@ -190,6 +198,7 @@ export const fetchPositions = async (param?: Record<string, string>): Promise<Of
 };
 
 export const fetchStreamEncodes = async (param?: Record<string, string>): Promise<StreamEncodes> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: streamEncodes
@@ -203,6 +212,7 @@ export const fetchStreamEncodes = async (param?: Record<string, string>): Promis
 };
 
 export const fetchVehicleBodyTypes = async (param?: Record<string, string>): Promise<VehicleBodyTypes> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: vehicleBodyTypes
@@ -216,6 +226,7 @@ export const fetchVehicleBodyTypes = async (param?: Record<string, string>): Pro
 };
 
 export const fetchVehicleBodyTypesTh = async (param?: Record<string, string>): Promise<VehicleBodyTypes> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: vehicleBodyTypes
@@ -229,6 +240,7 @@ export const fetchVehicleBodyTypesTh = async (param?: Record<string, string>): P
 };
 
 export const fetchVehicleColors = async (param?: Record<string, string>): Promise<VehicleColors> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: vehicleColors
@@ -242,6 +254,7 @@ export const fetchVehicleColors = async (param?: Record<string, string>): Promis
 };
 
 export const fetchVehicleMakes = async (param?: Record<string, string>): Promise<VehicleMakes> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: vehicleMakes
@@ -255,6 +268,7 @@ export const fetchVehicleMakes = async (param?: Record<string, string>): Promise
 };
 
 export const fetchVehicleModels = async (param?: Record<string, string>): Promise<VehicleModels> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: vehicleModels
@@ -268,6 +282,7 @@ export const fetchVehicleModels = async (param?: Record<string, string>): Promis
 };
 
 export const fetchPersonTypes = async (param?: Record<string, string>): Promise<PersonTypes> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     return Promise.resolve(personTypes);
   }

@@ -6,7 +6,7 @@ import {
 } from "@mui/material"
 import { format } from "date-fns"
 import "../../../styles/variables.scss"
-import { FILE_URL } from '../../../config/apiConfig'
+import { getUrls } from '../../../config/runtimeConfig';
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 
@@ -72,6 +72,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   const [systemStatusListData, setSystemStatusListData] = useState<SystemStatusData[]>([])
 
   const dispatch: AppDispatch = useDispatch()
+  const { FILE_URL } = getUrls();
   const { vehicleCountData, systemStatusData, connectionData } = useSelector(
     (state: RootState) => state.liveViewRealTimes
   )

@@ -1,7 +1,7 @@
 import React, {useState, useRef, useCallback, useEffect} from 'react'
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "../../../app/store"
-import { FILE_URL } from '../../../config/apiConfig'
+import { getUrls } from '../../../config/runtimeConfig';
 
 // Types
 import {
@@ -39,6 +39,7 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
   const [isRestarting, setIsRestarting] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
   const dispatch: AppDispatch = useDispatch()
+  const { FILE_URL } = getUrls();
 
   useEffect(() => {
     if (selectedRow) {

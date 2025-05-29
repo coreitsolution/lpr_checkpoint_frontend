@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment";
 import {
@@ -18,6 +18,7 @@ import {
 export const fetchLastRecognitions = async (
   param?: Record<string, string>
 ): Promise<LastRecognitionResult> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = { data: param && param.filter === "is_special_plate:1" ? lastRecognitionData.filter((row) => row.is_special_plate === true) : lastRecognitionData}
     return Promise.resolve(data);
@@ -29,6 +30,7 @@ export const fetchLastRecognitions = async (
 };
 
 export const fetchVehicleCount = async (param?: Record<string, string>): Promise<VehicleCountResult> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: vehicleCountListFullData
@@ -51,6 +53,7 @@ export const fetchConnection = async (): Promise<ConnectionResult> => {
 };
 
 export const fetchSystemStatus = async (param?: Record<string, string>): Promise<SystemStatusResult> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: systemStatusListFullData
@@ -66,6 +69,7 @@ export const fetchSystemStatus = async (param?: Record<string, string>): Promise
 export const dowloadFile = async (
   param?: Record<string, string>
 ): Promise<ZipDowload> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data: ZipDowload = {
       data: {

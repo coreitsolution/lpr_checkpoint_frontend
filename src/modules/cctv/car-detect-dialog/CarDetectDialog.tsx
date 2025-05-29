@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react'
-import { FILE_URL } from '../../../config/apiConfig'
+import { getUrls } from '../../../config/runtimeConfig';
 import { format } from "date-fns"
 import Skeleton from '@mui/material/Skeleton'
 
@@ -20,6 +20,7 @@ interface CarDetectDialogProps {
 
 const CarDetectDialog: React.FC<CarDetectDialogProps> = ({closeDialog, latestLprDetect, lprDetectHistoryList}) => {
   const [isLoading, setIsLoading] = useState(false)
+  const { FILE_URL } = getUrls();
 
   useEffect(() => {
     setIsLoading(true)

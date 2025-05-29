@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import {
@@ -12,6 +12,7 @@ import {
 } from "../../mocks/mockSettings"
 
 export const fetchSettings = async (param?: Record<string, string>): Promise<SettingData> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     let filterData:SettingDetail[] = []
     if (param && param.filter && param.filter === "key:live_view_count") {
@@ -32,6 +33,7 @@ export const fetchSettings = async (param?: Record<string, string>): Promise<Set
 }
 
 export const fetchSettingsShort = async (param?: Record<string, string>): Promise<SettingDataShort> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: mockSettingsShort
@@ -45,6 +47,7 @@ export const fetchSettingsShort = async (param?: Record<string, string>): Promis
 }
 
 export const putSettings = async (updatedSetting: SettingDetail): Promise<SettingDetail> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const index = mockSettings.findIndex(

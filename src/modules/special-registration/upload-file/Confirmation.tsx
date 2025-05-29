@@ -24,7 +24,7 @@ import {
 import { FileUploadDetail } from "../../../features/file-upload/fileUploadTypes"
 
 // Config
-import { FILE_URL } from '../../../config/apiConfig'
+import { getUrls } from '../../../config/runtimeConfig';
 
 // Component
 import Loading from "../../../components/loading/Loading"
@@ -42,6 +42,7 @@ interface ConfirmationProps {
 }
 
 const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataList, imagesDataList, textsDataList}) => {
+  const { FILE_URL } = getUrls();
   const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )

@@ -1,9 +1,0 @@
-export const IMAGE_URL = import.meta.env.VITE_IMAGE_BASE_URL;
-export const FILE_URL = import.meta.env.VITE_FILE_UPLOAD_BASE_URL;
-export const STREAM_URL = `${import.meta.env.VITE_STREAM_BASE_URL}/api${import.meta.env.VITE_API_VERSION}`;
-export const API_URL = `${import.meta.env.VITE_BASE_URL}/lpr-node-api/api${import.meta.env.VITE_API_VERSION}`;
-export const TELEGRAM_URL = `${import.meta.env.VITE_TELEGRAM_BASE_URL}/bot`;
-export const WEB_SOCKET_SERVICE = import.meta.env.VITE_WEB_SOCKET_SERVICE_REALTIME;
-export const TELEGRAM_CHAT_ID = import.meta.env.VITE_BASE_TELEGRAM_CHAT_ID;
-export const SERVICE_1_URL = `${import.meta.env.VITE_SERVICE_1_BASE_URL}/api${import.meta.env.VITE_API_VERSION}`;
-export const SERVICE_1_TOKEN = import.meta.env.VITE_SERVICE_1_TOKEN;

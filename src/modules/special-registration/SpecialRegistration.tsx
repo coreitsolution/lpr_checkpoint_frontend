@@ -3,7 +3,7 @@ import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
 import ManageExtraRegistration from "./manage-extra-registration/ManageExtraRegistration"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
-import { FILE_URL } from '../../config/apiConfig'
+import { getUrls } from '../../config/runtimeConfig';
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import {
@@ -69,6 +69,7 @@ function SpecialRegistration() {
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
   const [isFileImportClose, setIsFileImportClose] = useState(false)
   const tableDataRef = useRef<HTMLDivElement>(null)
+  const { FILE_URL } = getUrls();
 
   const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown

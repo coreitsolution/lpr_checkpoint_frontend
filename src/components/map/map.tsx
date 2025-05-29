@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./map.scss";
-import L, { Map as LeafletMap, Polyline } from "leaflet";
+import L, { Map as LeafletMap } from "leaflet";
 import { MapPosition } from "../../features/api/types";
 
 interface Coordinate {

@@ -1,4 +1,4 @@
-import { API_URL } from '../../config/apiConfig';
+import { getUrls } from '../../config/runtimeConfig';
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { isDevEnv } from "../../config/environment"
 import { NewSuspectPeople, SuspectPeopleData, SuspectPeopleRespondsDetail, SuspectPeopleDetail } from "./SuspectPeopleDataTypes"
@@ -7,6 +7,7 @@ import { suspectPeopleDetail } from "../../mocks/mockSuspectPeopleData"
 let mockSpecialSuspectPeopleData = [...suspectPeopleDetail]
 
 export const fetchSpecialSuspectPeopleData = async (param?: Record<string, string>): Promise<SuspectPeopleData> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     const data = {
       data: mockSpecialSuspectPeopleData
@@ -20,6 +21,7 @@ export const fetchSpecialSuspectPeopleData = async (param?: Record<string, strin
 }
 
 export const postSpecialSuspectPeopleData = async (newSetting: NewSuspectPeople): Promise<SuspectPeopleRespondsDetail> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const ids = mockSpecialSuspectPeopleData.map(setting => setting.id)
@@ -48,6 +50,7 @@ export const postSpecialSuspectPeopleData = async (newSetting: NewSuspectPeople)
 }
 
 export const deleteSpecialSuspectPeopleData = async (id: number): Promise<void> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const index = mockSpecialSuspectPeopleData.findIndex((data) => data.id === id)
@@ -72,6 +75,7 @@ export const deleteSpecialSuspectPeopleData = async (id: number): Promise<void> 
 }
 
 export const putSpecialSuspectPeopleData = async (updated: SuspectPeopleDetail): Promise<SuspectPeopleRespondsDetail> => {
+  const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const index = mockSpecialSuspectPeopleData.findIndex((data) => data.id === updated.id)

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../../app/store"
-import { FILE_URL } from '../../config/apiConfig'
 import { SelectChangeEvent } from '@mui/material/Select'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
@@ -44,6 +43,9 @@ import UploadFile from "./upload-file/UploadFile"
 // Constant
 import { SpecialRowPerPages } from "../../constants/dropdown"
 
+// Config
+import { getUrls } from '../../config/runtimeConfig';
+
 dayjs.extend(buddhistEra)
 
 function SpecialSuspectPerson() {
@@ -67,6 +69,7 @@ function SpecialSuspectPerson() {
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
   const [isFileImportClose, setIsFileImportClose] = useState(false)
   const tableDataRef = useRef<HTMLDivElement>(null)
+  const { FILE_URL } = getUrls();
 
   const { dataStatus, personTypes, personTitles } = useSelector(
     (state: RootState) => state.dropdown
