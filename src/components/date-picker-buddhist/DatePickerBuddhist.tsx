@@ -4,26 +4,39 @@ import { Typography } from '@mui/material'
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers"
 import buddhistEraAdapter from "../../utils/buddhistEraAdapter"
 import dayjs, { Dayjs } from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 type CustomDatePickerProps = Omit<DatePickerProps<Dayjs>, 'value' | 'onChange'> & {
-    id?: string
-    label?: string
-    labelTextSize?: string
-    className?: string
-    value: Date | null
-    onChange: (date: Date | null, context: any) => void
-    isWithTime?: boolean
+  id?: string
+  label?: string
+  labelTextSize?: string
+  className?: string
+  value: Date | null
+  onChange: (date: Date | null, context: any) => void
+  isWithTime?: boolean
+  error?: boolean
+  register?: any
+  sx?: object
 }
 
 const DatePickerBuddhist: React.FC<CustomDatePickerProps> = ({
-    id,
-    label,
-    labelTextSize,
-    onChange,
-    value,
-    isWithTime,
-    ...props
+  id,
+  label,
+  labelTextSize,
+  onChange,
+  value,
+  isWithTime,
+  error = false, 
+  register,
+  sx = {},
+  ...props
 }) => {
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const dayjsValue = value ? dayjs(value) : null;
 
   const handleDateChange = (date: dayjs.Dayjs | null, context: any) => {
@@ -37,7 +50,28 @@ const DatePickerBuddhist: React.FC<CustomDatePickerProps> = ({
     style: { height: '40px', justifyContent: 'center' },
     fullWidth: true,
     inputProps: {
-      placeholder: 'วว/ดด/ปปปป ชช:นน',
+      placeholder: t('place-holder.date-time'),
+    },
+    error: error,
+    sx: {
+      '& .MuiOutlinedInput-root': {
+        height: '40px',
+        borderRadius: '5px',
+        backgroundColor: 'white',
+        '& fieldset': {
+          borderColor: error ? 'red' : 'default',
+          borderWidth: '2px',
+        },
+        '&:hover fieldset': {
+          borderColor: error ? 'red' : 'default',
+          borderWidth: '2px',
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: error ? 'red' : 'default',
+          borderWidth: '2px',
+        },
+      },
+      ...sx,
     },
   }
 
@@ -52,7 +86,7 @@ const DatePickerBuddhist: React.FC<CustomDatePickerProps> = ({
           {label}
         </Typography>
       )}
-      <LocalizationProvider dateAdapter={buddhistEraAdapter} adapterLocale="th" >
+      <LocalizationProvider dateAdapter={i18n.language === "th" ? buddhistEraAdapter : AdapterDayjs} adapterLocale={i18n.language === "th" ? "th" : "en"} >
         {
           !isWithTime ? 
           (

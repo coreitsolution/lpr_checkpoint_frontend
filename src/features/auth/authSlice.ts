@@ -13,6 +13,7 @@ const initialState: AuthState = {
   authData: { 
     token: localStorage.getItem("token") || null,
     isAuthenticated: !!localStorage.getItem("token"),
+    username: localStorage.getItem("username") || null,
   },
   authStatus: Status.IDLE,
   authError: null,
@@ -57,6 +58,7 @@ const authSlice = createSlice({
         state.authData.isAuthenticated = true
         state.authData.token = action.payload.accessToken || null
         localStorage.setItem('token', action.payload.accessToken)
+        localStorage.setItem('username', action.meta.arg.username)
       })
       .addCase(login.rejected, (state, action) => {
         state.authStatus = Status.FAILED
@@ -83,6 +85,7 @@ const authSlice = createSlice({
           state.authData.token = null;
           state.authData.isAuthenticated = false;
           localStorage.removeItem("token");
+          localStorage.removeItem("username");
         }
       })
   },

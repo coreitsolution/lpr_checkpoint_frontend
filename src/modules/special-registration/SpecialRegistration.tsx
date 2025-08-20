@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
 import ManageExtraRegistration from "./manage-extra-registration/ManageExtraRegistration"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../app/store"
 import { getUrls } from '../../config/runtimeConfig';
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import {
   SelectChangeEvent,
-  Dialog,
-  DialogTitle
 } from "@mui/material"
 
 // Icon
@@ -19,18 +17,10 @@ import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 // Types
 import {
   SpecialPlatesRespondsDetail,
+  SpecialPlatesData,
 } from '../../features/registration-data/RegistrationDataTypes'
 import { FilterSpecialRegistration } from "../../features/api/types"
-import { DeleteRequestData } from "../../features/file-upload/fileUploadTypes"
-
-// API
-import {
-  deleteFilesDataThunk,
-} from "../../features/file-upload/fileUploadSlice"
-import { 
-  fetchSpecialPlateDataThunk,
-  deleteSpecialPlateDataThunk,
-} from "../../features/registration-data/RegistrationDataSlice"
+import { DeleteRequestData, FileDelete } from "../../features/file-upload/fileUploadTypes"
 
  // Context
 import { useHamburger } from "../../context/HamburgerContext"
@@ -46,15 +36,20 @@ import { SpecialRowPerPages } from "../../constants/dropdown"
 // Modules
 import UploadFile from "./upload-file/UploadFile"
 
+// Utils
+import { formatNumber } from "../../utils/commonFunction"
+import { fetchClient, combineURL } from "../../utils/fetchClient"
+
+// i18n
+import { useTranslation } from "react-i18next";
+
 dayjs.extend(buddhistEra)
 
 function SpecialRegistration() {
-  const dispatch: AppDispatch = useDispatch()
-  const { specialPlatesData } = useSelector(
-    (state: RootState) => state.registrationData
-  )
+  // i18n
+  const { t, i18n } = useTranslation();
 
-  const [isAddRegistationOpen, setIsAddRegistationOpen] = useState(false)
+  const [isAddRegistrationOpen, setIsAddRegistrationOpen] = useState(false)
   const [isFileImportOpen, setIsFileImportOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [specialRegistrationsList, setSpecialRegistrationsList] = useState<SpecialPlatesRespondsDetail[]>([])
@@ -65,11 +60,12 @@ function SpecialRegistration() {
   const [page, setPage] = useState(1)
   const [pageInput, setPageInput] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
+  const [totalData, setTotalData] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(SpecialRowPerPages[SpecialRowPerPages.length - 1])
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
   const [isFileImportClose, setIsFileImportClose] = useState(false)
   const tableDataRef = useRef<HTMLDivElement>(null)
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL, API_URL } = getUrls();
 
   const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
@@ -83,28 +79,32 @@ function SpecialRegistration() {
 
   const handleEditClick = (item: SpecialPlatesRespondsDetail) => {
     setSelectedRow(item)
-    setIsAddRegistationOpen(true)
+    setIsAddRegistrationOpen(true)
     setIsEditMode(true)
   }
 
   const handleAddClick = () => {
     setIsEditMode(false)
-    setIsAddRegistationOpen(true)
+    setIsAddRegistrationOpen(true)
   }
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
     try {
-      await dispatch(
-        deleteFilesDataThunk(deleteFile)
-      ).unwrap()
+      await fetchClient<FileDelete>(combineURL(API_URL, "/upload/remove"), {
+        method: "POST",
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(deleteFile),
+      })
     }
     catch (error) {
-      PopupMessage("ลบข้อมูลไม่สำเร็จ", "ไม่สามารถลบข้อมูลได้", "error")
+      PopupMessage(t('message.error.delete-data-failed'), t('message.error.can-not-delete-data'), "error")
     }
   }
 
   const handleDeleteClick = async (id: number) => {
-    const confirmed = await PopupMessageWithCancel("ยันยันการลบ", "คุณต้องการดำเนินการต่อใช่หรือไม่?", "ยืนยัน", "ยกเลิก", "warning", "#b91c1c")
+    const confirmed = await PopupMessageWithCancel(t('message.warning.delete-confirmation'), t('message.warning.do-you-want-to-continue'), t('button.confirm'), t('button.cancel'), "warning", "#b91c1c")
             
     if (confirmed) {
       try {
@@ -130,12 +130,19 @@ function SpecialRegistration() {
           })
         }
 
-        await dispatch(deleteSpecialPlateDataThunk(id))
-        PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
+        await fetchClient<void>(
+          combineURL(API_URL, `/special-plates/delete`),
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: id })
+          }
+        )
+        PopupMessage(t('message.success.delete-data-success'), t('message.success.data-saved-successfully'), 'success')
         await fetchSpecialPlateData(page.toString(), rowsPerPage.toString())
       } 
       catch (error) {
-        PopupMessage("ลบข้อมูลไม่สำเร็จ", "ข้อมูลไม่สามารถลบได้", "error")
+        PopupMessage(t('message.error.delete-data-failed'), t('message.error.data-cannot-delete'), "error")
       }
     }
   }
@@ -187,7 +194,7 @@ function SpecialRegistration() {
     await fetchSpecialPlateData('1', rowsPerPage.toString(), filter)
   }
 
-  const fetchSpecialPlateData = useCallback(async (page: string, limit: string, filter?:string[]) => {
+  const fetchSpecialPlateData = async (page: string, limit: string, filter?:string[]) => {
     const allFilter = filter ? ["deleted:0", ...filter] : ["deleted:0"]
     const query: Record<string, string> = {
       "filter": allFilter.join(","),
@@ -195,11 +202,28 @@ function SpecialRegistration() {
       "limit": limit,
     }
     setIsLoading(true)
-    await dispatch(fetchSpecialPlateDataThunk(query))
+    try {
+      const response = await fetchClient<SpecialPlatesData>(combineURL(API_URL, "/special-plates/get"), {
+        method: "GET",
+        queryParams: query,
+      });
+
+      if (response.data) {
+        setSpecialRegistrationsList(response.data)
+        if (response.countAll) {
+          setTotalPages(Math.ceil(response.countAll / rowsPerPage))
+          setTotalData(response.countAll)
+        }
+      }
+    }
+    catch (error) {
+      setSpecialRegistrationsList([]);
+      setTotalPages(1);
+    }
     setTimeout(() => {
       setIsLoading(false)
     }, 500)
-  }, [dispatch])
+  }
 
   useEffect(() => {
     setIsLoading(false)
@@ -210,29 +234,16 @@ function SpecialRegistration() {
   }, [])
 
   useEffect(() => {
-    if (!isAddRegistationOpen) {
+    if (!isAddRegistrationOpen) {
       fetchSpecialPlateData('1', rowsPerPage.toString())
     }
-  }, [isAddRegistationOpen])
+  }, [isAddRegistrationOpen])
 
   useEffect(() => {
     if (!isFileImportOpen) {
       fetchSpecialPlateData('1', rowsPerPage.toString())
     }
   }, [isFileImportOpen])
-
-  useEffect(() => {
-    if (specialPlatesData && specialPlatesData.data) {
-      setSpecialRegistrationsList(specialPlatesData.data)
-      if (specialPlatesData.countAll) {
-        setTotalPages(Math.ceil(specialPlatesData.countAll / rowsPerPage))
-      }
-    }
-    else {
-      setSpecialRegistrationsList([])
-    }
-    setIsLoading(false)
-  }, [specialPlatesData])
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
     event.preventDefault()
@@ -277,10 +288,6 @@ function SpecialRegistration() {
     setIsFileImportClose(false)
   }
 
-  const handleCloseDialog = () => {
-    setIsFileImportClose(true)
-  }
-
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
@@ -288,8 +295,8 @@ function SpecialRegistration() {
         <div className="min-w-0">
           <div id="head" className="flex h-[50px] justify-between">
             <div className="flex flex-col">
-              <p className="text-[20px] text-white">รายการทะเบียนพิเศษ</p>
-              <p className="text-[14px] text-white">{`จำนวน ${specialRegistrationsList.length} รายการ`}</p>
+              <p className="text-[20px] text-white">{t('screen.special-plate')}</p>
+              <p className="text-[14px] text-white">{`${t('text.amount')} ${formatNumber(totalData ?? 0)} ${t('text.item')}`}</p>
             </div>
             <div className="flex items-end space-x-2">
               <button 
@@ -298,7 +305,7 @@ function SpecialRegistration() {
                 onClick={handleFileImportOpen}
               >
                 <Icon icon={Upload} size={20} color="dodgerBlue" />
-                <span className="ml-[8px] text-[15px]">นำเข้าข้อมูล</span>
+                <span className="ml-[8px] text-[15px]">{t('button.import-data')}</span>
               </button>
               <button 
                 type="button" 
@@ -306,7 +313,7 @@ function SpecialRegistration() {
                 onClick={handleAddClick}
               >
                 <Icon icon={Plus} size={20} color="#FFFFFF" />
-                <span className="ml-[8px] text-[15px]">เพิ่มทะเบียนพิเศษ</span>
+                <span className="ml-[8px] text-[15px]">{t('button.add-special-plate')}</span>
               </button>
             </div>
           </div>
@@ -321,14 +328,14 @@ function SpecialRegistration() {
                   <table className="w-full text-[15px]">
                     <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80">
                       <tr className="h-[50px] bg-swamp border-none">
-                        <th className="text-center text-white">ทะเบียน</th>
-                        <th className="text-center text-white">รูป</th>
-                        <th className="text-center text-white">กลุ่มทะเบียน</th>
-                        <th className="text-center text-white">วันที่เพิ่ม</th>
-                        <th className="text-center text-white">วันที่แก้ไข</th>
-                        <th className="text-center text-white">เจ้าของข้อมูล</th>
-                        <th className="text-center text-white">หน่วยงาน</th>
-                        <th className="text-center text-white">สถานะ</th>
+                        <th className="text-center text-white">{t('table.column.plate')}</th>
+                        <th className="text-center text-white">{t('table.column.image')}</th>
+                        <th className="text-center text-white">{t('table.column.plate-type')}</th>
+                        <th className="text-center text-white">{t('table.column.added-date')}</th>
+                        <th className="text-center text-white">{t('table.column.edited-date')}</th>
+                        <th className="text-center text-white">{t('table.column.owner-data')}</th>
+                        <th className="text-center text-white">{t('table.column.owner-agency')}</th>
+                        <th className="text-center text-white">{t('table.column.status')}</th>
                         <th className="w-[120px] text-center text-white"></th>
                       </tr>
                     </thead>
@@ -349,7 +356,7 @@ function SpecialRegistration() {
                                   <div>
                                     {
                                       item.special_plate_images.map((image, index) => (
-                                        <img key={index} src={`${FILE_URL}${image.url}`} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]" />
+                                        <img key={index} src={`${IMAGE_URL}${image.url}`} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]" />
                                       ))
                                     }
                                   </div>
@@ -364,11 +371,11 @@ function SpecialRegistration() {
                                 <p className="pl-[10px]">{registrationTypes?.data?.find((row) => row.id === item.plate_class_id)?.title_en}</p>
                               }
                             </td>
-                            <td className="text-center bg-tuna">{ dayjs(item.createdAt).format('DD/MM/BBBB') }</td>
-                            <td className="text-center bg-celtic">{ dayjs(item.updatedAt).format('DD/MM/BBBB') }</td>
+                            <td className="text-center bg-tuna">{ dayjs(item.createdAt).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') }</td>
+                            <td className="text-center bg-celtic">{ dayjs(item.updatedAt).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') }</td>
                             <td className="text-center bg-tuna">
                               {
-                                item.case_owner_name === "" ? "ไม่ระบุตัวตน" : item.case_owner_name
+                                item.case_owner_name === "" ? t('text.owner-unknown') : item.case_owner_name
                               }
                             </td>
                             <td className="text-center bg-celtic">
@@ -402,7 +409,7 @@ function SpecialRegistration() {
                         )) :
                         !isLoading && isSearch && (
                           <tr className="h-[50px] w-full border-b-[1px] border-dashed border-darkGray">
-                            <td colSpan={9} className="text-center bg-tuna">ไม่มีข้อมูล</td>
+                            <td colSpan={9} className="text-center bg-tuna">{t('text.no-data')}</td>
                           </tr>
                         )
                       }
@@ -420,7 +427,6 @@ function SpecialRegistration() {
               rowsPerPageOptions={rowsPerPageOptions}
               handleRowsPerPageChange={handleRowsPerPageChange}
               totalPages={totalPages}
-              textFieldFontSize="15px"
               pageInput={pageInput.toString()}
               handlePageInputKeyDown={handlePageInputKeyDown}
               handlePageInputChange={handlePageInputChange}
@@ -432,39 +438,18 @@ function SpecialRegistration() {
             setFilterData={setFilterData}
           />
         </div>
-        <Dialog open={isAddRegistationOpen} onClose={() => {}} className="absolute z-30">
-          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
-            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] bg-black text-white w-[80vw]">
-              <DialogTitle className="text-[28px]">จัดการทะเบียนพิเศษ</DialogTitle>
-              <div className="px-5 pb-5">
-                <ManageExtraRegistration 
-                  closeDialog={() => setIsAddRegistationOpen(false)} 
-                  selectedRow={selectedRow}
-                  isEditMode={isEditMode}
-                />
-              </div>
-            </div>
-          </div>
-        </Dialog>
+        <ManageExtraRegistration 
+          open={isAddRegistrationOpen}
+          closeDialog={() => setIsAddRegistrationOpen(false)} 
+          selectedRow={selectedRow}
+          isEditMode={isEditMode}
+        />
         {/* Import File */}
-        <Dialog open={isFileImportOpen} onClose={() => {}} className="absolute z-30">
-          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
-            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] bg-black text-white w-[80vw] h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center">
-                <DialogTitle className="text-[28px]">นำเข้าข้อมูล</DialogTitle>
-                <button
-                  onClick={handleCloseDialog} 
-                  className="text-white bg-transparent border-0 text-[28px] pr-6"
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="px-5 pb-5">
-                <UploadFile closeDialog={() => setIsFileImportOpen(false)} isFileImportClose={isFileImportClose}/>
-              </div>
-            </div>
-          </div>
-        </Dialog>
+        <UploadFile 
+          open={isFileImportOpen} 
+          closeDialog={() => setIsFileImportOpen(false)} 
+          isFileImportClose={isFileImportClose}
+        />
       </div>
     </div>
   )

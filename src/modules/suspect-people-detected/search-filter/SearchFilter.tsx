@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react"
 import {
   SelectChangeEvent,
 } from "@mui/material"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../../app/store"
 
 // Types
 import { FilterSpecialSuspectPeople } from "../../../features/api/types";
@@ -16,18 +16,12 @@ import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePic
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import AutoCompleteMultiple, { OptionType } from "../../../components/auto-complete/AutoCompleteMultiple"
 
-// API
-import { 
-  fetchCameraSettingsThunk,
-} from "../../../features/camera-settings/cameraSettingsSlice"
-
 interface SearchFilterProps {
   setFilterData: (filterData: FilterSpecialSuspectPeople) => void
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
 
-  const dispatch: AppDispatch = useDispatch()
   const [firstname, setFirstname] = useState("")
   const [lastname, setLastname] = useState("")
   const [plateConfidence, setPlateConfidence] = useState("")
@@ -46,10 +40,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
   )
-
-  useEffect(() => {
-    dispatch(fetchCameraSettingsThunk())
-  }, [dispatch])
 
   const filterData: FilterSpecialSuspectPeople = {
     namePrefix: Number(selectedNamePrefix),
@@ -211,10 +201,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 sx={{ marginTop: "5px" }}
                 id="firstname"
                 label="ชื่อ"
-                placeHolder=""
-                className="w-full"
+                placeholder=""
                 labelFontSize="15px"
-                textFieldFontSize="15px"
                 value={firstname}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFirstname(event.target.value)}
               />
@@ -224,10 +212,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 sx={{ marginTop: "5px" }}
                 id="lastname"
                 label="นามสกุล"
-                placeHolder=""
-                className="w-full"
+                placeholder=""
                 labelFontSize="15px"
-                textFieldFontSize="15px"
                 value={lastname}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLastname(event.target.value)}
               />
@@ -246,10 +232,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 <TextBox
                   sx={{ marginTop: "0px" }}
                   id="percent-accuracy"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
+                  label=""
                 />
               </div>
             </div>

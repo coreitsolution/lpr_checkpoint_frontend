@@ -4,11 +4,11 @@ import {
   fetchVehicleCount,
   fetchConnection,
   fetchSystemStatus,
-  dowloadFile,
+  downloadFile,
 } from "./liveViewRealTimeAPI"
 import {
   LastRecognitionResult,
-  ZipDowload,
+  ZipDownload,
   VehicleCountResult,
   ConnectionResult,
   SystemStatusResult,
@@ -21,7 +21,7 @@ interface LiveViewRealTimesState {
   vehicleCountData: VehicleCountResult | null
   connectionData: ConnectionResult | null
   systemStatusData: SystemStatusResult | null
-  dowloadPath: ZipDowload | null
+  downloadPath: ZipDownload | null
   liveViewRealTimesStatus: Status
   liveViewRealTimesError: string | null
 }
@@ -32,7 +32,7 @@ const initialState: LiveViewRealTimesState = {
   vehicleCountData: null,
   connectionData: null,
   systemStatusData: null,
-  dowloadPath: null,
+  downloadPath: null,
   liveViewRealTimesStatus: Status.IDLE,
   liveViewRealTimesError: null,
 }
@@ -69,10 +69,10 @@ export const fetchVehicleCountThunk = createAsyncThunk(
   }
 )
 
-export const dowloadFileThunk = createAsyncThunk(
-  "liveViewRealTimes/dowloadData",
+export const downloadFileThunk = createAsyncThunk(
+  "liveViewRealTimes/downloadData",
   async (param?: Record<string, string>) => {
-    const response = await dowloadFile(param)
+    const response = await downloadFile(param)
     return response
   }
 )
@@ -149,18 +149,18 @@ const liveViewRealTimesSlice = createSlice({
           action.error.message || "Failed to fetch systemStatusData"
       })
 
-      // Dowload file
-      .addCase(dowloadFileThunk.pending, (state) => {
+      // Download file
+      .addCase(downloadFileThunk.pending, (state) => {
         state.liveViewRealTimesStatus = Status.LOADING
         state.liveViewRealTimesError = null
       })
-      .addCase(dowloadFileThunk.fulfilled, (state, action) => {
+      .addCase(downloadFileThunk.fulfilled, (state, action) => {
         state.liveViewRealTimesStatus = Status.SUCCEEDED
-        state.dowloadPath = action.payload
+        state.downloadPath = action.payload
       })
-      .addCase(dowloadFileThunk.rejected, (state, action) => {
+      .addCase(downloadFileThunk.rejected, (state, action) => {
         state.liveViewRealTimesStatus = Status.FAILED
-        state.liveViewRealTimesError = action.error.message || "Failed to fetch dowloadPath"
+        state.liveViewRealTimesError = action.error.message || "Failed to fetch downloadPath"
       })
   },
 })

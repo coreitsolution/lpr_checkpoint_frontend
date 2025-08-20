@@ -17,6 +17,7 @@ import {
   fetchVehicleMakes,
   fetchVehicleModels,
   fetchPersonTypes,
+  fetchPoliceStations,
 } from "./dropdownAPI";
 import { 
   Provinces,
@@ -35,6 +36,7 @@ import {
   VehicleMakes,
   VehicleModels,
   PersonTypes,
+  PoliceStationResponse,
 } from "./dropdownTypes";
 
 interface DropdownState {
@@ -54,6 +56,7 @@ interface DropdownState {
   vehicleMakes: VehicleMakes | null;
   vehicleModels: VehicleModels | null;
   personTypes: PersonTypes | null;
+  policeStations: PoliceStationResponse | null;
   dropdownStatus: Status;
   dropdownError: string | null;
 }
@@ -75,6 +78,7 @@ const initialState: DropdownState = {
   vehicleMakes: null,
   vehicleModels: null,
   personTypes: null,
+  policeStations: null,
   dropdownStatus: Status.IDLE,
   dropdownError: null,
 };
@@ -203,6 +207,14 @@ export const fetchPersonTypesThunk = createAsyncThunk(
   "personTypes/fetchPersonTypes",
   async (param?: Record<string, string>) => {
     const response = await fetchPersonTypes(param);
+    return response;
+  }
+);
+
+export const fetchPoliceStationsThunk = createAsyncThunk(
+  "policeStations/fetchPoliceStations",
+  async (param?: Record<string, string>) => {
+    const response = await fetchPoliceStations(param);
     return response;
   }
 );
@@ -434,6 +446,20 @@ const dropdownSlice = createSlice({
       .addCase(fetchPersonTypesThunk.rejected, (state, action) => {
         state.dropdownStatus = Status.FAILED;
         state.dropdownError = action.error.message || "Failed to fetch personTypes";
+      });
+
+    builder
+      .addCase(fetchPoliceStationsThunk.pending, (state) => {
+        state.dropdownStatus = Status.LOADING;
+        state.dropdownError = null;
+      })
+      .addCase(fetchPoliceStationsThunk.fulfilled, (state, action) => {
+        state.dropdownStatus = Status.SUCCEEDED;
+        state.policeStations = action.payload;
+      })
+      .addCase(fetchPoliceStationsThunk.rejected, (state, action) => {
+        state.dropdownStatus = Status.FAILED;
+        state.dropdownError = action.error.message || "Failed to fetch police stations";
       });
   },
 });

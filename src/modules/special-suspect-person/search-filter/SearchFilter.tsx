@@ -148,11 +148,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "5px" }}
                   id="name"
                   label="ชื่อ"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   value={firstname}
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
                   onChange={(e: any) => setFirstname(e.target.value)}
                 />
               </div>
@@ -161,11 +159,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "5px" }}
                   id="last-name"
                   label="นามสกุล"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   value={lastname}
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
                   onChange={(e: any) => setLastname(e.target.value)}
                 />
               </div>
@@ -186,11 +182,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "5px" }}
                   id="agency"
                   label="หน่วยงานเจ้าของข้อมูล"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   value={agencyText}
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
                   onChange={(e: any) => setAgencyText(e.target.value)}
                 />
               </div>

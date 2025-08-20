@@ -5,11 +5,17 @@ import "./DotInform.scss";
 import VehicleDisplay from "../vehicle-display/vehicleDisplay";
 import Loading from "../../../../components/loading/Loading";
 
+// i18n
+import { useTranslation } from "react-i18next";
+
 interface DOTInform {
   vehicle: any;
 }
 
 function DOTInform({ vehicle }: DOTInform) {
+  // i18n
+  const { t } = useTranslation();
+
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<DOTInform>();
 
@@ -52,33 +58,33 @@ function DOTInform({ vehicle }: DOTInform) {
               color: "white",
             }}
           >
-            ข้อมูลรถยนต์
+            {t('text.vehicle-data2')}
           </p>
         </div>
 
         <div className="text-[14px]">
           <div className="flex h-[43.5px]">
-            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">ทะเบียนรถ</div>
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">{t('text.plate')}</div>
             <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.plateId}</div>
           </div>
 
           <div className="flex h-[43.5px]">
-            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">ยี่ห้อ</div>
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">{t('text.car-brand')}</div>
             <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.brand}</div>
           </div>
 
           <div className="flex h-[43.5px]">
-            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">สี</div>
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">{t('text.car-color')}</div>
             <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.color}</div>
           </div>
 
           <div className="flex h-[43.5px]">
-            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">รุ่น/แบบ</div>
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">{t('text.model-type')}</div>
             <div className="w-2/3 bg-content p-2 flex items-center">{data?.vehicle.model}</div>
           </div>
 
           <div className="flex h-[43.5px]">
-            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">ประเภท</div>
+            <div className="w-1/3 font-semibold bg-title p-2 flex items-center">{t('text.car-type')}</div>
             <div className="w-2/3 bg-content p-2 flex items-center">
               {data?.vehicle.type}
             </div>

@@ -13,6 +13,8 @@ import telegramReducer from "../features/telegram/TelegramSlice";
 import searchDataReducer from "../features/search-data/SearchDataSlice";
 import suspectPeopleDataReducer from "../features/suspect-people/SuspectPeopleDataSlice";
 import settingsReducer from "../features/settings/settingsSlice";
+import refreshReducer from "../features/refresh/refreshSlice";
+import realTimeReducer from "../features/realtime-data/realtimeDataSlice";
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +32,8 @@ export const store = configureStore({
     searchData: searchDataReducer,
     suspectPeopleData: suspectPeopleDataReducer,
     settingsData: settingsReducer,
+    refresh: refreshReducer,
+    realtimeData: realTimeReducer,
   },
 });
 

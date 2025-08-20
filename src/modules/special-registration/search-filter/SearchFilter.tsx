@@ -129,11 +129,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "5px" }}
                   id="character"
                   label="หมวดอักษร"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   value={letterCategory}
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
                   onChange={(e: any) => setLetterCategory(e.target.value)}
                 />
               </div>
@@ -142,11 +140,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "5px" }}
                   id="registration-number"
                   label="เลขทะเบียน"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   value={carRegistration}
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
                   onChange={(e: any) => setCarRegistration(e.target.value)}
                 />
               </div>
@@ -165,7 +161,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 <SelectBox
                   sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
                   id="select-registrations-type"
-                  className="w-full"
                   value={selectedRegistrationType}
                   onChange={(event: SelectChangeEvent<any>) => setSelectedRegistrationType(event.target.value)}
                   options={registrationTypesOptions}
@@ -178,11 +173,9 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   sx={{ marginTop: "5px" }}
                   id="agency"
                   label="หน่วยงานเจ้าของข้อมูล"
-                  placeHolder=""
-                  className="w-full"
+                  placeholder=""
                   value={agencyText}
                   labelFontSize="15px"
-                  textFieldFontSize="15px"
                   onChange={(e: any) => setAgencyText(e.target.value)}
                 />
               </div>
@@ -190,7 +183,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 <SelectBox
                   sx={{ marginTop: "10px", height: "40px", fontSize: "15px" }}
                   id="select-status"
-                  className="w-full"
                   value={selectedStatus}
                   onChange={(event: SelectChangeEvent<any>) => setSelectedStatus(event.target.value)}
                   options={dataStatusOptions}

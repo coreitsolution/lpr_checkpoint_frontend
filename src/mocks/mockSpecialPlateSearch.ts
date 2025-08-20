@@ -26,12 +26,14 @@ export const specialPlateSearchData: LastRecognitionData[] =
       id: 10,
       body_type: "sedan-standard",
       body_type_th: "รถยนต์นั่งส่วนบุคคล",
+      body_type_en: "Sedan",
     },
     vehicle_color: "Black",
     vehicle_color_info: {
       id: 1,
       color: "black",
       color_th: "ดำ",
+      color_en: "White",
     },
     vehicle_image: i % 2 === 0
       ? "/lpr_images/2024-12-06/vehicle_images/20241206-135555.8IhJ9lKGAUWbggPO_vehicle.jpg"

@@ -2,13 +2,13 @@ import React, { useEffect, useState, useRef } from 'react'
 import {
   Select,
   MenuItem,
-  Dialog,
 } from "@mui/material"
 import { format } from "date-fns"
 import "../../../styles/variables.scss"
 import { getUrls } from '../../../config/runtimeConfig';
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
+import { fetchClient, combineURL } from "../../../utils/fetchClient"
 
 // Icon
 import { Icon } from '../../../components/icons/Icon'
@@ -19,9 +19,6 @@ import RiArrowLeftSFill from "~icons/ri/arrow-left-s-fill"
 // Modules
 import LocationDetailDialog from '../../search/detail/location-detail/LocationDetail'
 
-// API
-import { fetchSystemStatusThunk, fetchVehicleCountThunk, dowloadFileThunk } from "../../../features/live-view-real-time/liveViewRealTimeSlice"
-
 // Types
 import { CameraDetailSettings } from "../../../features/camera-settings/cameraSettingsTypes"
 import { 
@@ -29,20 +26,25 @@ import {
   ConnectionResult, 
   SystemStatusData,
   RealTimeLprData,
+  VehicleCountResult,
+  SystemStatusResult,
+  ZipDownload,
 } from "../../../features/live-view-real-time/liveViewRealTimeTypes"
 import { DirectionDetail } from "../../../features/api/types";
 
 // Services
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../../app/store"
 
 // Component
 import Loading from "../../../components/loading/Loading"
 
 // Utils
-import { reformatString, isNumber } from "../../../utils/comonFunction"
+import { reformatString, isNumber, formatNumber } from "../../../utils/commonFunction"
 import { PopupMessage } from "../../../utils/popupMessage"
-import { websocketService } from '../../../utils/websocketService'
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(buddhistEra)
 
@@ -54,9 +56,12 @@ interface CCTVSideBarProp {
 }
 
 const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, setUpdateLastRecognition, setUpdateSpecialPlate}) => {
+  // i18n
+  const { t, i18n } = useTranslation();
+  
   const [selectedMenu, setSelectedMenu] = useState<string | null>('lastRecognition')
   const [LPRCameraSetting, setLPRCameraSetting] = useState<number | ''>('')
-  const buttonDowloadRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const buttonDownloadRefs = useRef<(HTMLButtonElement | null)[]>([])
   const vehicleInfoRefs = useRef<(HTMLDivElement | null)[]>([])
   const [isOpenFullDirectionDialog, setOpenFullDirectionDialog] = useState(false)
   const [detailData, setDetailData] = useState<RealTimeLprData | null>(null)
@@ -67,14 +72,16 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   const [lastRecognitionData, setLastRecognitionData] = useState<RealTimeLprData | null>(null)
   const [lastRecognitionListData, setLastRecognitionListData] = useState<RealTimeLprData[]>([])
   const [vehicleCountListData, setVehicleCountListData] = useState<VehicleCountData[]>([])
-  const [originalData, setOriginalData] = useState<RealTimeLprData[]>([])
   const [connectionListData, setConnectionListData] = useState<ConnectionResult[]>([])
   const [systemStatusListData, setSystemStatusListData] = useState<SystemStatusData[]>([])
 
-  const dispatch: AppDispatch = useDispatch()
-  const { FILE_URL } = getUrls();
+  const { FILE_URL, IMAGE_URL, API_URL } = getUrls();
   const { vehicleCountData, systemStatusData, connectionData } = useSelector(
     (state: RootState) => state.liveViewRealTimes
+  )
+
+  const { realtimeData } = useSelector(
+    (state: RootState) => state.realtimeData
   )
 
   const tabIcon = {
@@ -91,7 +98,10 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         "orderBy": "id",
         "reverseOrder": "true",
       }
-      await dispatch(fetchVehicleCountThunk(query))
+      await fetchClient<VehicleCountResult>(combineURL(API_URL, "/lpr-data/get-vehicle-count"), {
+        method: "GET",
+        queryParams: query,
+      });
     }
     catch (ex) {
       setVehicleCountListData([])
@@ -105,7 +115,10 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         "orderBy": "id",
         "reverseOrder": "true",
       }
-      await dispatch(fetchSystemStatusThunk(query))
+      await fetchClient<SystemStatusResult>(combineURL(API_URL, "/logs/get"), {
+        method: "GET",
+        queryParams: query,
+      });
     }
     catch (ex) {
       setSystemStatusListData([])
@@ -118,7 +131,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         label: cam_id,
         value: alpr_cam_id,
       }))
-      const newDropdownData = [ {label: "ทั้งหมด", value: 0} , ...dropdownData]
+      const newDropdownData = [ {label: t('text.all'), value: 0} , ...dropdownData]
       setLPRCameraDropdown(newDropdownData)
 
       if (LPRCameraSetting === '' || !newDropdownData.find(item => item.value === LPRCameraSetting)) {
@@ -126,11 +139,11 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
       }
     }
     else {
-      const defaultDropdown = [{ label: "ทั้งหมด", value: 0 }]
+      const defaultDropdown = [{ label: t('text.all'), value: 0 }]
       setLPRCameraDropdown(defaultDropdown)
       setLPRCameraSetting(0)
     }
-  }, [cameraSetting])
+  }, [cameraSetting, i18n.language])
 
   useEffect(() => {
     if (lastRecognitionData) {
@@ -155,35 +168,24 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
 
   useEffect(() => {
     if (LPRCameraSetting === 0 || LPRCameraSetting === '') {
-      setLastRecognitionListData(originalData)
+      setLastRecognitionListData(realtimeData)
     }
     else {
-      const filterData = originalData.filter((item) => item.alprCamId === LPRCameraSetting)
+      const filterData = realtimeData.filter((item) => item.alprCamId === LPRCameraSetting)
       setLastRecognitionListData(filterData)
     }
-  }, [originalData])
+  }, [realtimeData])
 
   useEffect(() => {
-    const handleWebSocketMessage = (message: string) => {
-      const latestData = JSON.parse(message) as RealTimeLprData
-
-      setLastRecognitionData(latestData)
-
-      setOriginalData(prev => [latestData, ...prev].slice(0, 20))
+    if (realtimeData) {
+      setLastRecognitionData(realtimeData[0])
     }
-
-    websocketService.subscribe('lpr-data/new-data', handleWebSocketMessage)
-
-    return () => {
-      websocketService.unsubscribe('lpr-data/new-data', handleWebSocketMessage);
-    }
-  }, [])
+  }, [realtimeData])
 
   useEffect(() => {
     setIsLoading(true)
     fetchVehicleCount()
     fetchSystemStatus()
-    // dispatch(fetchConnectionThunk())
     setIsCompare(false)
     setTimeout(() => {
       setIsLoading(false)
@@ -192,7 +194,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     const interval = setInterval(() => {
       fetchVehicleCount()
       fetchSystemStatus()
-      // dispatch(fetchConnectionThunk())
     }, 3000)
 
     return () => clearInterval(interval)
@@ -206,10 +207,10 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
 
   useEffect(() => {
     if (LPRCameraSetting === 0) {
-      setLastRecognitionListData(originalData)
+      setLastRecognitionListData(realtimeData)
     }
     else {
-      const filterData = originalData.filter((item) => item.alprCamId === LPRCameraSetting)
+      const filterData = realtimeData.filter((item) => item.alprCamId === LPRCameraSetting)
       setLastRecognitionListData(filterData)
     }
   }, [LPRCameraSetting])
@@ -218,13 +219,16 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
   .sort((a, b) => b.id - a.id)
   .slice(0, 20)
 
-  const handleDowloadButtonClick = async(event: React.MouseEvent, id: number) => {
+  const handleDownloadButtonClick = async(event: React.MouseEvent, id: number) => {
     event.stopPropagation()
     try {
       const param: Record<string, string> = {
         "lprDataId": id.toString()
       }
-      const result = await dispatch(dowloadFileThunk(param)).unwrap()
+      const result = await fetchClient<ZipDownload>(combineURL(API_URL, "/lpr-data/get-zipped-images-url"), {
+        method: "GET",
+        queryParams: param,
+      });
       
       if (result && result.data) {
         if (result.data.zipUrl) {
@@ -235,8 +239,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
       }
     } 
     catch (error) {
-      PopupMessage("การดาวน์โหลดล้มเหลว", "", 'error');
-    }    
+      PopupMessage(t('message.error.download-failed'), "", 'error');
+    }
   }
 
   const handleVehicleInfoClick = async (event: React.MouseEvent, item: RealTimeLprData) => {
@@ -257,10 +261,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
 
   const handleOnButtonClick = (componentName: string) => {
     setSelectedMenu(componentName)
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US').format(price)
   }
 
   const createStatusButton = (status: number) => {
@@ -336,7 +336,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   <span 
                     className={`ml-[2px] text-[11px] ${selectedMenu === "lastRecognition" ? "text-white" : "bg-geyser"}`}
                   >
-                    Last Recognition
+                    {t('tab.last-recognition')}
                   </span>
                 </div>
               </div>
@@ -366,7 +366,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   <span 
                     className={`ml-[2px] text-[11px] ${selectedMenu === "vehicleCount" ? "text-white" : "bg-geyser"}`}
                   >
-                    Vehicle Count
+                    {t('tab.vehicle-count')}
                   </span>
                 </div>
               </div>
@@ -396,7 +396,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   <span 
                     className={`ml-[2px] text-[11px] ${selectedMenu === "systemStatus" ? "text-white" : "bg-geyser"}`}
                   >
-                    System Status
+                    {t('tab.system-status')}
                   </span>
                 </div>
               </div>
@@ -426,7 +426,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   <span 
                     className={`ml-[2px] text-[11px] ${selectedMenu === "connection" ? "text-white" : "bg-geyser"}`}
                   >
-                    Connection
+                    {t('tab.connection')}
                   </span>
                 </div>
               </div>
@@ -456,7 +456,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
           {/* Content */}
           <div className='flex p-[12px] border-[1px] border-dodgerBlue'>
             <div className='flex flex-col w-full h-full'>
-              <label className='flex justify-start text-white'>LPR Camera</label>
+              <label className='flex justify-start text-white'>{t('text.lpr-camera')}</label>
               <Select
                 name="select-lpr-camera-setting" 
                 value={LPRCameraSetting}
@@ -507,7 +507,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                         <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
                           <img 
                             key={`vehicle_img_${index}_${item.vehicleImage}`}
-                            src={`${FILE_URL}${item.vehicleImage}`} 
+                            src={`${IMAGE_URL}${item.vehicleImage}`} 
                             alt="Vehicle Image"
                             className="w-full h-full" 
                           />
@@ -515,7 +515,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                         <div className="flex-1 h-full flex items-center justify-center overflow-hidden">
                           <img 
                             key={`plate_img_${index}_${item.plateImage}`}
-                            src={`${FILE_URL}${item.plateImage}`} 
+                            src={`${IMAGE_URL}${item.plateImage}`} 
                             alt="Plate Image"
                             className="w-full h-[50%]" 
                           />
@@ -526,35 +526,35 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                       className="w-full h-full relative"
                     >
                       <div className='bg-celti text-center'>
-                        <label className="px-1">{dayjs(item.detectionDatetime).format('DD-MM-BBBB HH:mm:ss')}</label>
+                        <label className="px-1">{dayjs(item.detectionDatetime).format(i18n.language === 'th' ? 'DD/MM/BBBB HH:mm:ss' : 'DD-MM-YYYY HH:mm:ss')}</label>
                         <label className="px-1 border-l-[1px] border-white">{`${item.plateConfidence}%`}</label>
                       </div>
                       <div className="h-[100px] relative flex flex-col p-1 pl-2">
                         <div className="flex mb-[2px]">
-                          <span className="w-[55px] text-left">ประเภท</span>
+                          <span className={`${i18n.language === "en" ? "w-[70px]": "w-[55px]"} text-left`}>{t('text.car-type')}</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.bodyType)}>{reformatString(item.bodyType)}</span>
+                          <span className={`${i18n.language === "en" ? "w-[120px]": "w-[135px]"} truncate`} title={reformatString(item.bodyType)}>{reformatString(item.bodyType)}</span>
                         </div>
                         <div className="flex mb-[2px]">
-                          <span className="w-[55px] text-left">ยี่ห้อ</span>
+                          <span className={`${i18n.language === "en" ? "w-[70px]": "w-[55px]"} text-left`}>{t('text.car-brand')}</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.make)}>{reformatString(item.make)}</span>
+                          <span className={`${i18n.language === "en" ? "w-[120px]": "w-[135px]"} truncate`} title={reformatString(item.make)}>{reformatString(item.make)}</span>
                         </div>
                         <div className="flex mb-[2px]">
-                          <span className="w-[55px] text-left">สี</span>
+                          <span className={`${i18n.language === "en" ? "w-[70px]": "w-[55px]"} text-left`}>{t('text.car-color')}</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.color)}>{reformatString(item.color)}</span>
+                          <span className={`${i18n.language === "en" ? "w-[120px]": "w-[135px]"} truncate`} title={reformatString(item.color)}>{reformatString(item.color)}</span>
                         </div>
                         <div className="flex mb-[2px]">
-                          <span className="w-[55px] text-left">รุ่น</span>
+                          <span className={`${i18n.language === "en" ? "w-[70px]": "w-[55px]"} text-left`}>{t('text.car-model')}</span>
                           <span className="mx-1">:</span>
-                          <span className='w-[135px] truncate' title={reformatString(item.model)}>{reformatString(item.model)}</span>
+                          <span className={`${i18n.language === "en" ? "w-[120px]": "w-[135px]"} truncate`} title={reformatString(item.model)}>{reformatString(item.model)}</span>
                         </div>
                         <div className='absolute bottom-0 right-0'>
                           <button 
                             type='button'
-                            ref={el => buttonDowloadRefs.current[index] = el}
-                            onClick={(e) => handleDowloadButtonClick(e, item.id)}
+                            ref={el => buttonDownloadRefs.current[index] = el}
+                            onClick={(e) => handleDownloadButtonClick(e, item.id)}
                           >
                             <Icon icon={Download} size={25} color="dodgerBlue" />
                           </button>
@@ -568,13 +568,12 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
               </div>
             </div>
           </div>
-          <Dialog open={isOpenFullDirectionDialog} onClose={() => {}} className="absolute z-50">
-            <LocationDetailDialog
-              detailData={detailData}
-              close={handleFullDirectionDialogClose}
-              isCompare={compare}
-            />
-          </Dialog>
+          <LocationDetailDialog
+            open={isOpenFullDirectionDialog}
+            detailData={detailData}
+            close={handleFullDirectionDialogClose}
+            isCompare={compare}
+          />
         </div>
         {/* Vehicle Count */}
         <div className={ selectedMenu === "vehicleCount" ? "" : "hidden"}>
@@ -587,20 +586,20 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   <thead className="text-[14px] sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80">
                     <tr className="border-b-[1px] border-celtic">
                       <td className="border-r-[1px] border-celtic" colSpan={2}>
-                        ช่วงเวลา
+                        {t('table.column.time-range')}
                       </td>
-                      <td colSpan={3}>จำนวน</td>
+                      <td colSpan={3}>{t('table.column.count')}</td>
                     </tr>
                     <tr className="h-[30px]">
-                      <td className="w-[150px]">เริ่ม</td>
-                      <td className="border-l-[2px] border-white w-[150px]">ถึง</td>
+                      <td className="w-[150px]">{t('table.column.start')}</td>
+                      <td className="border-l-[2px] border-white w-[150px]">{t('table.column.end')}</td>
                       <td className="w-[100px] border-l-[1px] border-celtic">
-                        ยานพาหนะ
+                        {t('table.column.vehicle')}
                       </td>
                       <td className="border-l-[2px] border-white text-wrap w-[100px]">
-                        ยานพาหนะ เฝ้าระวัง
+                        {t('table.column.watch-list-vehicle')}
                       </td>
-                      <td className="border-l-[2px] border-white w-[100px]">รวม</td>
+                      <td className="border-l-[2px] border-white w-[100px]">{t('table.column.total')}</td>
                     </tr>
                   </thead>
                   {/* Table Body */}
@@ -611,8 +610,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                             key={`vehicle-count-${index + 1}`}
                             className="h-[35px] border-b-[1px] border-dashed border-darkGray"
                           >
-                            <td className="bg-celtic">{dayjs(item.start_time).format('DD/MM/BBBB (HH:mm)')}</td>
-                            <td className="bg-tuna">{dayjs(item.end_time).format('DD/MM/BBBB (HH:mm)')}</td>
+                            <td className="bg-celtic">{dayjs(item.start_time).format(i18n.language === 'th' ? 'DD/MM/BBBB (HH:mm)' : 'DD/MM/YYYY (HH:mm)')}</td>
+                            <td className="bg-tuna">{dayjs(item.end_time).format(i18n.language === 'th' ? 'DD/MM/BBBB (HH:mm)' : 'DD/MM/YYYY (HH:mm)')}</td>
                             <td className="bg-celtic">{item.lpr_count}</td>
                             <td className="bg-tuna">{item.special_plates_count}</td>
                             <td className="bg-celtic">{item.total_count}</td>
@@ -661,13 +660,13 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   {/* Table Header */}
                   <thead className="sticky top-0 z-10 bg-swamp backdrop-blur-md bg-opacity-80 text-[12px]">
                     <tr className='bg-swamp h-[30px]'>
-                      <td>วันเวลาส่งข้อมูล</td>
-                      <td>IP Server</td>
-                      <td>Port</td>
-                      <td>Host</td>
-                      <td>ส่งสำเร็จ</td>
-                      <td>คงค้าง</td>
-                      <td>สถานะ</td>
+                      <td>{t('table.column.send-data-date-time')}</td>
+                      <td>{t('table.column.ip-server')}</td>
+                      <td>{t('table.column.port')}</td>
+                      <td>{t('table.column.host')}</td>
+                      <td>{t('table.column.send-successful')}</td>
+                      <td>{t('table.column.remain')}</td>
+                      <td>{t('table.column.status')}</td>
                     </tr>
                   </thead>
                   {/* Table Body */}
@@ -678,12 +677,12 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                             key={item.id}
                             className="h-[35px] border-b-[1px] border-dashed border-darkGray"
                           >
-                            <td className="bg-celtic w-[26%]">{dayjs(item.sendingTime).format('DD/MM/BBBB (HH:mm:ss)')}</td>
+                            <td className="bg-celtic w-[26%]">{dayjs(item.sendingTime).format(i18n.language === 'th' ? 'DD/MM/BBBB (HH:mm:ss)' : 'DD/MM/YYYY (HH:mm:ss)')}</td>
                             <td className="bg-tuna w-[18%]">{item.ipServer}</td>
                             <td className="bg-celtic">{item.port}</td>
                             <td className="bg-tuna">{item.host}</td>
-                            <td className="bg-celtic">{formatPrice(item.sendCompleted)}</td>
-                            <td className="bg-tuna">{formatPrice(item.pending)}</td>
+                            <td className="bg-celtic">{formatNumber(item.sendCompleted)}</td>
+                            <td className="bg-tuna">{formatNumber(item.pending)}</td>
                             <td className="bg-celtic w-[15%]">
                               {
                                 createStatusButton(item.status)

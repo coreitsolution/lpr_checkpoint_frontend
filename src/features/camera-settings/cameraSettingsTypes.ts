@@ -1,12 +1,14 @@
 import { Officer } from "../api/types"
 import { CustomShape } from "../../components/drawing-canvas/types"
 import { StreamEncodesDetail } from "../dropdown/dropdownTypes"
+import { Pagination } from "../../features/api/types"
 
 export interface CameraSettings {
   message?: string
   status?: string
-  success?: string
-  data?: CameraDetailSettings[]
+  success?: boolean
+  pagination: Pagination
+  data: CameraDetailSettings[]
 }
 
 export interface ReqStream {
@@ -55,12 +57,13 @@ export interface CameraDetailSettings {
   id: number
   cam_id: string
   cam_uid: string
+  checkpoint_uid: number,
   checkpoint_name: string
   alpr_cam_id: number
   organization: string
   province_id: number
   district_id: number
-  sub_district_id: number
+  sub_district_id : number
   detecion_count: number
   sample_image_url?:string
   route: string
@@ -85,6 +88,7 @@ export interface CameraDetailSettings {
   streaming: boolean
   visible: number
   active: number
+  deleted: number
   alive: number
   last_online: string | null
   last_check: string | null
@@ -92,35 +96,53 @@ export interface CameraDetailSettings {
   updatedAt: string
 }
 
-export interface NewCameraDetailSettings {
+export interface CameraSettingsDataResponse {
+  message?: string
+  status?: string
+  success?: boolean
+  pagination: Pagination
+  data: CameraSettingsData[]
+}
+
+export interface CameraSettingsData {
+  id: number
+  checkpoint_uid: number,
   cam_id: string
-  checkpoint_name: string
-  organization: string
-  province_id: number
-  district_id: number
-  sub_district_id: number
-  route: string
-  latitude: number
-  longitude: number
   rtsp_live_url: string
   rtsp_process_url: string
   stream_encode_id: number
   api_server_url: string
-  pc_serial_number: string
-  license_key: string
-  officer_title_id: number
-  officer_firstname: string
-  officer_lastname: string
-  officer_position_id: number
-  officer_phone: string
-  detection_area: string
+  latitude: number;
+  longitude: number;
+  province_id: number
+  district_id: number
+  sub_district_id : number
+  route: string
+  visible: number
+  active: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface NewCameraDetailSettings {
+  cam_id: string
+  rtsp_live_url: string
+  rtsp_process_url: string
+  stream_encode_id: number
+  api_server_url: string
+  latitude: number;
+  longitude: number;
+  province_id: number;
+  district_id: number;
+  sub_district_id : number;
+  route: string;
   visible: number
   active: number
 }
 
 export interface CreateCameraSettings {
   camera_status: number
-  checkpoint_id: string
+  checkpoint_uid: string
   checkpoint: string
   latitude: string
   longtitude: string

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../app/store"
 import { CSVLink } from "react-csv"
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
@@ -17,27 +17,31 @@ import Loading from "../../components/loading/Loading"
 // Modules
 import SearchFilter from "./search-filter/SearchFilter"
 
-// API
-import { fetchSpecialSuspectPeopleSearchDataThunk, clearSearchData } from "../../features/search-data/SearchDataSlice"
-
 // Types
 import { FilterSpecialSuspectPeople } from "../../features/api/types"
-import { SpecialSuspectPeopleSearchData } from "../../features/search-data/SearchDataTypes"
+import { SpecialSuspectPeopleSearchData, SpecialSuspectPeopleSearchResult } from "../../features/search-data/SearchDataTypes"
 
 // Utils
 import { PopupMessage } from "../../utils/popupMessage"
-import { reformatString } from "../../utils/comonFunction"
+import { reformatString } from "../../utils/commonFunction"
+import { fetchClient, combineURL } from "../../utils/fetchClient"
 
 // Config
 import { getUrls } from '../../config/runtimeConfig';
 
 // Constant
-import { SEPECIAL_SUSPECT_PEOPLE_FILE_NAME } from "../../constants/filename"
+import { SPECIAL_SUSPECT_PEOPLE_FILE_NAME } from "../../constants/filename"
 // import { SearchSpecialRowPerPages } from "../../constants/dropdown"
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(buddhistEra)
 
 const SuspectPeopleDetected = () => {
+  // i18n
+  const { i18n } = useTranslation();
+
   const { isOpen } = useHamburger()
   const [isLoading, setIsLoading] = useState(false)
   // const [page, setPage] = useState(1)
@@ -45,17 +49,10 @@ const SuspectPeopleDetected = () => {
   // const [rowsPerPage, setRowsPerPage] = useState(SearchSpecialRowPerPages[0])
   const [specialSuspectPeopleSearchDataList, setSpecialSuspectPeopleSearchDataList] = useState<SpecialSuspectPeopleSearchData[]>([])
   // const [rowsPerPageOptions] = useState(SearchSpecialRowPerPages)
-  const dispatch: AppDispatch = useDispatch()
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL, API_URL } = getUrls();
   const { specialSuspectPeopleSearchData, searchDataError, searchDataStatus } = useSelector(
     (state: RootState) => state.searchData
   )
-
-  useEffect(() => {
-    return () => {
-      dispatch(clearSearchData())
-    }
-  }, [dispatch])
 
   useEffect(() => {
     if (specialSuspectPeopleSearchData) {
@@ -139,7 +136,13 @@ const SuspectPeopleDetected = () => {
         "page": "1",
         // "limit": rowsPerPage.toString(),
       }
-      const response = await dispatch(fetchSpecialSuspectPeopleSearchDataThunk(query)).unwrap()
+      const response = await fetchClient<SpecialSuspectPeopleSearchResult>(
+        combineURL(API_URL, "/special-plates/search"),
+        {
+          method: "GET",
+          queryParams: query,
+        }
+      );
       
       if (response && response.data) {
         // setPage(1)
@@ -157,7 +160,7 @@ const SuspectPeopleDetected = () => {
   }
 
   const headers = [
-    { label: SEPECIAL_SUSPECT_PEOPLE_FILE_NAME, key: "title" },
+    { label: SPECIAL_SUSPECT_PEOPLE_FILE_NAME, key: "title" },
     { label: "", key: "firstname" },
     { label: "", key: "lastname" },
     { label: "", key: "checkpoint" },
@@ -188,7 +191,7 @@ const SuspectPeopleDetected = () => {
       behavior: reformatString(data.vehicle_make),
       confidence: `${parseInt(data.plate_confidence.replace("%", "")).toFixed(2)}`,
       registration_type: "Blacklist",
-      date: dayjs(data.epoch_start).format('DD/MM/BBBB'),
+      date: dayjs(data.epoch_start).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY'),
       time: dayjs(data.epoch_start).format('HH:mm:ss'),
     }))
   ] : [];
@@ -227,7 +230,7 @@ const SuspectPeopleDetected = () => {
   //   }
 
   //   try {
-  //     const result = await dispatch(dowloadPdfSpecialPlateThunk(pdfContent)).unwrap()
+  //     const result = await dispatch(downloadPdfSpecialPlateThunk(pdfContent)).unwrap()
       
   //     if (result && result.data) {
   //       if (result.data.pdfUrl) {
@@ -303,7 +306,7 @@ const SuspectPeopleDetected = () => {
                   <CSVLink
                     data={csvData}
                     headers={headers}
-                    filename={`${SEPECIAL_SUSPECT_PEOPLE_FILE_NAME}.csv`}
+                    filename={`${SPECIAL_SUSPECT_PEOPLE_FILE_NAME}.csv`}
                     className="flex items-center"
                   >
                     <img
@@ -355,12 +358,12 @@ const SuspectPeopleDetected = () => {
                           <td className="text-start text-white bg-celtic pl-5">{`${data.plate} ${data.region_info.name_th}`}</td>
                           <td className="text-center text-white bg-tuna">
                             <img
-                              src={`${FILE_URL}${data.vehicle_image}`}
+                              src={`${IMAGE_URL}${data.vehicle_image}`}
                               alt="Vehicle"
                               className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]"
                             />
                             <img
-                              src={`${FILE_URL}${data.plate_image}`}
+                              src={`${IMAGE_URL}${data.plate_image}`}
                               alt="Plate"
                               className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]"
                             />
@@ -370,7 +373,7 @@ const SuspectPeopleDetected = () => {
                           <td className="text-center text-white bg-celtic">{data.vehicle_make_model}</td>
                           <td className="text-center text-white bg-tuna">{data.vehicle_make}</td>
                           <td className="pr-5 text-end text-white bg-celtic">{parseInt(data.plate_confidence.replace("%", "")).toFixed(2)}</td>
-                          <td className="text-center text-white bg-tuna">{dayjs(data.epoch_start).format('DD/MM/BBBB (HH:mm:ss)')}</td>
+                          <td className="text-center text-white bg-tuna">{dayjs(data.epoch_start).format(i18n.language === "th" ? 'DD/MM/BBBB (HH:mm:ss)' : 'DD/MM/YYYY (HH:mm:ss)')}</td>
                         </tr>
                       ))}
                     </tbody>

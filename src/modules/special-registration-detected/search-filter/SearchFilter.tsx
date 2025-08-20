@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react"
 import {
   SelectChangeEvent,
 } from "@mui/material"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../../app/store"
 
 // Types
 import { FilterSpecialPlates } from "../../../features/api/types"
@@ -16,17 +16,17 @@ import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePic
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import AutoCompleteMultiple, { OptionType } from "../../../components/auto-complete/AutoCompleteMultiple"
 
-// API
-import { 
-  fetchCameraSettingsThunk,
-} from "../../../features/camera-settings/cameraSettingsSlice"
+// i18n
+import { useTranslation } from "react-i18next";
 
 interface SearchFilterProps {
   setFilterData: (filterData: FilterSpecialPlates) => void
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
-  const dispatch: AppDispatch = useDispatch()
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const [letterCategory, setLetterCategory] = useState("")
   const [carRegistration, setCarRegistration] = useState("")
   const [selectedProvince, setSelectedProvince] = useState<string | ''>('')
@@ -46,17 +46,13 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   const [carModelsOptions, setCarModelsOptions] = useState<{ label: string, value: string }[]>([])
   const [carColorsOptions, setCarColorsOptions] = useState<{ label: string, value: string }[]>([])
   const [checkpointOptions, setCheckpointOptions] = useState<{ label: string, value: string }[]>([])
-  const { registrationTypes, vehicleColors, vehicleMakes, vehicleModels, regions, vehicleBodyTypesTh } = useSelector(
+  const { registrationTypes, vehicleColors, vehicleMakes, vehicleModels, regions, vehicleBodyTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
 
   const { cameraSettings } = useSelector(
     (state: RootState) => state.cameraSettings
   )
-
-  useEffect(() => {
-    dispatch(fetchCameraSettingsThunk())
-  }, [dispatch])
 
   const filterData: FilterSpecialPlates = {
     plateGroup: letterCategory,
@@ -75,12 +71,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   useEffect(() => {
     if (regions && regions.data) {
       const options = regions.data.map((row) => ({
-        label: row.name_th,
+        label: i18n.language === "th" ? row.name_th : row.name,
         value: row.code,
       }))
       setProvincesOptions(options)
     }
-  }, [regions])
+  }, [regions, i18n.language])
 
   useEffect(() => {
     if (registrationTypes && registrationTypes.data) {
@@ -88,10 +84,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         label: row.title_en,
         value: row.id,
       }))
-      setRegistrationTypesOptions([{label: "ทั้งหมด", value: 0}, ...options])
+      setRegistrationTypesOptions([{label: t('text.all'), value: 0}, ...options])
       setSelectedRegistrationType(0)
     }
-  }, [registrationTypes])
+  }, [registrationTypes, i18n.language])
 
   useEffect(() => {
     if (cameraSettings && cameraSettings.data) {
@@ -104,26 +100,26 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   }, [cameraSettings])
 
   useEffect(() => {
-    if (vehicleBodyTypesTh && vehicleBodyTypesTh.data) {
-      const options = vehicleBodyTypesTh.data.map((row) => ({
-        label: row.body_type_th,
-        value: row.body_type_th,
+    if (vehicleBodyTypes && vehicleBodyTypes.data) {
+      const options = vehicleBodyTypes.data.map((row) => ({
+        label: i18n.language === "th" ? row.body_type_th : row.body_type_en,
+        value: i18n.language === "th" ? row.body_type_th : row.body_type_en,
       }))
-      setCarTypesOptions([{label: "ทุกประเภท", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
+      setCarTypesOptions([{label: t('text.all-type'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
       setSelectedCarType('all')
     }
-  }, [vehicleBodyTypesTh])
+  }, [vehicleBodyTypes, i18n.language])
 
   useEffect(() => {
     if (vehicleColors && vehicleColors.data) {
       const options = vehicleColors.data.map((row) => ({
-        label: row.color_th,
+        label: i18n.language === "th" ? row.color_th : row.color_en,
         value: row.color,
       }))
-      setCarColorsOptions([{label: "ทุกสี", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
+      setCarColorsOptions([{label: t('text.all-color'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
       setSelectedCarColor('all')
     }
-  }, [vehicleColors])
+  }, [vehicleColors, i18n.language])
 
   useEffect(() => {
     if (vehicleMakes && vehicleMakes.data) {
@@ -131,10 +127,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         label: row.make_en,
         value: row.make,
       }))
-      setCarBrandsOptions([{label: "ทุกยี่ห้อ", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
+      setCarBrandsOptions([{label: t('text.all-brand'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
       setSelectedCarBrand('all')
     }
-  }, [vehicleMakes])
+  }, [vehicleMakes, i18n.language])
 
   useEffect(() => {
     if (vehicleModels && vehicleModels.data) {
@@ -143,10 +139,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         value: row.model,
       }))
       setOriCarModelsOptions(vehicleModels.data)
-      setCarModelsOptions(([{label: "ทุกรุ่น", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
+      setCarModelsOptions(([{label: t('text.all-model'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
       setSelectedCarModel('all')
     }
-  }, [vehicleModels])
+  }, [vehicleModels, i18n.language])
 
   useEffect(() => {
     if (selectedCarBrand && selectedCarBrand !== 'all' && carOriModelsOptions) {
@@ -160,10 +156,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         label: row.model_en,
         value: row.model,
       }))
-      setCarModelsOptions(([{label: "ทุกรุ่น", value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
+      setCarModelsOptions(([{label: t('text.all-model'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
     }
     
-  }, [selectedCarBrand])
+  }, [selectedCarBrand, i18n.language])
 
   const handleReset = () => {
     setLetterCategory("")
@@ -248,7 +244,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               alt="Search Filter"
               className="w-[22px] h-[22px] ml-[10px]"
             />
-            <span className="flex justify-start text-[15px] ml-[15px]">เงื่อนไขการค้นหา</span>
+            <span className="flex justify-start text-[15px] ml-[15px]">{t('screen.search-condition')}</span>
           </div>
 
           {/* Form */}
@@ -264,7 +260,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   ]);
                 }}
                 options={checkpointOptions}
-                label="จุดตรวจ"
+                label={t('component.checkpoint')}
                 labelFontSize="15px"
               />
             </div>
@@ -284,7 +280,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 }}
                 className="w-full"
                 id="start-date"
-                label="วันที่เริ่มต้น"
+                label={t('component.start-date')}
                 labelTextSize="15px"
                 isWithTime={true}
                 onChange={(value) => setSelectedStartDate(value)}
@@ -307,7 +303,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 }}
                 className="w-full"
                 id="end-date"
-                label="วันที่สิ้นสุด"
+                label={t('component.end-date')}
                 labelTextSize="15px"
                 isWithTime={true}
                 onChange={(value) => setSelectedEndDate(value)}
@@ -318,22 +314,18 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               <TextBox
                 sx={{ marginTop: "5px" }}
                 id="plate-character"
-                label="หมวดอักษร"
-                placeHolder=""
-                className="w-full"
+                label={t('component.plate-character')}
+                placeholder=""
                 labelFontSize="15px"
-                textFieldFontSize="15px"
                 value={letterCategory}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLetterCategory(event.target.value)}
               />
               <TextBox
                 sx={{ marginTop: "5px" }}
                 id="registration-number"
-                label="เลขทะเบียน"
-                placeHolder=""
-                className="w-full"
+                label={t('component.plate-number')}
+                placeholder=""
                 labelFontSize="15px"
-                textFieldFontSize="15px"
                 value={carRegistration}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCarRegistration(event.target.value)}
               />
@@ -345,7 +337,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 value={selectedProvince}
                 onChange={handleProvicesChange}
                 options={provincesOptions}
-                label="หมวดจังหวัด"
+                label={t('component.province-category')}
                 labelFontSize="15px"
               />
             </div>
@@ -356,7 +348,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 value={selectedCarType}
                 onChange={handleCarTypeChange}
                 options={carTypesOptions}
-                label="ประเภทรถ"
+                label={t('component.car-type')}
                 labelFontSize="15px"
               />
             </div>
@@ -367,7 +359,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 value={selectedCarBrand}
                 onChange={handleCarBrandChange}
                 options={carBrandsOptions}
-                label="ยี่ห้อ"
+                label={t('component.brand')}
                 labelFontSize="15px"
                 title={selectedCarBrand !== "all" ? carBrandsOptions.find((row) => row.value === selectedCarBrand)?.label : ""}
               />
@@ -377,7 +369,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 value={selectedCarModel}
                 onChange={handleCarModelChange}
                 options={carModelsOptions}
-                label="รุ่นรถ"
+                label={t('component.car-model')}
                 labelFontSize="15px"
                 title={selectedCarModel !== "all" ? carModelsOptions.find((row) => row.value === selectedCarModel)?.label : ""}
               />
@@ -389,7 +381,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 value={selectedCarColor}
                 onChange={handleCarColorChange}
                 options={carColorsOptions}
-                label="สี"
+                label={t('component.color')}
                 labelFontSize="15px"
               />
             </div>
@@ -401,7 +393,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 value={selectedRegistrationType}
                 onChange={(event: SelectChangeEvent<any>) => setSelectedRegistrationType(event.target.value)}
                 options={registrationTypesOptions}
-                label="กลุ่มทะเบียน"
+                label={t('component.plate-group')}
                 labelFontSize="15px"
               />
             </div>
@@ -416,14 +408,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   alt="Search Icon" 
                   className='w-[20px] h-[20px]' 
                 />
-                <span className="ml-[5px]">ค้นหา</span>
+                <span className="ml-[5px]">{t('button.search')}</span>
               </button>
               <button 
                 type="button" 
                 className="bg-white text-dodgerBlue rounded border-[1px] border-dodgerBlue w-[90px] h-[35px]"
                 onClick={handleReset}
               >
-                ล้างข้อมูล
+                {t('button.clear-data')}
               </button>
             </div>
           </div>

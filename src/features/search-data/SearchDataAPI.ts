@@ -4,7 +4,7 @@ import { isDevEnv } from "../../config/environment"
 import { SpecialPlateSearchResult, SpecialSuspectPeopleSearchResult } from './SearchDataTypes';
 import { specialPlateSearchData } from "../../mocks/mockSpecialPlateSearch"
 import { specialSuspectPeopleSearchData } from '../../mocks/mockSpecialSuspectPeopleSearch';
-import { DetactSpecialPlate, FilterSpecialPlatesBody, PdfDowload } from "../../features/api/types";
+import { DetactSpecialPlate, FilterSpecialPlatesBody, PdfDownload } from "../../features/api/types";
 
 let mockSpecialPlateSearchData = [...specialPlateSearchData]
 let mockSpecialSuspectPeopleSearchData = [...specialSuspectPeopleSearchData]
@@ -27,15 +27,15 @@ export const postSpecialPlateSearchData = async (
   );
 };
 
-export const dowloadPdfSpecialPlate = async (): Promise<PdfDowload> => {
+export const downloadPdfSpecialPlate = async (): Promise<PdfDownload> => {
   const { API_URL } = getUrls();
   if (isDevEnv) {
-    const data: PdfDowload = {
+    const data: PdfDownload = {
       filePath: "/pdf/example.pdf"
     }
     return Promise.resolve(data);
   }
-  return await fetchClient<PdfDowload>(combineURL(API_URL, "/lpr-data/search/get-pdf"), {
+  return await fetchClient<PdfDownload>(combineURL(API_URL, "/lpr-data/search/get-pdf"), {
     method: "GET",
   });
 };
@@ -115,17 +115,17 @@ export const fetchSpecialSuspectPeopleSearchData = async (
   );
 };
 
-export const dowloadPdfSpecialSuspectPeople = async (
+export const downloadPdfSpecialSuspectPeople = async (
   data: DetactSpecialPlate
-): Promise<PdfDowload> => {
+): Promise<PdfDownload> => {
   const { API_URL } = getUrls();
   if (isDevEnv) {
-    const data: PdfDowload = {
+    const data: PdfDownload = {
       filePath: "/pdf/example.pdf"
     }
     return Promise.resolve(data);
   }
-  return await fetchClient<PdfDowload>(combineURL(API_URL, "/lpr-data/get-detect-special-plate-pdf"), {
+  return await fetchClient<PdfDownload>(combineURL(API_URL, "/lpr-data/get-detect-special-plate-pdf"), {
     method: "GET",
     body: JSON.stringify(data),
   });

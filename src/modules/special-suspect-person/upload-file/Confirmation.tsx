@@ -30,7 +30,7 @@ import { getUrls } from '../../../config/runtimeConfig';
 import Loading from "../../../components/loading/Loading"
 
 // Utils
-import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+import { getFileNameWithoutExtension } from "../../../utils/commonFunction"
 import { PopupMessage } from "../../../utils/popupMessage"
 
 dayjs.extend(buddhistEra)
@@ -43,7 +43,7 @@ interface ConfirmationProps {
 }
 
 const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataList, imagesDataList, textsDataList}) => {
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL } = getUrls();
   const { provinces, dataStatus, personTypes, personTitles, districts, subDistricts } = useSelector(
     (state: RootState) => state.dropdown
   )
@@ -146,7 +146,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
       {isLoading && <Loading />}
       <div className='flex flex-col h-full'>
         <div className="flex-grow overflow-x-auto">
-          <TableContainer component={Paper} className="mt-4 h-[60vh] w-[2500px]"
+          <TableContainer component={Paper} className="mt-4 h-[56vh] w-[2500px]"
             sx={{
               backgroundColor: "#000000"
             }}
@@ -194,7 +194,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
               >
                 {
                   confirmationData.map((data, index) => {
-                    const imageUrl = data.imagesUploadedData ? `${FILE_URL}${data.imagesUploadedData.url}` : ""
+                    const imageUrl = data.imagesUploadedData ? `${IMAGE_URL}${data.imagesUploadedData.url}` : ""
                     const fileUrl = data.fileUploadedData ? data.fileUploadedData.originalName : ""
 
                     return (

@@ -1,3 +1,11 @@
+import bcrypt from 'bcryptjs';
+
+// Types
+import { Option } from '../features/api/types';
+
+// Constants
+const SALT_ROUNDS = 10;
+
 export const reformatString = (input: string): string => {
   return input
     .split('_') // Split the string by underscores
@@ -39,8 +47,22 @@ export const getFileNameWithoutExtension = (filePath: string): string => {
   return fileName.split('.').slice(0, -1).join('.') || fileName 
 }
 
-export const getCookieValue = (name: string) => {
-  const cookies = document.cookie.split('; ');
-  const cookie = cookies.find(row => row.startsWith(`${name}=`));
-  return cookie ? cookie.split('=')[1] : null;
+export const formatNumber = (value: number) => {
+  return new Intl.NumberFormat('en-US').format(value)
 }
+
+export const makeRandomText = (length: number): string => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length }, () => 
+    characters[Math.floor(Math.random() * characters.length)]
+  ).join('');
+};
+
+export const hashPassword = async (plainPassword: string): Promise<string> => {
+  const hashed = await bcrypt.hash(plainPassword, SALT_ROUNDS);
+  return hashed;
+};
+
+export const getId = (val: number | Option) => {
+  return typeof val === "number" ? val : val.value;
+};

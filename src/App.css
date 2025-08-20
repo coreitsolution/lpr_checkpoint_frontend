@@ -11,3 +11,73 @@ body {
   background-color: var(--background-color);
   color: var(--text-color);
 }
+
+@keyframes bellShake {
+  0%, 16.67% {
+    transform: rotate(0deg);
+  }
+  2.78%, 8.33% {
+    transform: rotate(5deg);
+  }
+  5.56%, 11.11% {
+    transform: rotate(-5deg);
+  }
+  13.89% {
+    transform: rotate(5deg);
+  }
+  16.67%, 33.33% {
+    transform: rotate(0deg);
+  }
+  36.11%, 41.67% {
+    transform: rotate(-5deg);
+  }
+  38.89%, 44.44% {
+    transform: rotate(5deg);
+  }
+  47.22% {
+    transform: rotate(-5deg);
+  }
+  50%, 100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ringShake {
+  0%, 16.67% {
+    transform: rotate(0deg);
+  }
+  2.78%, 8.33% {
+    transform: rotate(-1deg);
+  }
+  5.56%, 11.11% {
+    transform: rotate(1deg);
+  }
+  13.89% {
+    transform: rotate(-1deg);
+  }
+  16.67%, 33.33% {
+    transform: rotate(0deg);
+  }
+  36.11%, 41.67% {
+    transform: rotate(1deg);
+  }
+  38.89%, 44.44% {
+    transform: rotate(-1deg);
+  }
+  47.22% {
+    transform: rotate(1deg);
+  }
+  50%, 100% {
+    transform: rotate(0deg);
+  }
+}
+
+.bell-shake {
+  animation: bellShake 3s infinite;
+  transform-origin: top center;
+}
+
+.ring-shake {
+  animation: ringShake 3s infinite;
+  transform-origin: top center;
+}

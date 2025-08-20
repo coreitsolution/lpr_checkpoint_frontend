@@ -22,10 +22,13 @@ import {
 
 // Utils
 import { PopupMessage } from "../../../utils/popupMessage"
-import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+import { getFileNameWithoutExtension } from "../../../utils/commonFunction"
 
 // Component
 import Loading from "../../../components/loading/Loading"
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(buddhistEra)
 
@@ -35,6 +38,9 @@ interface TextUploadProps {
 }
 
 const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}) => {
+  // i18n
+  const { i18n } = useTranslation();
+
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [textsData, setTextsData] = useState<ImportSuspectPeople[]>(textsDataList)
   const [isLoading, setIsLoading] = useState(false)
@@ -199,7 +205,7 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
           />
         </div>
         <div className="flex-grow overflow-x-auto">
-          <TableContainer component={Paper} className="mt-4 h-[56.3vh] w-[2500px]"
+          <TableContainer component={Paper} className="mt-4 h-[52.3vh] w-[2500px]"
             sx={{
               backgroundColor: "#000000"
             }}
@@ -260,8 +266,8 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
                       <TableCell sx={{ backgroundColor: "#48494B" }}>{data.postal_code}</TableCell>
                       <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.person_class}</TableCell>
                       <TableCell sx={{ backgroundColor: "#48494B" }}>{data.case_number || "-"}</TableCell>
-                      <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.arrest_warrant_date ? dayjs(data.arrest_warrant_date).format("DD/MM/BBBB") : "-"}</TableCell>
-                      <TableCell sx={{ backgroundColor: "#48494B" }}>{data.arrest_warrant_expire_date ? dayjs(data.arrest_warrant_expire_date).format("DD/MM/BBBB") : "-"}</TableCell>
+                      <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.arrest_warrant_date ? dayjs(data.arrest_warrant_date).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') : "-"}</TableCell>
+                      <TableCell sx={{ backgroundColor: "#48494B" }}>{data.arrest_warrant_expire_date ? dayjs(data.arrest_warrant_expire_date).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') : "-"}</TableCell>
                       <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.behavior || "-"}</TableCell>
                       <TableCell sx={{ backgroundColor: "#48494B" }}>{data.case_owner_name}</TableCell>
                       <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.case_owner_agency}</TableCell>

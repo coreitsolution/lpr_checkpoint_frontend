@@ -1,8 +1,12 @@
-import { useState, useCallback, useEffect } from 'react'
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "../../../app/store"
+import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+} from "@mui/material"
 
 // Components
 import FileImportBreadCrumbs from '../../../components/breadcrumbs/FileImportBreadCrumbs'
@@ -16,34 +20,33 @@ import {
   ImportSuspectPeople,
   ImportSuspectPeopleDetail,
   NewSuspectPeople,
+  SuspectPeopleRespondsDetail,
 } from '../../../features/suspect-people/SuspectPeopleDataTypes'
-import { FileUploadDetail, DeleteRequestData } from "../../../features/file-upload/fileUploadTypes"
-
-// API
-import { 
-  postSpecialSuspectPeopleDataThunk
-} from "../../../features/suspect-people/SuspectPeopleDataSlice"
-import {
-  deleteFilesDataThunk,
-} from "../../../features/file-upload/fileUploadSlice"
+import { FileUploadDetail, DeleteRequestData, FileDelete } from "../../../features/file-upload/fileUploadTypes"
 
 // Utils
 import { PopupMessage } from "../../../utils/popupMessage"
+import { fetchClient, combineURL } from "../../../utils/fetchClient"
 
 // Components
 import FilesUpload from '../../../components/import-files/FilesUpdate'
 import ImagesUpload from '../../../components/import-files/ImagesUpload'
 import Loading from "../../../components/loading/Loading"
 
+// Config
+import { getUrls } from '../../../config/runtimeConfig';
+
 dayjs.extend(buddhistEra)
 
 interface UploadFileProps {
+  open: boolean
   closeDialog: () => void
   isFileImportClose: boolean
 }
 
-const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose}) => {
-  const dispatch: AppDispatch = useDispatch()
+const UploadFile: React.FC<UploadFileProps> = ({open, closeDialog, isFileImportClose}) => {
+  const { API_URL } = getUrls();
+
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(0)
   const [imagesList, setImagesList] = useState<FileUploadDetail[]>([])
@@ -143,7 +146,10 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
           notes: "",
         }
   
-        await dispatch(postSpecialSuspectPeopleDataThunk(updatedFormData)).unwrap()
+        await fetchClient<SuspectPeopleRespondsDetail>(combineURL(API_URL, "/watchlist/create"), {
+          method: "POST",
+          body: JSON.stringify(updatedFormData),
+        });
         complete = true
       }
       if (complete) {
@@ -158,16 +164,20 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
     try {
-      await dispatch(
-        deleteFilesDataThunk(deleteFile)
-      ).unwrap()
+      await fetchClient<FileDelete>(combineURL(API_URL, "/upload/remove"), {
+        method: "POST",
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(deleteFile),
+      })
     }
     catch (error) {
       throw new Error(error instanceof Error ? error.message : String(error))
     }
   }
 
-  const handleDeleteFile = useCallback(async (url: string) => {
+  const handleDeleteFile = async (url: string) => {
     try {
       await deleteFileUpload({
         url: url
@@ -176,12 +186,11 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
     catch (error) {
       PopupMessage("เกิดข้อผิดพลาดในการลบไฟล์", error instanceof Error ? error.message : String(error), "error");
     }
-  }, [dispatch])
+  }
 
   const handleConfirmClick = async () => {
     const importableData = finalList.filter(item => !item.cannotImport)
     setIsLoading(true)
-    console.time("addNewSpecialSuspectPeople")
     await addNewSpecialSuspectPeople(importableData)
 
     // Delete unused images
@@ -198,54 +207,70 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
       await handleDeleteFile(file.url)
     }
     setIsLoading(false)
-    console.timeEnd("addNewSpecialSuspectPeople")
   }
 
   return (
-    <div id='upload-file' className='h-[75vh]'>
-      {isLoading && <Loading />}
-      <FileImportBreadCrumbs items={breadcrumbItems} />
-      <div className="mt-4">
-        {step === 0 && <ImagesUpload setImagesDataList={setImagesDataList} imagesDataList={imagesList}/>}
-        {step === 1 && <FilesUpload setFilesDataList={setFilesDataList} filesDataList={filesList}/>}
-        {step === 2 && <TextUpload setTextsDataList={setTextsDataList} textsDataList={textsList} />}
-        {step === 3 && 
-        <Confirmation 
-          setFinalDataList={setFinalDataList} 
-          textsDataList={textsList}
-          imagesDataList={imagesList}
-          filesDataList={filesList}
-        />}
-      </div>
+    <Dialog id='upload-file' open={open} maxWidth="xl" fullWidth sx={{ zIndex: 1000 }}>
+      <DialogTitle className='bg-black'>
+        <div className="flex justify-between items-center">
+          <div>
+            <Typography variant="h5" color="white" className="font-bold">นำเข้าข้อมูล</Typography>
+          </div>
+          <button
+            onClick={closeDialog} 
+            className="text-white bg-transparent border-0 text-[28px] pr-6"
+          >
+            &times;
+          </button>
+        </div>
+      </DialogTitle>
+      <DialogContent className='bg-black text-white'>
+        <div className='h-[75vh]'>
+          {isLoading && <Loading />}
+          <FileImportBreadCrumbs items={breadcrumbItems} />
+          <div className="mt-4">
+            {step === 0 && <ImagesUpload setImagesDataList={setImagesDataList} imagesDataList={imagesList}/>}
+            {step === 1 && <FilesUpload setFilesDataList={setFilesDataList} filesDataList={filesList}/>}
+            {step === 2 && <TextUpload setTextsDataList={setTextsDataList} textsDataList={textsList} />}
+            {step === 3 && 
+            <Confirmation 
+              setFinalDataList={setFinalDataList} 
+              textsDataList={textsList}
+              imagesDataList={imagesList}
+              filesDataList={filesList}
+            />}
+          </div>
 
-      <div className="flex justify-end mt-4 space-x-2">
-        {step > 0 && (
-          <button
-            className="px-4 py-2 text-white bg-gray-500 rounded-[5px] hover:bg-gray-700"
-            onClick={prevStep}
-          >
-            ย้อนกลับ
-          </button>
-        )}
-        {step < breadcrumbItems.length - 1 && (
-          <button
-            className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500"
-            onClick={nextStep}
-          >
-            ถัดไป
-          </button>
-        )}
-        {step === breadcrumbItems.length - 1 && (
-          <button
-            className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500 disabled:bg-slate-400"
-            onClick={handleConfirmClick}
-            disabled={!finalList.some(item => !item.cannotImport)}
-          >
-            ยืนยัน
-          </button>
-        )}
-      </div>
-    </div>
+          <div className="flex justify-end mt-4 space-x-2">
+            {step > 0 && (
+              <button
+                className="px-4 py-2 text-white bg-gray-500 rounded-[5px] hover:bg-gray-700"
+                onClick={prevStep}
+              >
+                ย้อนกลับ
+              </button>
+            )}
+            {step < breadcrumbItems.length - 1 && (
+              <button
+                className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500"
+                onClick={nextStep}
+              >
+                ถัดไป
+              </button>
+            )}
+            {step === breadcrumbItems.length - 1 && (
+              <button
+                className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500 disabled:bg-slate-400"
+                onClick={handleConfirmClick}
+                disabled={!finalList.some(item => !item.cannotImport)}
+              >
+                ยืนยัน
+              </button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../utils/popupMessage"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../app/store"
 import { SelectChangeEvent } from '@mui/material/Select'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
 
 // Icon
 import { Icon } from '../../components/icons/Icon'
@@ -15,18 +13,10 @@ import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 // Types
 import {
   SuspectPeopleRespondsDetail,
+  SuspectPeopleData,
 } from '../../features/suspect-people/SuspectPeopleDataTypes'
 import { FilterSpecialPeople } from "../../features/api/types"
-import { DeleteRequestData } from "../../features/file-upload/fileUploadTypes"
-
-// API
-import {
-  deleteFilesDataThunk,
-} from "../../features/file-upload/fileUploadSlice"
-import { 
-  fetchSpecialSuspectPeopleDataThunk,
-  deleteSpecialSuspectPeopleDataThunk,
-} from "../../features/suspect-people/SuspectPeopleDataSlice"
+import { DeleteRequestData, FileDelete } from "../../features/file-upload/fileUploadTypes"
 
  // Context
 import { useHamburger } from "../../context/HamburgerContext"
@@ -46,10 +36,19 @@ import { SpecialRowPerPages } from "../../constants/dropdown"
 // Config
 import { getUrls } from '../../config/runtimeConfig';
 
+// Utils
+import { formatNumber } from "../../utils/commonFunction";
+import { fetchClient, combineURL } from "../../utils/fetchClient";
+
+// i18n
+import { useTranslation } from "react-i18next";
+
 dayjs.extend(buddhistEra)
 
 function SpecialSuspectPerson() {
-  const dispatch: AppDispatch = useDispatch()
+  // i18n
+  const { i18n } = useTranslation();
+
   const { specialSuspectPeopleData } = useSelector(
     (state: RootState) => state.suspectPeopleData
   )
@@ -69,7 +68,7 @@ function SpecialSuspectPerson() {
   const [rowsPerPageOptions] = useState(SpecialRowPerPages)
   const [isFileImportClose, setIsFileImportClose] = useState(false)
   const tableDataRef = useRef<HTMLDivElement>(null)
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL, API_URL } = getUrls();
 
   const { dataStatus, personTypes, personTitles } = useSelector(
     (state: RootState) => state.dropdown
@@ -94,9 +93,13 @@ function SpecialSuspectPerson() {
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
     try {
-      await dispatch(
-        deleteFilesDataThunk(deleteFile)
-      ).unwrap()
+      await fetchClient<FileDelete>(combineURL(API_URL, "/upload/remove"), {
+        method: "POST",
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(deleteFile),
+      })
     }
     catch (error) {
       PopupMessage("ลบข้อมูลไม่สำเร็จ", "ไม่สามารถลบไฟล์ได้", "error")
@@ -130,7 +133,14 @@ function SpecialSuspectPerson() {
           })
         }
 
-        await dispatch(deleteSpecialSuspectPeopleDataThunk(id))
+        await fetchClient<void>(
+          combineURL(API_URL, `/watchlist/delete`),
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: id })
+          }
+        )
         // PopupMessage("ลบข้อมูลสำเร็จ", "บันทึกข้อมูลสำเร็จ", 'success')
         await fetchSpecialSuspectPeopleData(page.toString(), rowsPerPage.toString())
       } 
@@ -187,7 +197,7 @@ function SpecialSuspectPerson() {
     await fetchSpecialSuspectPeopleData('1', rowsPerPage.toString(), filter)
   }
 
-  const fetchSpecialSuspectPeopleData = useCallback(async (page: string, limit: string, filter?:string[]) => {
+  const fetchSpecialSuspectPeopleData = async (page: string, limit: string, filter?:string[]) => {
     const allFilter = filter ? ["deleted:0", ...filter] : ["deleted:0"]
     const query: Record<string, string> = {
       "filter": allFilter.join(","),
@@ -195,11 +205,29 @@ function SpecialSuspectPerson() {
       "limit": limit,
     }
     setIsLoading(true)
-    await dispatch(fetchSpecialSuspectPeopleDataThunk(query))
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
-  }, [dispatch])
+    try {
+      const response = await fetchClient<SuspectPeopleData>(combineURL(API_URL, "/watchlist/get"), {
+        method: "GET",
+        queryParams: query,
+      });
+
+      if (response.data) {
+        setSpecialSuspectPeopleList(response.data)
+        if (response.countAll) {
+          setTotalPages(Math.ceil(response.countAll / rowsPerPage))
+        }
+      }
+    }
+    catch (error) {
+      setSpecialSuspectPeopleList([]);
+      setTotalPages(1);
+    }
+    finally {
+      setTimeout(() => {
+        setIsLoading(false)
+      }, 500)
+    }
+  }
 
   useEffect(() => {
     setIsLoading(false)
@@ -220,16 +248,6 @@ function SpecialSuspectPerson() {
       fetchSpecialSuspectPeopleData('1', rowsPerPage.toString())
     }
   }, [isFileImportOpen])
-
-  useEffect(() => {
-    if (specialSuspectPeopleData && specialSuspectPeopleData.data) {
-      setSpecialSuspectPeopleList(specialSuspectPeopleData.data)
-      setTotalPages(Math.ceil(specialSuspectPeopleData.data.length / rowsPerPage))
-    }
-    else {
-      setSpecialSuspectPeopleList([])
-    }
-  }, [specialSuspectPeopleData])
 
   const handlePageChange = async (event: React.ChangeEvent<unknown>, value: number) => {
     event.preventDefault()
@@ -274,10 +292,6 @@ function SpecialSuspectPerson() {
     setIsFileImportClose(false)
   }
 
-  const handleCloseDialog = () => {
-    setIsFileImportClose(true)
-  }
-
   return (
     <div className={`main-content pe-3 ${isOpen ? "pl-[130px]" : "pl-[10px]"} transition-all duration-500`}>
       {isLoading && <Loading />}
@@ -286,7 +300,7 @@ function SpecialSuspectPerson() {
           <div id="head" className="flex h-[50px] justify-between">
             <div className="flex flex-col">
               <p className="text-[20px] text-white">รายการบุคคลต้องสงสัย</p>
-              <p className="text-[14px] text-white">{`จำนวน ${specialSuspectPeopleList.length} รายการ`}</p>
+              <p className="text-[14px] text-white">{`จำนวน ${formatNumber(specialSuspectPeopleData?.countAll ?? 0)} รายการ`}</p>
             </div>
             <div className="flex items-end space-x-2">
               <button 
@@ -352,7 +366,7 @@ function SpecialSuspectPerson() {
                                   <div>
                                     {
                                       item.watchlist_images.map((image, index) => (
-                                        <img key={index} src={`${FILE_URL}${image.url}`} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]" />
+                                        <img key={index} src={`${IMAGE_URL}${image.url}`} alt={`image-${index}`} className="inline-flex items-center justify-center align-middle h-[70px] w-[60px]" />
                                       ))
                                     }
                                   </div>
@@ -367,8 +381,8 @@ function SpecialSuspectPerson() {
                                 <p className="pl-[10px]">{personTypes?.data?.find((row) => row.id === item.person_class_id)?.title_en}</p>
                               }
                             </td>
-                            <td className="text-center bg-celtic">{ dayjs(item.createdAt).format('DD/MM/BBBB') }</td>
-                            <td className="text-center bg-tuna">{ dayjs(item.updatedAt).format('DD/MM/BBBB') }</td>
+                            <td className="text-center bg-celtic">{ dayjs(item.createdAt).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') }</td>
+                            <td className="text-center bg-tuna">{ dayjs(item.updatedAt).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') }</td>
                             <td className="text-center w-[200px] bg-celtic">
                               {
                                 item.case_owner_agency === "" ? "ไม่ระบุตัวตน" : item.case_owner_agency
@@ -423,7 +437,6 @@ function SpecialSuspectPerson() {
               rowsPerPageOptions={rowsPerPageOptions}
               handleRowsPerPageChange={handleRowsPerPageChange}
               totalPages={totalPages}
-              textFieldFontSize="15px"
               pageInput={pageInput.toString()}
               handlePageInputKeyDown={handlePageInputKeyDown}
               handlePageInputChange={handlePageInputChange}
@@ -435,41 +448,18 @@ function SpecialSuspectPerson() {
             setFilterData={setFilterData}
           />
         </div>
-        <Dialog open={isAddSuspectPersonOpen} onClose={() => {}} className="absolute z-30">
-          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
-            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] text-white w-[80vw]">
-              <div className="flex justify-between">
-                <DialogTitle className="text-[28px]">จัดการบุคคลต้องสงสัย</DialogTitle>
-              </div>
-              <div className="px-5 pb-5">
-                <ManageSpecialSuspectPerson 
-                  closeDialog={() => setIsAddSuspectPersonOpen(false)} 
-                  selectedRow={selectedRow}
-                  isEditMode={isEditMode}
-                />
-              </div>
-            </div>
-          </div>
-        </Dialog>
+        <ManageSpecialSuspectPerson 
+          open={isAddSuspectPersonOpen}
+          closeDialog={() => setIsAddSuspectPersonOpen(false)} 
+          selectedRow={selectedRow}
+          isEditMode={isEditMode}
+        />
         {/* Import File */}
-        <Dialog open={isFileImportOpen} onClose={() => {}} className="absolute z-30">
-          <div className="fixed inset-0 flex w-screen items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm ">
-            <div className="space-y-4 border bg-[var(--background-color)] max-w-[80%] bg-black text-white w-[80vw] h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center">
-                <DialogTitle className="text-[28px]">นำเข้าข้อมูล</DialogTitle>
-                <button
-                  onClick={handleCloseDialog} 
-                  className="text-white bg-transparent border-0 text-[28px] pr-6"
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="px-5 pb-5">
-                <UploadFile closeDialog={() => setIsFileImportOpen(false)} isFileImportClose={isFileImportClose} />
-              </div>
-            </div>
-          </div>
-        </Dialog>
+        <UploadFile 
+          open={isFileImportOpen} 
+          closeDialog={() => setIsFileImportOpen(false)} 
+          isFileImportClose={isFileImportClose} 
+        />
       </div>
     </div>
   )

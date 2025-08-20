@@ -4,20 +4,32 @@ import { isDevEnv } from "../../config/environment"
 import {
   CameraSettings,
   NewCameraDetailSettings,
-  CameraDetailSettings,
+  CameraSettingsData,
   StartStopStream,
 } from "./cameraSettingsTypes"
 import {
   cameraDetailSettingsData,
+  cameraSettingsData,
 } from "../../mocks/mockCameraSettings"
 
-let mockData = {data:[...cameraDetailSettingsData]}
+let mockData = [...cameraDetailSettingsData]
 let mockDataDetail = [...cameraDetailSettingsData]
+let mockCameraSettingData = [...cameraSettingsData]
 
 export const fetchCameraSettings = async (param?: Record<string, string>): Promise<CameraSettings> => {
   const { API_URL } = getUrls();
   if (isDevEnv) {
-    return Promise.resolve(mockData)
+    const data = {
+      data: mockData,
+      pagination: {
+        page: 1,
+        maxPage: 1,
+        limit: 10,
+        count: 1,
+        countAll: 1,
+      },
+    }
+    return Promise.resolve(data)
   }
   return await fetchClient<CameraSettings>(combineURL(API_URL, "/cameras/get"), {
     method: "GET",
@@ -27,44 +39,29 @@ export const fetchCameraSettings = async (param?: Record<string, string>): Promi
 
 export const postCameraSetting = async (
   newSetting: NewCameraDetailSettings
-): Promise<CameraDetailSettings> => {
+): Promise<CameraSettingsData> => {
   const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
       const ids = mockDataDetail.map((setting) => setting.id)
       const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1
-      const settingWithId: CameraDetailSettings = { 
+      const settingWithId: CameraSettingsData = { 
         ...newSetting, 
-        latitude: newSetting.latitude.toString(),
-        longitude: newSetting.longitude.toString(),
         id: newId,
-        cam_uid: '', 
-        alpr_cam_id: 0, 
-        detecion_count: 0,
-        sample_image_url: '',
-        live_server_url: '', 
-        live_stream_url: '',
-        wsport: 0, 
-        streaming: false, 
-        alive: 0,
-        last_online: null,
-        last_check: null,
-        stream_encode: {
-          id: 1,
-          name: "H265",
-          gstreamer_format: "",
-          visible: true,
-          active: true,
-        },
+        checkpoint_uid: newId,
         stream_encode_id: 1,
         createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString(),
       };
   
-      mockDataDetail.push(settingWithId);
-      return Promise.resolve(mockDataDetail[mockDataDetail.length - 1]);
+      mockCameraSettingData.push(settingWithId);
+      return Promise.resolve({
+        ...mockDataDetail[mockDataDetail.length - 1],
+        latitude: Number(mockDataDetail[mockDataDetail.length - 1].latitude),
+        longitude: Number(mockDataDetail[mockDataDetail.length - 1].longitude),
+      });
     }
-    return await fetchClient<CameraDetailSettings>(combineURL(API_URL, "/cameras/create"), {
+    return await fetchClient<CameraSettingsData>(combineURL(API_URL, "/cameras/create"), {
       method: "POST",
       body: JSON.stringify(newSetting),
     })
@@ -75,8 +72,8 @@ export const postCameraSetting = async (
 }
 
 export const putCameraSetting = async (
-  updatedSetting: CameraDetailSettings
-): Promise<CameraDetailSettings> => {
+  updatedSetting: CameraSettingsData
+): Promise<CameraSettingsData> => {
   const { API_URL } = getUrls();
   try {
     if (isDevEnv) {
@@ -86,11 +83,21 @@ export const putCameraSetting = async (
       if (index === -1) {
         return Promise.reject(new Error("Setting not found in mock data"))
       }
-      mockDataDetail[index] = { ...mockDataDetail[index], ...updatedSetting }
-      return Promise.resolve(mockDataDetail[index])
+      mockDataDetail[index] = {
+        ...mockDataDetail[index],
+        ...updatedSetting,
+        latitude: String(updatedSetting.latitude),
+        longitude: String(updatedSetting.longitude)
+      };
+      
+      return Promise.resolve({
+        ...mockDataDetail[index],
+        latitude: Number(mockDataDetail[index].latitude),
+        longitude: Number(mockDataDetail[index].longitude)
+      } as CameraSettingsData);
     }
   
-    return await fetchClient<CameraDetailSettings>(combineURL(API_URL, "/cameras/update"), {
+    return await fetchClient<CameraSettingsData>(combineURL(API_URL, "/cameras/update"), {
       method: "PATCH",
       body: JSON.stringify(updatedSetting),
     })

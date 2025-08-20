@@ -6,6 +6,9 @@ import { useMap } from "../../hooks/useOpenStreetMap"
 // Components
 import Loading from "../../components/loading/Loading"
 
+// i18n
+import { useTranslation } from "react-i18next";
+
 const BaseMap: React.FC<MapProps> = ({
   height = DEFAULT_DIMENSIONS.height,
   width = DEFAULT_DIMENSIONS.width,
@@ -16,6 +19,9 @@ const BaseMap: React.FC<MapProps> = ({
   fullscreenControl = DEFAULT_MAP_CONFIG.fullscreenControl,
   onMapLoad,
 }) => {
+  // i18n
+  const { t } = useTranslation();
+
   const mapRef = useRef<HTMLDivElement>(null)
   const { initMap, isLoading, error, mapInstance } = useMap({
     panControl: panControl,
@@ -48,7 +54,7 @@ const BaseMap: React.FC<MapProps> = ({
   }, [mapInstance, onMapLoad])
 
   if (error) {
-    return <div className="text-red-500">Failed to load map: {error.message}</div>
+    return <div className="text-red-500">{t('text.show-screen', { error: error.message})}</div>
   }
 
   return (

@@ -126,13 +126,13 @@ export interface SystemStatusData {
   updatedAt: string
 }
 
-export interface ZipDowload {
+export interface ZipDownload {
   message?: string
   status?: string
   success?: string
-  data?: ZipDowloadDetail
+  data?: ZipDownloadDetail
 }
 
-export interface ZipDowloadDetail {
+export interface ZipDownloadDetail {
   zipUrl: string
 }

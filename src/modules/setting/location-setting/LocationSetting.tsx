@@ -1,5 +1,10 @@
 import React, {useState, useCallback, useEffect} from 'react'
 import { Map as LeafletMap } from 'leaflet';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material"
 
 // Components
 import TextBox from '../../../components/text-box/TextBox'
@@ -15,7 +20,11 @@ import { SearchResult } from '../../../types/index'
 // Popup
 import { PopupMessage } from "../../../utils/popupMessage"
 
+// i18n
+import { useTranslation } from "react-i18next";
+
 interface LocationSettingProps {
+  open: boolean
   closeDialog: () => void
   confirmPoint: (result: SearchResult) => void
   location?: {
@@ -23,7 +32,10 @@ interface LocationSettingProps {
     longitude: string,
   }
 }
-const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, confirmPoint, location}) => {
+const LocationSetting: React.FC<LocationSettingProps> = ({open, closeDialog, confirmPoint, location}) => {
+  // i18n
+  const { t } = useTranslation();
+  
   const [searchText, setSearchText] = useState("")
   const [map, setMap] = useState<LeafletMap | null>(null)
 
@@ -60,7 +72,7 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, confirmPo
       closeDialog()
     }
     else {
-      PopupMessage("", "โปรดเลือกสถานที่", "warning")
+      PopupMessage("", t('message.warning.please-select-location'), "warning")
     }
   }
 
@@ -78,55 +90,60 @@ const LocationSetting: React.FC<LocationSettingProps> = ({closeDialog, confirmPo
     else if (navigator.geolocation && searchResults.length === 0 && !isSearching) {
       navigator.geolocation.getCurrentPosition(
         showPosition,
-        (error) => console.error("Error fetching location:", error),
+        (error) => console.error(t('message.error.fetching-location-error', { error: error })),
         { enableHighAccuracy: true }
       );
     }
   }, [location, searchPlace, searchResults, isSearching])
 
   return (
-    <div id='location-setting'>
-      {isSearching && <Loading />}
-      <div className="bg-black text-white w-full">
-        <div className='grid grid-cols-2 mb-5'>
-          <div className='col-start-2'>
-            <TextBox
-              id="search-location"
-              label="ค้นหาสถานที่"
-              placeHolder=""
-              className="w-full"
-              value={searchText}
-              onChange={(e: any) => handleSearchChange(e.target.value)}
-              onKeyPress={handleKeyPress}
-              isError={ searchError ? true : false}
-              helperText={searchError}
-            />
+    <Dialog id='location-setting' open={open} maxWidth="xl" fullWidth>
+      <DialogTitle className="text-[28px] bg-black">{t('screen.camera-location')}</DialogTitle>
+      <DialogContent className='bg-black'>
+        <div>
+          {isSearching && <Loading />}
+          <div className="bg-black text-white w-full">
+            <div className='grid grid-cols-2 mb-5'>
+              <div className='col-start-2'>
+                <TextBox
+                  id="search-location"
+                  label={t('component.search-location')}
+                  placeholder=""
+                  className="w-full"
+                  value={searchText}
+                  onChange={(e: any) => handleSearchChange(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  error={ searchError ? true : false}
+                  helperText={searchError}
+                />
+              </div>
+            </div>
+            <div className='h-[550px] relative border-[1px] border-dodgerBlue mb-[20px]'>
+              <BaseMap 
+                onMapLoad={handleMapLoad}
+              />
+            </div>
+            <div className='flex items-center justify-end'>
+              <button 
+                type="button" 
+                className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
+                onClick={handlePointButton}
+              >
+                <img src="/icons/map-pin.png" alt="Map Pin" className='w-[20px] h-[20px]' />
+                <span className='ml-[5px]'>{t('button.point')}</span>
+              </button>
+              <button 
+                type="button" 
+                className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded" 
+                onClick={closeDialog}
+              >
+                {t('button.cancel')}
+              </button>
+            </div>
           </div>
         </div>
-        <div className='h-[550px] relative border-[1px] border-dodgerBlue mb-[20px]'>
-          <BaseMap 
-            onMapLoad={handleMapLoad}
-          />
-        </div>
-        <div className='flex items-center justify-end'>
-          <button 
-            type="button" 
-            className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px]" 
-            onClick={handlePointButton}
-          >
-            <img src="/icons/map-pin.png" alt="Map Pin" className='w-[20px] h-[20px]' />
-            <span className='ml-[5px]'>Point</span>
-          </button>
-          <button 
-            type="button" 
-            className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded" 
-            onClick={closeDialog}
-          >
-            ยกเลิก
-          </button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

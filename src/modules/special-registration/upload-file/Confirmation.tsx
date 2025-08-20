@@ -30,7 +30,10 @@ import { getUrls } from '../../../config/runtimeConfig';
 import Loading from "../../../components/loading/Loading"
 
 // Utils
-import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+import { getFileNameWithoutExtension } from "../../../utils/commonFunction"
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(buddhistEra)
 
@@ -42,7 +45,10 @@ interface ConfirmationProps {
 }
 
 const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataList, imagesDataList, textsDataList}) => {
-  const { FILE_URL } = getUrls();
+  // i18n
+  const { t } = useTranslation();
+  
+  const { IMAGE_URL } = getUrls();
   const { provinces, dataStatus, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
@@ -70,9 +76,9 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
         id: data.id,
         plate_group: data.plate_group,
         plate_number: data.plate_number,
-        province: province?.name_th || "ไม่พบข้อมูล",
+        province: province?.name_th || t('text.not-found-data'),
         province_id: province?.id || 0,
-        plate_class: registrationType?.title_en || "ไม่พบข้อมูล",
+        plate_class: registrationType?.title_en || t('text.not-found-data'),
         plate_class_id: registrationType?.id || 0,
         case_number: data.case_number,
         arrest_warrant_date: data.arrest_warrant_date,
@@ -84,7 +90,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
         imagesData: data.imagesData,
         filesData: data.filesData,
         visible: 1,
-        activeString: status?.status || "ไม่พบข้อมูล",
+        activeString: status?.status || t('text.not-found-data'),
         active: status?.id || 0,
         imagesUploadedData: matchedImage,
         fileUploadedData: matchedFile,
@@ -121,7 +127,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
       {isLoading && <Loading />}
       <div className='flex flex-col h-full'>
         <div className="flex-grow overflow-x-auto">
-          <TableContainer component={Paper} className="mt-4 h-[60vh] w-[2500px]"
+          <TableContainer component={Paper} className="mt-4 h-[56vh] w-[2500px]"
             sx={{
               backgroundColor: "#000000"
             }}
@@ -136,21 +142,21 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
                 }}
               >
                 <TableRow>
-                  <TableCell>ลำดับ</TableCell>
-                  <TableCell>หมวดอักษร</TableCell>
-                  <TableCell>เลขทะเบียน</TableCell>
-                  <TableCell>จังหวัด</TableCell>
-                  <TableCell>กลุ่มทะเบียน</TableCell>
-                  <TableCell>หมายเลขคดี</TableCell>
-                  <TableCell>วันที่ออกหมายจับ</TableCell>
-                  <TableCell>วันที่สิ้นสุดออกหมายจับ</TableCell>
-                  <TableCell>พฤติการ</TableCell>
-                  <TableCell>เจ้าของข้อมูล</TableCell>
-                  <TableCell>หน่วยงาน</TableCell>
-                  <TableCell>เบอร์ติดต่อ</TableCell>
-                  <TableCell>รูปรถ/ทะเบียน</TableCell>
-                  <TableCell>ไฟล์</TableCell>
-                  <TableCell>สถานะ</TableCell>
+                  <TableCell>{t('table.column.order')}</TableCell>
+                  <TableCell>{t('table.column.plate-character')}</TableCell>
+                  <TableCell>{t('table.column.plate-number')}</TableCell>
+                  <TableCell>{t('table.column.province')}</TableCell>
+                  <TableCell>{t('table.column.plate-type')}</TableCell>
+                  <TableCell>{t('table.column.case-number')}</TableCell>
+                  <TableCell>{t('table.column.date-arrest-warrant')}</TableCell>
+                  <TableCell>{t('table.column.date-expiration-arrest-warrant')}</TableCell>
+                  <TableCell>{t('table.column.behavior')}</TableCell>
+                  <TableCell>{t('table.column.owner-data')}</TableCell>
+                  <TableCell>{t('table.column.owner-agency')}</TableCell>
+                  <TableCell>{t('table.column.phone')}</TableCell>
+                  <TableCell>{t('table.column.vehicle-plate-image')}</TableCell>
+                  <TableCell>{t('table.column.file')}</TableCell>
+                  <TableCell>{t('table.column.status')}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableHead>
@@ -163,7 +169,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
               >
                 {
                   confirmationData.map((data, index) => {
-                    const imageUrl = data.imagesUploadedData ? `${FILE_URL}${data.imagesUploadedData.url}` : ""
+                    const imageUrl = data.imagesUploadedData ? `${IMAGE_URL}${data.imagesUploadedData.url}` : ""
                     const fileUrl = data.fileUploadedData ? data.fileUploadedData.originalName : ""
 
                     return (
@@ -195,10 +201,10 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
                               />
                             </div>
                           ) : (
-                            "ไม่พบข้อมูล"
+                            t('text.not-found-data')
                           )}
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: "#48494B" }}>{fileUrl || "ไม่พบข้อมูล"}</TableCell>
+                        <TableCell sx={{ backgroundColor: "#48494B" }}>{fileUrl || t('text.not-found-data')}</TableCell>
                         <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.activeString}</TableCell>
                         <TableCell sx={{ backgroundColor: "#48494B" }}>
                           <IconButton 
@@ -226,7 +232,7 @@ const Confirmation: React.FC<ConfirmationProps> = ({setFinalDataList, filesDataL
                             }}
                             colSpan={15}
                           >
-                            ไม่สามารถเพิ่มข้อมูลได้ หรือ ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบไฟล์อีกครั้ง
+                            {t('text.data-cannot-add')}
                           </TableCell>
                         )}
                       </TableRow>

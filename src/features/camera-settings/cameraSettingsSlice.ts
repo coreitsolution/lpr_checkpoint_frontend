@@ -11,14 +11,14 @@ import {
 import {
   CameraSettings,
   NewCameraDetailSettings,
-  CameraDetailSettings,
+  CameraSettingsData,
   StreamDetail,
   StartStopStream,
 } from "./cameraSettingsTypes";
 import { Status } from "../../constants/statusEnum";
 
 interface CameraSettingsState {
-  cameraDetailSetting: CameraDetailSettings[];
+  cameraDetailSetting: CameraSettingsData[];
   cameraSettings: CameraSettings | null;
   streamDetail: StreamDetail[];
   cameraSettingsStatus: Status;
@@ -41,7 +41,7 @@ export const fetchCameraSettingsThunk = createAsyncThunk(
   }
 );
 
-export const postCameraSettingThunk = createAsyncThunk<CameraDetailSettings, NewCameraDetailSettings, { rejectValue: string }>(
+export const postCameraSettingThunk = createAsyncThunk<CameraSettingsData, NewCameraDetailSettings, { rejectValue: string }>(
   "cameraSettings/postCameraSetting",
   async (newSetting: NewCameraDetailSettings, { rejectWithValue }) => {
     try {
@@ -54,9 +54,9 @@ export const postCameraSettingThunk = createAsyncThunk<CameraDetailSettings, New
   }
 );
 
-export const putCameraSettingThunk = createAsyncThunk<CameraDetailSettings, CameraDetailSettings, { rejectValue: string }>(
+export const putCameraSettingThunk = createAsyncThunk<CameraSettingsData, CameraSettingsData, { rejectValue: string }>(
   "cameraSettings/putCameraSetting",
-  async (updateSetting: CameraDetailSettings, { rejectWithValue }) => {
+  async (updateSetting: CameraSettingsData, { rejectWithValue }) => {
     try {
       const response = await putCameraSetting(updateSetting);
       return response;

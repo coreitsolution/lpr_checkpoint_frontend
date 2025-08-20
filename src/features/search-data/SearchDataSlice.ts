@@ -4,11 +4,11 @@ import { Status } from "../../constants/statusEnum"
 
 // Types
 import { SpecialPlateSearchResult, SpecialSuspectPeopleSearchResult } from "./SearchDataTypes"
-import { FilterSpecialPlatesBody, PdfDowload } from "../../features/api/types";
+import { FilterSpecialPlatesBody, PdfDownload } from "../../features/api/types";
 
 // API
 import {
-  dowloadPdfSpecialPlate,
+  downloadPdfSpecialPlate,
   postSpecialPlateSearchData,
   fetchSpecialSuspectPeopleSearchData
 } from "./SearchDataAPI"
@@ -16,7 +16,7 @@ import {
 interface SearchDataState {
   specialPlateSearchData: SpecialPlateSearchResult | null
   specialSuspectPeopleSearchData: SpecialSuspectPeopleSearchResult | null
-  dowloadPath: PdfDowload | null
+  downloadPath: PdfDownload | null
   searchDataStatus: Status
   searchDataError: string | null
 }
@@ -24,7 +24,7 @@ interface SearchDataState {
 const initialState: SearchDataState = {
   specialPlateSearchData: null,
   specialSuspectPeopleSearchData: null,
-  dowloadPath: null,
+  downloadPath: null,
   searchDataStatus: Status.IDLE,
   searchDataError: null,
 }
@@ -45,10 +45,10 @@ export const fetchSpecialSuspectPeopleSearchDataThunk = createAsyncThunk(
   }
 )
 
-export const dowloadPdfSpecialPlateThunk = createAsyncThunk(
-  "searchData/dowloadPdfSpecialPlate",
+export const downloadPdfSpecialPlateThunk = createAsyncThunk(
+  "searchData/downloadPdfSpecialPlate",
   async() => {
-    const response = await dowloadPdfSpecialPlate()
+    const response = await downloadPdfSpecialPlate()
     return response
   }
 )
@@ -78,14 +78,14 @@ const searchDataSlice = createSlice({
       })
 
     builder
-      .addCase(dowloadPdfSpecialPlateThunk.pending, (state) => {
+      .addCase(downloadPdfSpecialPlateThunk.pending, (state) => {
         state.searchDataStatus = Status.LOADING
       })
-      .addCase(dowloadPdfSpecialPlateThunk.fulfilled, (state, action) => {
+      .addCase(downloadPdfSpecialPlateThunk.fulfilled, (state, action) => {
         state.searchDataStatus = Status.SUCCEEDED
-        state.dowloadPath = action.payload
+        state.downloadPath = action.payload
       })
-      .addCase(dowloadPdfSpecialPlateThunk.rejected, (state, action) => {
+      .addCase(downloadPdfSpecialPlateThunk.rejected, (state, action) => {
         state.searchDataStatus = Status.FAILED
         state.searchDataError = action.error.message || "Failed to fetch special plates data."
       })

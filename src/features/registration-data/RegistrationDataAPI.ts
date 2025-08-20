@@ -90,7 +90,11 @@ export const putSpecialPlateData = async (updated: SpecialPlatesDetail): Promise
         mockSpecialRegistrationData = [...mockSpecialRegistrationData];
       }
       
-      mockSpecialRegistrationData[index] = { ...mockSpecialRegistrationData[index], ...updated }
+      return Promise.resolve({
+        ...mockSpecialRegistrationData[index],
+        arrest_warrant_date: mockSpecialRegistrationData[index].arrest_warrant_date ?? "",
+        arrest_warrant_expire_date: mockSpecialRegistrationData[index].arrest_warrant_expire_date ?? "",
+      });
       return Promise.resolve(mockSpecialRegistrationData[index])
     }
   

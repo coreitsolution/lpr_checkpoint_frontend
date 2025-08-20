@@ -1,9 +1,6 @@
 import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { getUrls } from '../../config/runtimeConfig';
-import { LoginCredentials, LoginResponse, RefreshTokenResponse, UserInfoResponse } from "./authTypes";
-
-// Utils
-import { getCookieValue } from "../../utils/comonFunction";
+import { LoginCredentials, LoginResponse, RefreshTokenResponse } from "./authTypes";
 
 export const loginUser = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   const { API_URL } = getUrls();
@@ -18,18 +15,6 @@ export const refreshToken = async (): Promise<RefreshTokenResponse> => {
 
   return await fetchClient<RefreshTokenResponse>(combineURL(API_URL, "/users/refresh"), {
     method: 'POST',
-  });
-}
-
-export const getUserInfo = async (): Promise<UserInfoResponse> => {
-  const { API_URL } = getUrls();
-  const refreshToken = getCookieValue('refreshToken');
-  const params: Record<string, string> = {
-    "filter": `refresh_token:${refreshToken}`
-  };
-  return await fetchClient<UserInfoResponse>(combineURL(API_URL, "/users/get"), {
-    method: 'GET',
-    queryParams: params,
   });
 }
 

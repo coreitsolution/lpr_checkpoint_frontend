@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../../utils/popupMessage"
 import { format, parse } from "date-fns"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../../app/store"
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material"
 
 // Config
 import { getUrls } from '../../../config/runtimeConfig';
@@ -17,16 +22,6 @@ import Loading from "../../../components/loading/Loading"
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePickerBuddhist"
 
-// API
-import {
-  putSpecialSuspectPeopleDataThunk,
-  postSpecialSuspectPeopleDataThunk,
-} from "../../../features/suspect-people/SuspectPeopleDataSlice"
-import {
-  postFilesDataThunk,
-  deleteFilesDataThunk,
-} from "../../../features/file-upload/fileUploadSlice"
-
 // Types
 import {
   FileData,
@@ -35,19 +30,21 @@ import {
   NewFileRespondsData,
   NewSuspectPeople,
 } from "../../../features/suspect-people/SuspectPeopleDataTypes"
-import { DeleteRequestData } from "../../../features/file-upload/fileUploadTypes"
+import { DeleteRequestData, FileUpload, FileDelete } from "../../../features/file-upload/fileUploadTypes"
 import { DistrictsDetail, SubDistrictsDetail } from "../../../features/dropdown/dropdownTypes";
 
 // Icon
 import { Icon } from "../../../components/icons/Icon"
 import { Download, Upload, Trash2 } from "lucide-react"
+import { fetchClient, combineURL } from "../../../utils/fetchClient"
 
 // Utils
-import { formatThaiID, formatPhone } from "../../../utils/comonFunction"
+import { formatThaiID, formatPhone } from "../../../utils/commonFunction"
 
 dayjs.locale('th');
 
 interface ManageExtraRegistrationProps {
+  open: boolean
   closeDialog: () => void
   selectedRow: SuspectPeopleRespondsDetail | null
   isEditMode: boolean
@@ -80,6 +77,7 @@ interface FormData {
 }
 
 const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
+  open,
   closeDialog,
   selectedRow,
   isEditMode,
@@ -98,8 +96,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   const [districtsList, setDistrictsList] = useState<DistrictsDetail[]>([])
   const [subDistrictsList, setSubDistrictsList] = useState<SubDistrictsDetail[]>([])
     
-  const dispatch: AppDispatch = useDispatch()
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL, API_URL } = getUrls();
   const { provinces, personTypes, personTitles, districts, subDistricts } = useSelector(
     (state: RootState) => state.dropdown
   )
@@ -250,7 +247,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
     setTimeout(() => {
       setIsLoading(false)
     }, 500);
-  }, [selectedRow, isEditMode, dispatch])
+  }, [selectedRow, isEditMode])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -268,7 +265,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
       }
     };
     fetchData();
-  }, [dispatch, formData.province_id, formData.district_id]);
+  }, [formData.province_id, formData.district_id]);
 
   const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
@@ -303,9 +300,14 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         formData.append("files", file)
       })
 
-      const response = await dispatch(
-        postFilesDataThunk(formData)
-      ).unwrap()
+      const response = await fetchClient<FileUpload>(combineURL(API_URL, "/upload"), {
+        method: "POST",
+        isFormData: true,
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: formData,
+      })
 
       if (response?.data) {
         const uploadedImages = response.data.map((file: any, index: any) => ({
@@ -338,9 +340,9 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
     catch (error) {
       PopupMessage("เกิดข้อผิดพลาดในการอัพโหลดไฟล์", error instanceof Error ? error.message : String(error), "error")
     }
-  }, [dispatch, formData.imagesData])
+  }, [, formData.imagesData])
 
-  const handleDeleteImage = useCallback(async (position: number, url: string) => {
+  const handleDeleteImage = async (position: number, url: string) => {
     try {
       const deleteFile: DeleteRequestData = {
         url: url
@@ -359,7 +361,7 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         imagesData: updatedImagesData,
       }
     })
-  }, [dispatch])
+  }
 
   const handleTextChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
@@ -483,9 +485,14 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         if (confirmed) {
           // Update existing data
           const updateDataWithId = { ...updatedFormData, id: selectedRow.id }
-          await dispatch(
-            putSpecialSuspectPeopleDataThunk(updateDataWithId)
-          ).unwrap()
+          await fetchClient<SuspectPeopleRespondsDetail>(
+            combineURL(API_URL, `/watchlist/update`),
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updateDataWithId),
+            }
+          )
         }
         else {
           return
@@ -494,9 +501,10 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
       } 
       else {
         // Add new data
-        await dispatch(
-          postSpecialSuspectPeopleDataThunk(updatedFormData)
-        ).unwrap()
+        await fetchClient<SuspectPeopleRespondsDetail>(combineURL(API_URL, "/watchlist/create"), {
+          method: "POST",
+          body: JSON.stringify(updatedFormData),
+        });
       }
       PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
       closeDialog()
@@ -525,10 +533,15 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
         newFiles.forEach(file => {
           formData.append("files", file) // Append each file individually
         })
-        // Dispatch the thunk to upload files and await the response
-        const response = await dispatch(
-          postFilesDataThunk(formData)
-        ).unwrap()
+
+        const response = await fetchClient<FileUpload>(combineURL(API_URL, "/upload"), {
+          method: "POST",
+          isFormData: true,
+          headers: { 
+            Accept: 'application/json',
+          },
+          body: formData,
+        })
   
         if (response?.data) {
           const uploadedFiles: NewFileRespondsData[] = response.data.map((file) => ({
@@ -655,9 +668,13 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
     try {
-      await dispatch(
-        deleteFilesDataThunk(deleteFile)
-      ).unwrap()
+      await fetchClient<FileDelete>(combineURL(API_URL, "/upload/remove"), {
+        method: "POST",
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(deleteFile),
+      })
     }
     catch (error) {
       
@@ -824,420 +841,416 @@ const ManageSpecialSuspectPerson: React.FC<ManageExtraRegistrationProps> = ({
   }
   
   return (
-    <div
-      id="manage-special-registration"
-      className="bg-black text-white p-[20px] border-[1px] border-dodgerBlue"
-    >
-      {isLoading && <Loading />}
-      <div className="grid grid-cols-4 gap-2 items-start justify-start">
-        {/* Row 1 */}
-        <div className="mr-[20px]">
-          <AutoComplete 
-            id="name-prefix-select"
-            sx={{ marginTop: "5px"}}
-            value={formData.name_prefix}
-            onChange={handleCommonPrefixChange}
-            options={commonPrefixOptions}
-            label="คำนำหน้า"
-            labelFontSize="15px"
-          />
-        </div>
-        <div className="mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "4px", fontSize: "15px" }}
-            id="first-name"
-            label="ชื่อ"
-            placeHolder=""
-            className="w-full"
-            value={formData.firstname}
-            onChange={(event) =>
-              handleTextChange("firstname", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "4px", fontSize: "15px" }}
-            id="last-name"
-            label="นามสกุล"
-            placeHolder=""
-            className="w-full"
-            value={formData.lastname}
-            onChange={(event) =>
-              handleTextChange("lastname", event.target.value)
-            }
-          />
-        </div>
-        {/* Import File */}
+    <Dialog open={open} maxWidth="xl" fullWidth sx={{ zIndex: 1000 }}>
+      <DialogTitle className="text-[28px] text-white bg-black">จัดการบุคคลต้องสงสัย</DialogTitle>
+      <DialogContent className="bg-black">
         <div
-          id="file-import-container"
-          className="col-start-4 row-span-9 h-full border-l-[2px] border-nobel pl-[25px]"
+          id="manage-special-registration"
+          className="bg-black text-white p-[20px] border-[1px] border-dodgerBlue"
         >
-          <div className="h-full">
-            {/* Image Upload Section */}
-            <div id="image-import-part" className="flex flex-col items-center">
-              <label
-                htmlFor="image-upload"
-                className="relative flex items-center justify-center w-full h-[250px] mt-[5px] bg-[#48494B] cursor-pointer overflow-hidden hover:bg-gray-800"
-              >
-                { formData.imagesData && Object.keys(formData.imagesData).length > 0 ? (
-                  <div className="relative w-full h-full">
-                    {/* First Image (Full Size) */}
-                    {formData.imagesData[0] && (
-                      <div className="absolute inset-0">
-                        <img
-                          src={`${FILE_URL}${formData.imagesData[0].url}`}
-                          alt="Uploaded 1"
-                          className="object-contain w-full h-full"
-                        />
-                        <button
-                          type="button"
-                          className="absolute z-[52] top-2 right-2 text-white bg-red-500 rounded-full w-[30px] h-[30px] flex items-center justify-center hover:cursor-pointer"
-                          onClick={() => handleDeleteImage(0, formData.imagesData[0].url)}
-                        >
-                          &times;
-                        </button>
+          {isLoading && <Loading />}
+          <div className="grid grid-cols-4 gap-2 items-start justify-start">
+            {/* Row 1 */}
+            <div className="mr-[20px]">
+              <AutoComplete 
+                id="name-prefix-select"
+                sx={{ marginTop: "5px"}}
+                value={formData.name_prefix}
+                onChange={handleCommonPrefixChange}
+                options={commonPrefixOptions}
+                label="คำนำหน้า"
+                labelFontSize="15px"
+              />
+            </div>
+            <div className="mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "4px", fontSize: "15px" }}
+                id="first-name"
+                label="ชื่อ"
+                placeholder=""
+                value={formData.firstname}
+                onChange={(event) =>
+                  handleTextChange("firstname", event.target.value)
+                }
+              />
+            </div>
+            <div className="mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "4px", fontSize: "15px" }}
+                id="last-name"
+                label="นามสกุล"
+                placeholder=""
+                value={formData.lastname}
+                onChange={(event) =>
+                  handleTextChange("lastname", event.target.value)
+                }
+              />
+            </div>
+            {/* Import File */}
+            <div
+              id="file-import-container"
+              className="col-start-4 row-span-9 h-full border-l-[2px] border-nobel pl-[25px]"
+            >
+              <div className="h-full">
+                {/* Image Upload Section */}
+                <div id="image-import-part" className="flex flex-col items-center">
+                  <label
+                    htmlFor="image-upload"
+                    className="relative flex items-center justify-center w-full h-[250px] mt-[5px] bg-[#48494B] cursor-pointer overflow-hidden hover:bg-gray-800"
+                  >
+                    { formData.imagesData && Object.keys(formData.imagesData).length > 0 ? (
+                      <div className="relative w-full h-full">
+                        {/* First Image (Full Size) */}
+                        {formData.imagesData[0] && (
+                          <div className="absolute inset-0">
+                            <img
+                              src={`${IMAGE_URL}${formData.imagesData[0].url}`}
+                              alt="Uploaded 1"
+                              className="object-contain w-full h-full"
+                            />
+                            <button
+                              type="button"
+                              className="absolute z-[52] top-2 right-2 text-white bg-red-500 rounded-full w-[30px] h-[30px] flex items-center justify-center hover:cursor-pointer"
+                              onClick={() => handleDeleteImage(0, formData.imagesData[0].url)}
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Second and Third Images (Bottom Left) */}
+                        <div className="absolute bottom-2 left-2 flex gap-2">
+                          {[1, 2].map(
+                            (position) =>
+                              formData.imagesData[position] && (
+                                <div
+                                  key={position}
+                                  className="relative w-[80px] h-[60px] border border-white bg-tuna"
+                                >
+                                  <img
+                                    src={`${IMAGE_URL}${formData.imagesData[position].url}`}
+                                    alt={`Uploaded ${position + 1}`}
+                                    className="object-contain w-full h-full"
+                                  />
+                                  <button
+                                    type="button"
+                                    className="absolute z-[52] top-[-5px] right-[-5px] text-white bg-red-500 rounded-full w-[20px] h-[20px] flex items-center justify-center hover:cursor-pointer"
+                                    onClick={() => handleDeleteImage(position, formData.imagesData[position].url)}
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              )
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* No Images */
+                      <div className="flex flex-col justify-center items-center">
+                        <Icon icon={Download} size={80} color="#999999" />
+                        <span className="text-[18px] text-nobel mt-[20px]">
+                          อัพโหลดรูปภาพ
+                        </span>
                       </div>
                     )}
+                    {/* Hidden File Input */}
+                    <input
+                      id="image-upload"
+                      type="file"
+                      name="images"
+                      accept="image/*"
+                      multiple
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                </div>
 
-                    {/* Second and Third Images (Bottom Left) */}
-                    <div className="absolute bottom-2 left-2 flex gap-2">
-                      {[1, 2].map(
-                        (position) =>
-                          formData.imagesData[position] && (
-                            <div
-                              key={position}
-                              className="relative w-[80px] h-[60px] border border-white bg-tuna"
-                            >
-                              <img
-                                src={`${FILE_URL}${formData.imagesData[position].url}`}
-                                alt={`Uploaded ${position + 1}`}
-                                className="object-contain w-full h-full"
-                              />
+                {/* File Upload Section */}
+                <div
+                  id="file-import-part"
+                  className="flex justify-end mt-[25px] space-x-2"
+                >
+                  <button
+                    type="button"
+                    className="flex justify-center items-center bg-dodgerBlue rounded w-[140px] h-[40px] hover:cursor-pointer"
+                    onClick={handleImportFileClick}
+                  >
+                    <Icon icon={Upload} size={20} color="white" />
+                    <span className="ml-[5px]">Upload Files</span>
+                  </button>
+                </div>
+
+                <input
+                  ref={hiddenFileInput}
+                  name="files"
+                  type="file"
+                  accept=".docx, .pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {/* File List Section */}
+                <div id="file-list-part" className="mt-[15px]">
+                  <table className="w-full">
+                    <tbody>
+                      {formData.filesData && formData.filesData.length > 0 ? (
+                        formData.filesData.map((file, index) => (
+                          <tr
+                            key={`${file.title}-${index}`}
+                            className={`h-[40px] ${
+                              index % 2 === 0 ? "bg-swamp" : "bg-celtic"
+                            } ${
+                              index === formData.filesData.length - 1
+                                ? "border-b border-white"
+                                : "border-b-[1px] border-dashed border-gray-300"
+                            }`}
+                          >
+                            <td className="font-medium text-center">
+                              {getFileName(file.title, file.url)}
+                            </td>
+                            <td className="font-medium text-center">
+                              {format(new Date(file.createdAt), "dd/MM/yyyy (hh:mm)")}
+                            </td>
+                            <td className="w-[30px]">
                               <button
                                 type="button"
-                                className="absolute z-[52] top-[-5px] right-[-5px] text-white bg-red-500 rounded-full w-[20px] h-[20px] flex items-center justify-center hover:cursor-pointer"
-                                onClick={() => handleDeleteImage(position, formData.imagesData[position].url)}
+                                onClick={() => handleDeleteFile(index, file.url)}
+                                className="hover:opacity-80 transition-opacity hover:cursor-pointer"
                               >
-                                &times;
+                                <Icon icon={Trash2} size={20} color="white" />
                               </button>
-                            </div>
-                          )
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="font-medium h-[40px] bg-swamp border-b border-white">
+                          <td className="text-start pl-[10px]">ไม่มีข้อมูล</td>
+                        </tr>
                       )}
-                    </div>
-                  </div>
-                ) : (
-                  /* No Images */
-                  <div className="flex flex-col justify-center items-center">
-                    <Icon icon={Download} size={80} color="#999999" />
-                    <span className="text-[18px] text-nobel mt-[20px]">
-                      อัพโหลดรูปภาพ
-                    </span>
-                  </div>
-                )}
-                {/* Hidden File Input */}
-                <input
-                  id="image-upload"
-                  type="file"
-                  name="images"
-                  accept="image/*"
-                  multiple
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={handleImageUpload}
-                />
-              </label>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-
-            {/* File Upload Section */}
-            <div
-              id="file-import-part"
-              className="flex justify-end mt-[25px] space-x-2"
-            >
+            {/* Row 2 */}
+            <div className="mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "4px", fontSize: "15px" }}
+                id="nation-number"
+                label="หมายเลขบัตรประชาชน"
+                placeholder=""
+                value={formatThaiID(formData.nation_number)}
+                onChange={handleNationNumberChange}
+              />
+            </div>
+            <div className="mr-[20px] col-span-2">
+              <TextBox
+                sx={{ marginTop: "4px", fontSize: "15px" }}
+                id="address"
+                label="ที่อยู่"
+                placeholder=""
+                value={formData.address}
+                onChange={(event) =>
+                  handleTextChange("address", event.target.value)
+                }
+              />
+            </div>
+            {/* Row 3 */}
+            <div className="col-start-1 mr-[20px]">
+              <AutoComplete 
+                id="provice-select"
+                sx={{ marginTop: "5px"}}
+                value={formData.province_id}
+                onChange={handleProvicesChange}
+                options={provincesOptions}
+                label="จังหวัด"
+                labelFontSize="15px"
+              />
+            </div>
+            <div className="mr-[20px]">
+              <AutoComplete 
+                id="distict-select"
+                sx={{ marginTop: "5px"}}
+                value={formData.district_id}
+                onChange={handleDistrictChange}
+                options={districtsOptions}
+                label="อำเภอ"
+                labelFontSize="15px"
+                disabled={formData.province_id === 0 || formData.province_id === "" ? true : false}
+              />
+            </div>
+            <div className="mr-[20px]">
+              <AutoComplete 
+                id="sub-distict-select"
+                sx={{ marginTop: "5px"}}
+                value={formData.sub_district_id}
+                onChange={handleSubDistrictChange}
+                options={subDistrictsOptions}
+                label="ตำบล"
+                labelFontSize="15px"
+                disabled={formData.district_id === 0 || formData.district_id === "" ? true : false}
+              />
+            </div>
+            {/* Row 4 */}
+            <div className="col-start-1 mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "4px", fontSize: "15px" }}
+                id="postal-code"
+                label="รหัสไปรษณีย์"
+                placeholder=""
+                value={formData.postal_code}
+                onChange={handlePostalCodeChange}
+              />
+            </div>
+            <div className="mr-[20px] col-span-2">
+              <AutoComplete 
+                id="select-person-type"
+                sx={{ marginTop: "10px"}}
+                value={formData.person_class_id}
+                onChange={handlePersonTypeChange}
+                options={personTypesOptions}
+                label="ประเภทบุคคล"
+                labelFontSize="15px"
+              />
+            </div>
+            {/* Row 5 */}
+            <div className="col-start-1 mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "4px", fontSize: "15px" }}
+                id="case-id"
+                label="หมายเลขคดี"
+                placeholder=""
+                value={formData.case_number}
+                onChange={(event) =>
+                  handleTextChange("case_number", event.target.value)
+                }
+                disabled={!isBlackListType}
+              />
+            </div>
+            <div className="mr-[20px]">
+              <label>วันที่ออกหมายจับ</label>
+              <DatePickerBuddhist
+                value={formData.arrest_warrant_date}
+                sx={{
+                  marginTop: "8px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14
+                  }
+                }}
+                className="w-full"
+                id="start-arrest-date"
+                onChange={(value) => handleStartArrestDateChange(value)}
+                disabled={!isBlackListType}
+              >
+              </DatePickerBuddhist>
+            </div>
+            <div className="mr-[20px]">
+              <label>วันที่สิ้นสุดออกหมายจับ</label>
+              <DatePickerBuddhist
+                value={formData.arrest_warrant_expire_date}
+                sx={{
+                  marginTop: "8px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14
+                  }
+                }}
+                className="w-full"
+                id="end-arrest-date"
+                onChange={(value) => handleEndArrestDateChange(value)}
+                disabled={!isBlackListType}
+              >
+              </DatePickerBuddhist>
+            </div>
+            {/* Row 6 */}
+            <div className="col-start-1 col-span-3 mr-[20px]">
+              <label>พฤติการ</label>
+              <Textarea
+                className="resize-none w-full h-[100px] text-start text-wrap text-black mt-[10px] bg-white rounded-[5px]"
+                name="behavior"
+                value={formData.behavior}
+                onChange={(e) => handleInputChange(e)}
+                disabled={!isBlackListType}
+              />
+            </div>
+            {/* Row 7 */}
+            <div className="col-start-1 mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "5px", fontSize: "15px" }}
+                id="case-owner-name"
+                label="เจ้าของข้อมูล"
+                placeholder=""
+                value={formData.case_owner_name}
+                onChange={(event) =>
+                  handleTextChange("case_owner_name", event.target.value)
+                }
+              />
+            </div>
+            <div className="mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "5px", fontSize: "15px" }}
+                id="case-owner-agency"
+                label="หน่วยงาน"
+                placeholder=""
+                value={formData.case_owner_agency}
+                onChange={(event) =>
+                  handleTextChange("case_owner_agency", event.target.value)
+                }
+              />
+            </div>
+            <div className="mr-[20px]">
+              <TextBox
+                sx={{ marginTop: "5px", fontSize: "15px" }}
+                id="case-owner-phone"
+                label="เบอร์ติดต่อ"
+                placeholder=""
+                value={formData.case_owner_phone}
+                onChange={handlePhoneChange}
+              />
+            </div>
+            {/* Row 8 */}
+            <div className="col-start-1 flex items-center justify-start mt-[10px]">
+              <Checkbox
+                id="active-checkbox"
+                className="border-[1px] border-white mr-[10px] w-[26px] h-[26px]"
+                value={formData.active}
+                checked={formData.active === 1}
+                onCheckedChange={handleCheckboxChange}
+              />
+              <label className="text-[15px]">Active</label>
+            </div>
+            {/* Row 9 */}
+            <div className="col-start-3 row-start-8 flex items-center justify-end mr-[20px] mt-[50px]">
               <button
                 type="button"
-                className="flex justify-center items-center bg-dodgerBlue rounded w-[140px] h-[40px] hover:cursor-pointer"
-                onClick={handleImportFileClick}
+                className="bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px] focus:cursor-pointer"
+                onClick={handleSaveClick}
               >
-                <Icon icon={Upload} size={20} color="white" />
-                <span className="ml-[5px]">Upload Files</span>
+                <span>บันทึก</span>
               </button>
-            </div>
-
-            <input
-              ref={hiddenFileInput}
-              name="files"
-              type="file"
-              accept=".docx, .pdf"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-
-            {/* File List Section */}
-            <div id="file-list-part" className="mt-[15px]">
-              <table className="w-full">
-                <tbody>
-                  {formData.filesData && formData.filesData.length > 0 ? (
-                    formData.filesData.map((file, index) => (
-                      <tr
-                        key={`${file.title}-${index}`}
-                        className={`h-[40px] ${
-                          index % 2 === 0 ? "bg-swamp" : "bg-celtic"
-                        } ${
-                          index === formData.filesData.length - 1
-                            ? "border-b border-white"
-                            : "border-b-[1px] border-dashed border-gray-300"
-                        }`}
-                      >
-                        <td className="font-medium text-center">
-                          {getFileName(file.title, file.url)}
-                        </td>
-                        <td className="font-medium text-center">
-                          {format(new Date(file.createdAt), "dd/MM/yyyy (hh:mm)")}
-                        </td>
-                        <td className="w-[30px]">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFile(index, file.url)}
-                            className="hover:opacity-80 transition-opacity hover:cursor-pointer"
-                          >
-                            <Icon icon={Trash2} size={20} color="white" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="font-medium h-[40px] bg-swamp border-b border-white">
-                      <td className="text-start pl-[10px]">ไม่มีข้อมูล</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <button
+                type="button"
+                className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded cursor-pointer"
+                onClick={handleCancelButton}
+              >
+                ยกเลิก
+              </button>
             </div>
           </div>
         </div>
-        {/* Row 2 */}
-        <div className="mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "4px", fontSize: "15px" }}
-            id="nation-number"
-            label="หมายเลขบัตรประชาชน"
-            placeHolder=""
-            className="w-full"
-            value={formatThaiID(formData.nation_number)}
-            onChange={handleNationNumberChange}
-          />
-        </div>
-        <div className="mr-[20px] col-span-2">
-          <TextBox
-            sx={{ marginTop: "4px", fontSize: "15px" }}
-            id="address"
-            label="ที่อยู่"
-            placeHolder=""
-            className="w-full"
-            value={formData.address}
-            onChange={(event) =>
-              handleTextChange("address", event.target.value)
-            }
-          />
-        </div>
-        {/* Row 3 */}
-        <div className="col-start-1 mr-[20px]">
-          <AutoComplete 
-            id="provice-select"
-            sx={{ marginTop: "5px"}}
-            value={formData.province_id}
-            onChange={handleProvicesChange}
-            options={provincesOptions}
-            label="จังหวัด"
-            labelFontSize="15px"
-          />
-        </div>
-        <div className="mr-[20px]">
-          <AutoComplete 
-            id="distict-select"
-            sx={{ marginTop: "5px"}}
-            value={formData.district_id}
-            onChange={handleDistrictChange}
-            options={districtsOptions}
-            label="อำเภอ"
-            labelFontSize="15px"
-            disabled={formData.province_id === 0 || formData.province_id === "" ? true : false}
-          />
-        </div>
-        <div className="mr-[20px]">
-          <AutoComplete 
-            id="sub-distict-select"
-            sx={{ marginTop: "5px"}}
-            value={formData.sub_district_id}
-            onChange={handleSubDistrictChange}
-            options={subDistrictsOptions}
-            label="ตำบล"
-            labelFontSize="15px"
-            disabled={formData.district_id === 0 || formData.district_id === "" ? true : false}
-          />
-        </div>
-        {/* Row 4 */}
-        <div className="col-start-1 mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "4px", fontSize: "15px" }}
-            id="postal-code"
-            label="รหัสไปรษณีย์"
-            placeHolder=""
-            className="w-full"
-            value={formData.postal_code}
-            onChange={handlePostalCodeChange}
-          />
-        </div>
-        <div className="mr-[20px] col-span-2">
-          <AutoComplete 
-            id="select-person-type"
-            sx={{ marginTop: "10px"}}
-            value={formData.person_class_id}
-            onChange={handlePersonTypeChange}
-            options={personTypesOptions}
-            label="ประเภทบุคคล"
-            labelFontSize="15px"
-          />
-        </div>
-        {/* Row 5 */}
-        <div className="col-start-1 mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "4px", fontSize: "15px" }}
-            id="case-id"
-            label="หมายเลขคดี"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_number}
-            onChange={(event) =>
-              handleTextChange("case_number", event.target.value)
-            }
-            disabled={!isBlackListType}
-          />
-        </div>
-        <div className="mr-[20px]">
-          <label>วันที่ออกหมายจับ</label>
-          <DatePickerBuddhist
-            value={formData.arrest_warrant_date}
-            sx={{
-              marginTop: "8px",
-              borderRadius: "5px",
-              backgroundColor: "white",
-              "& .MuiTextField-root": {
-                height: "fit-content",
-              },
-              "& .MuiOutlinedInput-input": {
-                fontSize: 14
-              }
-            }}
-            className="w-full"
-            id="start-arrest-date"
-            onChange={(value) => handleStartArrestDateChange(value)}
-            disabled={!isBlackListType}
-          >
-          </DatePickerBuddhist>
-        </div>
-        <div className="mr-[20px]">
-          <label>วันที่สิ้นสุดออกหมายจับ</label>
-          <DatePickerBuddhist
-            value={formData.arrest_warrant_expire_date}
-            sx={{
-              marginTop: "8px",
-              borderRadius: "5px",
-              backgroundColor: "white",
-              "& .MuiTextField-root": {
-                height: "fit-content",
-              },
-              "& .MuiOutlinedInput-input": {
-                fontSize: 14
-              }
-            }}
-            className="w-full"
-            id="end-arrest-date"
-            onChange={(value) => handleEndArrestDateChange(value)}
-            disabled={!isBlackListType}
-          >
-          </DatePickerBuddhist>
-        </div>
-        {/* Row 6 */}
-        <div className="col-start-1 col-span-3 mr-[20px]">
-          <label>พฤติการ</label>
-          <Textarea
-            className="resize-none w-full h-[100px] text-start text-wrap text-black mt-[10px] bg-white rounded-[5px]"
-            name="behavior"
-            value={formData.behavior}
-            onChange={(e) => handleInputChange(e)}
-            disabled={!isBlackListType}
-          />
-        </div>
-        {/* Row 7 */}
-        <div className="col-start-1 mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "5px", fontSize: "15px" }}
-            id="case-owner-name"
-            label="เจ้าของข้อมูล"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_owner_name}
-            onChange={(event) =>
-              handleTextChange("case_owner_name", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "5px", fontSize: "15px" }}
-            id="case-owner-agency"
-            label="หน่วยงาน"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_owner_agency}
-            onChange={(event) =>
-              handleTextChange("case_owner_agency", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[20px]">
-          <TextBox
-            sx={{ marginTop: "5px", fontSize: "15px" }}
-            id="case-owner-phone"
-            label="เบอร์ติดต่อ"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_owner_phone}
-            onChange={handlePhoneChange}
-          />
-        </div>
-        {/* Row 8 */}
-        <div className="col-start-1 flex items-center justify-start mt-[10px]">
-          <Checkbox
-            id="active-checkbox"
-            className="border-[1px] border-white mr-[10px] w-[26px] h-[26px]"
-            value={formData.active}
-            checked={formData.active === 1}
-            onCheckedChange={handleCheckboxChange}
-          />
-          <label className="text-[15px]">Active</label>
-        </div>
-        {/* Row 9 */}
-        <div className="col-start-3 row-start-8 flex items-center justify-end mr-[20px] mt-[50px]">
-          <button
-            type="button"
-            className="bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px] focus:cursor-pointer"
-            onClick={handleSaveClick}
-          >
-            <span>บันทึก</span>
-          </button>
-          <button
-            type="button"
-            className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded cursor-pointer"
-            onClick={handleCancelButton}
-          >
-            ยกเลิก
-          </button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

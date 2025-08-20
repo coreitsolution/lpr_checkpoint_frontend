@@ -1,3 +1,4 @@
+import { Th, Gb, La } from "react-flags-select"
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { RootState } from "../../app/store"
@@ -9,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { login, clearError } from '../../features/auth/authSlice'
 
 // Image
-import LogoImage from '/images/Logo.jpg'
+import LogoImage from '/project-logo/logo.png'
 
 // Icons
 import { FaEye, FaEyeSlash } from "react-icons/fa"
@@ -17,14 +18,27 @@ import { FaEye, FaEyeSlash } from "react-icons/fa"
 // utils
 import { PopupMessage } from "../../utils/popupMessage"
 
+// i18n
+import { useTranslation } from "react-i18next";
+
+// Config
+import { getUrls } from '../../config/runtimeConfig';
+
 const LoginPage = () => {
   const version = __APP_VERSION__
+
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const dispatch = useAppDispatch()
   const { authData, authError, authStatus } = useSelector((state: RootState) => state.auth)
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+  const [languageSelected, setLanguageSelect] = useState("th");
+
+  const { PROJECT_NAME } = getUrls();
 
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.9 },
@@ -35,11 +49,11 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!username) {
-      PopupMessage("กรุณากรอก username", "", "warning")
+      PopupMessage(t('message.warning.please-input-username'), "", "warning")
       return
     }
     if (!password) {
-      PopupMessage("กรุณากรอก password", "", "warning")
+      PopupMessage(t('message.warning.please-input-password'), "", "warning")
       return
     }
     dispatch(clearError())
@@ -48,7 +62,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (authError) {
-      PopupMessage("มีข้อผิดพลาดเกิดขึ้น", authError, "error")
+      PopupMessage(t('message.error.something-wrong-occur'), authError, "error")
     }
   }, [authError])
 
@@ -59,11 +73,44 @@ const LoginPage = () => {
   }, [authData, navigate])
 
   const handleForgetPassword = () => {
-    PopupMessage("ลืมรหัสผ่าน", "กรุณาติดต่อผู้ดูแลระบบ", "info")
+    PopupMessage(t('message.info.forgot-password'), t('message.info.contact-admin'), "info")
+  }
+
+  const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedLanguage = event.target.value
+    setLanguageSelect(selectedLanguage);
+    i18n.changeLanguage(selectedLanguage);
   }
 
   return (
-    <div id='login' className="flex items-center justify-center min-h-screen">
+    <div id='login' className="flex items-center justify-center min-h-screen relative">
+      <div className="absolute top-2 right-5 grid grid-cols-[20px_auto] border border-white rounded-[5px] py-[3px] px-[12px]">
+        <span className="mr-[5px]">
+          {
+            (() => {
+              switch (languageSelected) {
+                case 'th':
+                  return <Th />;
+                case 'en':
+                  return <Gb />;
+                case 'la':
+                  return <La />;
+                default:
+                  return <Th />;
+              }
+            })()
+          }
+        </span>
+        <select 
+          className="bg-transparent text-[12px] text-center focus:outline-none focus:ring-0" 
+          value={languageSelected} 
+          onChange={handleLanguageChange}
+        >
+          <option className="text-black" value="th">Thai</option>
+          <option className="text-black" value="en">English</option>
+          <option className="text-black" value="la">Lao</option>
+        </select>
+      </div>
       <motion.div
         className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg border-dodgerBlue border-[1px]"
         variants={containerVariants}
@@ -141,7 +188,7 @@ const LoginPage = () => {
             className="text-black hover:underline"
             onClick={handleForgetPassword}
           >
-            ลืมรหัสผ่านหรือไม่?
+            {t('button.forget-password')}
           </button>
         </motion.div>
 
@@ -150,7 +197,7 @@ const LoginPage = () => {
             <label
               className="text-dodgerBlue"
             >
-              <span className='font-bold text-[15px]'>License Plate Recognition</span>
+              <span className='font-bold text-[15px]'>{PROJECT_NAME}</span>
             </label>
           </div>
         </div>

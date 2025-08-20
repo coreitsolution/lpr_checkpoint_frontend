@@ -16,7 +16,8 @@ import {
   VehicleBodyTypes,
   VehicleColors,
   VehicleMakes,
-  VehicleModels
+  VehicleModels,
+  PoliceStationResponse,
 } from "./dropdownTypes";
 import { provincesDetail } from "../../mocks/mockProvinces";
 import { registrationTypes } from "../../mocks/mockRegistrationTypes";
@@ -32,6 +33,7 @@ import { vehicleColors } from '../../mocks/mockVehicleColors';
 import { vehicleMakes } from '../../mocks/mockVehicleMakes';
 import { vehicleModels } from '../../mocks/mockVehicleModels';
 import { personTypes } from "../../mocks/mockPersonTypes";
+import { mockPoliceStations } from '../../mocks/mockPoliceStations';
 
 export const fetchRegions = async (param?: Record<string, string>): Promise<Regions> => {
   const { API_URL } = getUrls();
@@ -287,6 +289,20 @@ export const fetchPersonTypes = async (param?: Record<string, string>): Promise<
     return Promise.resolve(personTypes);
   }
   return await fetchClient<PersonTypes>(combineURL(API_URL, "/person-classes/get"), {
+    method: "GET",
+    queryParams: param,
+  });
+};
+
+export const fetchPoliceStations = async (param?: Record<string, string>): Promise<PoliceStationResponse> => {
+  const { API_URL } = getUrls();
+  if (isDevEnv) {
+    const data = {
+      data: mockPoliceStations
+    }
+    return Promise.resolve(data);
+  }
+  return await fetchClient<PoliceStationResponse>(combineURL(API_URL, "/police-stations/get"), {
     method: "GET",
     queryParams: param,
   });

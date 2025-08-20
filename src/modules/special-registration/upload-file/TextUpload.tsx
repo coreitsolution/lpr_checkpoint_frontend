@@ -22,10 +22,13 @@ import {
 
 // Utils
 import { PopupMessage } from "../../../utils/popupMessage"
-import { getFileNameWithoutExtension } from "../../../utils/comonFunction"
+import { getFileNameWithoutExtension } from "../../../utils/commonFunction"
 
 // Component
 import Loading from "../../../components/loading/Loading"
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(buddhistEra)
 
@@ -35,6 +38,9 @@ interface TextUploadProps {
 }
 
 const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}) => {
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [textsData, setTextsData] = useState<ImportSpecialPlates[]>(textsDataList)
   const [isLoading, setIsLoading] = useState(false)
@@ -54,8 +60,8 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
     if (!file) return;
   
     const reader = new FileReader();
+    setIsLoading(true)
     reader.onload = async (e) => {
-      setIsLoading(true)
       const arrayBuffer = e.target?.result;
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
       const sheetName = workbook.SheetNames[0];
@@ -86,28 +92,32 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
         }
 
         if (missingFields.length > 0) {
-          fileImportError = `ช่องที่จำเป็นและไม่สามารถเว้นว่างไว้ได้: ${missingFields.join(", ")}`;
+          fileImportError = t('text.field-required', { fieldName: missingFields.join(", ")});
           return null;
         }
 
         // Check duplicate image
-        const imageName = getFileNameWithoutExtension(row.filesData)
-        if (fileNames.has(imageName)) {
-          duplicateImages.push(imageName);
-          fileImportError = `พบไฟล์ชื่อซ้ำ: ${duplicateImages.join(", ")}. กรุณาเปลี่ยนชื่อไฟล์ไม่ให้ซ้ำกัน`
-          return null;
+        if (row.imagesData) {
+          const imageName = getFileNameWithoutExtension(row.imagesData)
+          if (fileNames.has(imageName)) {
+            duplicateImages.push(imageName);
+            fileImportError = t('text.duplicate-file-found', { fileName: duplicateImages.join(", ")})
+            return null;
+          }
+          imageNames.add(imageName);
         }
-        imageNames.add(imageName);
 
         // Check duplicate filename
-        const fileName = getFileNameWithoutExtension(row.filesData)
-        if (fileNames.has(fileName)) {
-          duplicateFiles.push(fileName);
-          fileImportError = `พบไฟล์ชื่อซ้ำ: ${duplicateImages.join(", ")}. กรุณาเปลี่ยนชื่อไฟล์ไม่ให้ซ้ำกัน`
-          return null;
+        if (row.filesData) {
+          const fileName = getFileNameWithoutExtension(row.filesData)
+          if (fileNames.has(fileName)) {
+            duplicateFiles.push(fileName);
+            fileImportError = t('text.duplicate-file-found', { fileName: duplicateFiles.join(", ")})
+            return null;
+          }
+          fileNames.add(fileName);
         }
-        fileNames.add(fileName);
-
+        
         return {
           id: index + 1,
           plate_group: row.plate_group,
@@ -121,21 +131,24 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
           case_owner_name: row.case_owner_name,
           case_owner_agency: row.case_owner_agency,
           case_owner_phone: row.case_owner_phone,
-          imagesData: row.imagesData,
-          filesData: row.filesData,
+          imagesData: row.imagesData ?? "-",
+          filesData: row.filesData ?? "-",
           active: row.active,
         };
       }).filter(Boolean) as ImportSpecialPlates[];
 
       if (fileImportError) {
-        PopupMessage("โหลดข้อมูลไม่สำเร็จ", fileImportError, "error");
+        PopupMessage(t('message.error.load-data-failed'), fileImportError, "error");
       }
       else if (!fileImportError && validatedData && validatedData.length > 0) {
         setTextsData(validatedData as ImportSpecialPlates[]);
       }
-      setIsLoading(false)
     };
     reader.readAsArrayBuffer(file);
+
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
 
     if (hiddenFileInput.current) {
       hiddenFileInput.current.value = ""
@@ -178,7 +191,7 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
             className='px-4 py-1 text-dodgerBlue border-[1px] border-dodgerBlue bg-white rounded-[5px] hover:bg-blue-500 hover:text-white'
             onClick={handleClickImport}
           >
-            เลือกไฟล์ Excel
+            {t('button.excel-file-image')}
           </button>
           {/* Hidden File Input */}
           <input
@@ -192,7 +205,7 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
           />
         </div>
         <div className="flex-grow overflow-x-auto">
-          <TableContainer component={Paper} className="mt-4 h-[56.3vh] w-[2500px]"
+          <TableContainer component={Paper} className="mt-4 h-[52.3vh] w-[2500px]"
             sx={{
               backgroundColor: "#000000"
             }}
@@ -207,21 +220,21 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
                 }}
               >
                 <TableRow>
-                  <TableCell>ลำดับ</TableCell>
-                  <TableCell>หมวดอักษร</TableCell>
-                  <TableCell>เลขทะเบียน</TableCell>
-                  <TableCell>จังหวัด</TableCell>
-                  <TableCell>กลุ่มทะเบียน</TableCell>
-                  <TableCell>หมายเลขคดี</TableCell>
-                  <TableCell>วันที่ออกหมายจับ</TableCell>
-                  <TableCell>วันที่สิ้นสุดออกหมายจับ</TableCell>
-                  <TableCell>พฤติการ</TableCell>
-                  <TableCell>เจ้าของข้อมูล</TableCell>
-                  <TableCell>หน่วยงาน</TableCell>
-                  <TableCell>เบอร์ติดต่อ</TableCell>
-                  <TableCell>รูปรถ/ทะเบียน</TableCell>
-                  <TableCell>ไฟล์</TableCell>
-                  <TableCell>สถานะ</TableCell>
+                  <TableCell>{t('table.column.order')}</TableCell>
+                  <TableCell>{t('table.column.plate-character')}</TableCell>
+                  <TableCell>{t('table.column.plate-number')}</TableCell>
+                  <TableCell>{t('table.column.province')}</TableCell>
+                  <TableCell>{t('table.column.plate-type')}</TableCell>
+                  <TableCell>{t('table.column.case-number')}</TableCell>
+                  <TableCell>{t('table.column.date-arrest-warrant')}</TableCell>
+                  <TableCell>{t('table.column.date-expiration-arrest-warrant')}</TableCell>
+                  <TableCell>{t('table.column.behavior')}</TableCell>
+                  <TableCell>{t('table.column.owner-data')}</TableCell>
+                  <TableCell>{t('table.column.owner-agency')}</TableCell>
+                  <TableCell>{t('table.column.phone')}</TableCell>
+                  <TableCell>{t('table.column.vehicle-plate-image')}</TableCell>
+                  <TableCell>{t('table.column.file')}</TableCell>
+                  <TableCell>{t('table.column.status')}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableHead>
@@ -241,8 +254,8 @@ const TextUpload: React.FC<TextUploadProps> = ({setTextsDataList, textsDataList}
                       <TableCell sx={{ backgroundColor: "#48494B" }}>{data.province}</TableCell>
                       <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.plate_class}</TableCell>
                       <TableCell sx={{ backgroundColor: "#48494B" }}>{data.case_number || "-"}</TableCell>
-                      <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.arrest_warrant_date ? dayjs(data.arrest_warrant_date).format("DD/MM/BBBB") : "-"}</TableCell>
-                      <TableCell sx={{ backgroundColor: "#48494B" }}>{data.arrest_warrant_expire_date ? dayjs(data.arrest_warrant_expire_date).format("DD/MM/BBBB") : "-"}</TableCell>
+                      <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.arrest_warrant_date ? dayjs(data.arrest_warrant_date).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') : "-"}</TableCell>
+                      <TableCell sx={{ backgroundColor: "#48494B" }}>{data.arrest_warrant_expire_date ? dayjs(data.arrest_warrant_expire_date).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY') : "-"}</TableCell>
                       <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.behavior || "-"}</TableCell>
                       <TableCell sx={{ backgroundColor: "#48494B" }}>{data.case_owner_name}</TableCell>
                       <TableCell sx={{ backgroundColor: "#393B3A" }}>{data.case_owner_agency}</TableCell>

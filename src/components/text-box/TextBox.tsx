@@ -1,83 +1,140 @@
-import React from "react";
+import React, { useState } from "react"
+import { InputAdornment, IconButton, Typography } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import TextField, {TextFieldProps} from "@mui/material/TextField";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import { Typography } from "@mui/material";
 
 type TextBoxProps = TextFieldProps & {
-  id?: string;
-  label?: string;
-  variant?: "outlined" | "filled" | "standard";
-  className?: string;
-  placeHolder: string;
-  value?: string;
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onKeyPress?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  isError?: boolean;
+  id?: string
+  value?: string
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onKeyPress?: (event: React.KeyboardEvent<HTMLInputElement>) => void
+  label: string
+  placeholder?: string
+  labelFontSize?: string
+  sx?: object
+  disabled?: boolean
+  title?: string
+  error?: boolean
   helperText?: string | null;
-  disabled?: boolean;
-  labelFontSize?: string;
-  textFieldFontSize?: string;
+  variant?: "outlined" | "filled" | "standard"
+  required?: boolean
+  type?: string
+  register?: any;
+  isMultiline?: boolean;
+  rows?: number;
+  autoComplete?: string;
 }
 
 const TextBox: React.FC<TextBoxProps> = ({
-  id = "custom-textbox",
-  label,
-  variant = "outlined",
-  className,
-  placeHolder,
-  onChange,
+  id,
   value,
+  onChange,
   onKeyPress,
-  isError = false,
-  helperText,
+  label,
+  placeholder,
+  labelFontSize = "15px",
+  sx,
   disabled,
-  labelFontSize,
-  textFieldFontSize,
+  title,
+  error,
+  helperText,
+  variant = "outlined",
+  required = false,
+  type = "text",
+  register,
+  isMultiline = false,
+  rows,
+  autoComplete,
   ...props
 }) => {
+  // State
+  const [showPassword, setShowPassword] = useState(false);
+
+  const isPasswordType = type === "password";
+  const actualType = isPasswordType && showPassword ? "text" : type;
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
-      onChange(event);
+      onChange(event)
+      if (register) {
+        register.onChange({
+          target: { name: register.name, value: event.target.value || "" },
+        });
+      }
     }
-  };
+  }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (onKeyPress) {
-      onKeyPress(event);
+      onKeyPress(event)
     }
-  };
-  
+  }
+
   return (
     <div className="flex flex-col w-full">
-      <Typography sx={{ fontSize: labelFontSize || undefined }} variant="subtitle1" color="white">
-        {label}
+      <Typography sx={{ fontSize: labelFontSize || undefined }} variant='subtitle1' color='white'>
+        {`${label}`}
+        {
+          required && <span className="text-red-500"> *</span>
+        }
       </Typography>
       <TextField
-        error={isError}
-        sx={{ marginTop: "15px" }}
-        size="small"
         id={id}
-        variant={variant}
+        value={value}
+        type={actualType}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        value={value}
-        slots={{
-          input: OutlinedInput, // Define the input component
-        }}
-        placeholder={placeHolder}
-        slotProps={{
-          input: {
-            className: `bg-white w-full ${className}`, // Custom styling for the input
-            style: { color: "black" },
-          },
-        }}
-        helperText={isError ? helperText : ""}
+        placeholder={placeholder || ""}
         disabled={disabled}
+        error={error}
+        helperText={helperText ?? ""}
+        variant={variant}
+        multiline={isMultiline}
+        rows={rows}
+        autoComplete={autoComplete ?? (type === "password" ? "current-password" : undefined)}
+        sx={{
+          borderRadius: "5px",
+          backgroundColor: "white",
+          "& .MuiInputBase-root": {
+            minHeight: "40px",
+            padding: "2px 8px",
+            "& .MuiInputBase-input": {
+              height: "25px",
+              padding: "0 !important"
+            },
+            "&.Mui-error": {
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#d32f2f",
+                borderWidth: "2px"
+              }
+            },
+          },
+          "& .Mui-disabled": {
+            backgroundColor: "#DDD",
+          },
+          ...sx,
+        }}
+        InputLabelProps={{
+          sx: { fontSize: labelFontSize },
+        }}
+        InputProps={{
+          endAdornment: isPasswordType && (
+            <InputAdornment position="end" className="mr-2">
+              <IconButton onClick={handleTogglePasswordVisibility} edge="end">
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          )
+        }}
+        title={title || ""}
         {...props}
       />
     </div>
-  );
-};
+  )
+}
 
-export default TextBox;
+export default TextBox

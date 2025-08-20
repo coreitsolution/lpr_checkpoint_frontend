@@ -2,6 +2,9 @@ import React from "react"
 import { TextField, Autocomplete } from "@mui/material"
 import { Typography } from '@mui/material'
 
+// i18n
+import { useTranslation } from "react-i18next";
+
 export type OptionType = {
   value: any
   label: string
@@ -17,7 +20,10 @@ type AutoCompleteProps = {
   labelFontSize?: string
   sx?: object
   disabled?: boolean
+  required?: boolean
   title?: string
+  error?: boolean;
+  register?: any;
 }
 
 const AutoComplete: React.FC<AutoCompleteProps> = ({
@@ -31,8 +37,26 @@ const AutoComplete: React.FC<AutoCompleteProps> = ({
   sx,
   disabled,
   title,
+  error = false,
+  required = false,
+  register, 
   ...props
 }) => {
+
+  // i18n
+  const { t } = useTranslation();
+  
+  const handleSelectionChange = (event: React.SyntheticEvent, newValue: OptionType | null) => {
+    event.stopPropagation();
+    event.preventDefault();
+    onChange(event, newValue);
+
+    if (register) {
+      register.onChange({
+        target: { name: register.name, value: newValue || "" },
+      });
+    }
+  };
 
   const renderHighlightedText = (label: string, inputValue: string) => {
     if (!inputValue) return label
@@ -54,23 +78,47 @@ const AutoComplete: React.FC<AutoCompleteProps> = ({
 
   return (
     <div className={`flex flex-col w-full`}>
-      <Typography sx={{ fontSize: labelFontSize || undefined }} variant='subtitle1' color='white'>{label}</Typography>
+      <Typography sx={{ fontSize: labelFontSize || undefined }} variant='subtitle1' color='white'>
+        {label}
+        {
+          required && <span className="text-red-500"> *</span>
+        }
+      </Typography>
       <Autocomplete
-        disablePortal
+        disablePortal={false}
         value={options.find((option) => option.value === value) || null}
-        onChange={onChange}
+        onChange={handleSelectionChange}
         options={options}
         getOptionLabel={(option) => option.label || ""}
-        noOptionsText={'ไม่พบข้อมูล'}
+        noOptionsText={t('text.not-found-data')}
         filterOptions={(options, state) =>
           options.filter((option) =>
             option.label.toLowerCase().startsWith(state.inputValue.toLowerCase())
           )
         }
         sx={{
-          width: "100%",
+          borderRadius: "5px",
+          backgroundColor: "white",
           "& .MuiInputBase-root": {
-            height: "40px",
+            minHeight: "40px",
+            padding: "2px 8px",
+            "& .MuiInputBase-input": {
+              height: "25px",
+              padding: "0 !important"
+            },
+            "&.Mui-error": {
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#d32f2f",
+                borderWidth: "2px"
+              }
+            },
+          },
+          "& .MuiOutlinedInput-root": {
+            "& > div": {
+              padding: "3px !important",
+              gap: "4px",
+              display: "flex",
+            }
           },
           ...sx,
         }}
@@ -78,21 +126,14 @@ const AutoComplete: React.FC<AutoCompleteProps> = ({
           <TextField
             {...params}
             placeholder={placeholder || ""}
+            error={error}
             InputLabelProps={{
               sx: { fontSize: labelFontSize },
             }}
-            sx={{
-              borderRadius: "5px",
-              backgroundColor: "white",
-              "& .MuiInputBase-input": {
-                height: "40px",
-                padding: "8px",
-              },
-            }}
           />
         )}
-        disabled={disabled ? disabled : false}
-        title={ title ? title : ""}
+        disabled={disabled}
+        title={title || ""}
         renderOption={(props, option, { inputValue }) => {
           const { key, ...otherProps } = props
           return (
@@ -106,6 +147,5 @@ const AutoComplete: React.FC<AutoCompleteProps> = ({
     </div>
   )
 }
-
 
 export default AutoComplete

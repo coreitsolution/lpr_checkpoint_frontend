@@ -6,6 +6,9 @@ import Select, { SelectChangeEvent } from '@mui/material/Select'
 // Component
 import TextBox from '../../components/text-box/TextBox'
 
+// i18n
+import { useTranslation } from "react-i18next";
+
 interface PaginationProps {
   page: number;
   onChange: (event: React.ChangeEvent<unknown>, value: number) => void;
@@ -16,7 +19,6 @@ interface PaginationProps {
   pageInput: string;
   handlePageInputKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   handlePageInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  textFieldFontSize?: string
 }
 
 const PaginationComponent: React.FC<PaginationProps> = ({
@@ -29,12 +31,14 @@ const PaginationComponent: React.FC<PaginationProps> = ({
   pageInput,
   handlePageInputKeyDown,
   handlePageInputChange,
-  textFieldFontSize,
 }) => {
+  // i18n
+  const { t } = useTranslation();
+
   return (
     <div className='flex items-center justify-between w-full'>
       <div className="flex items-center space-x-4">
-        <p className="text-white text-[16px]">แสดง</p>
+        <p className="text-white text-[16px]">{t('component.show')}</p>
         <Select
           id="row-per-page-select"
           value={rowsPerPage.toString()}
@@ -84,18 +88,16 @@ const PaginationComponent: React.FC<PaginationProps> = ({
         </Stack>
         <div className="flex items-center space-x-2 ml-3">
           <p className="text-white text-[16px]">
-            หน้า
+            {t('component.page')}
           </p>
           <TextBox
             id="input-page"
             label=""
-            placeHolder=""
-            className="w-[200px]"
+            placeholder=""
             sx={{
               display: 'flex',
               justifyContent: 'center',
             }}
-            textFieldFontSize={textFieldFontSize}
             value={pageInput}
             onKeyDown={handlePageInputKeyDown}
             onChange={handlePageInputChange}

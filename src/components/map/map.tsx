@@ -33,6 +33,7 @@ function Map({
     // Prevent re-initializing map
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
     }
 
     const map = L.map(mapRef.current).setView([13, 100], 5);
@@ -51,7 +52,10 @@ function Map({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      map.remove();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, [isCompare]);
 

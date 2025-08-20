@@ -6,7 +6,7 @@ import {
   VehicleCountResult,
   ConnectionResult,
   SystemStatusResult,
-  ZipDowload,
+  ZipDownload,
 } from "./liveViewRealTimeTypes";
 import {
   lastRecognitionData,
@@ -66,19 +66,19 @@ export const fetchSystemStatus = async (param?: Record<string, string>): Promise
   });
 };
 
-export const dowloadFile = async (
+export const downloadFile = async (
   param?: Record<string, string>
-): Promise<ZipDowload> => {
+): Promise<ZipDownload> => {
   const { API_URL } = getUrls();
   if (isDevEnv) {
-    const data: ZipDowload = {
+    const data: ZipDownload = {
       data: {
         zipUrl: "/zip/example.zip"
       }
     }
     return Promise.resolve(data);
   }
-  return await fetchClient<ZipDowload>(combineURL(API_URL, "/lpr-data/get-zipped-images-url"), {
+  return await fetchClient<ZipDownload>(combineURL(API_URL, "/lpr-data/get-zipped-images-url"), {
     method: "GET",
     queryParams: param,
   });

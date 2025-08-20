@@ -1,11 +1,17 @@
 import React, {useState, useRef, useCallback, useEffect} from 'react'
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "../../../app/store"
 import { getUrls } from '../../../config/runtimeConfig';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+} from "@mui/material"
+import { fetchClient, combineURL } from "../../../utils/fetchClient"
 
 // Types
 import {
-  CameraDetailSettings
+  CameraDetailSettings,
+  CameraSettingsData,
 } from '../../../features/camera-settings/cameraSettingsTypes'
 import { DetectionArea } from "../../../components/drawing-canvas/types"
 
@@ -20,17 +26,19 @@ import { Save } from 'lucide-react'
 // Pop-up
 import { PopupMessage } from "../../../utils/popupMessage"
 
-// API
-import { 
-  putCameraSettingThunk,
-} from "../../../features/camera-settings/cameraSettingsSlice"
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 interface SensorSettingProps {
+  open: boolean
   closeDialog: () => void
   selectedRow: CameraDetailSettings | null
 }
 
-const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow}) => {
+const SensorSetting: React.FC<SensorSettingProps> = ({open, closeDialog, selectedRow}) => {
+  // i18n
+  const { t } = useTranslation();
 
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false)
   const [clearCanvas, setClearCanvas] = useState(false)
@@ -38,8 +46,7 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
   const [originalData, setOriginalData] = useState<DetectionArea | null>(null)
   const [isRestarting, setIsRestarting] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
-  const dispatch: AppDispatch = useDispatch()
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL, API_URL } = getUrls();
 
   useEffect(() => {
     if (selectedRow) {
@@ -71,11 +78,11 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
     try {
       if (selectedRow) {
         if (!hasChanges()) {
-          PopupMessage("ไม่พบการเปลี่ยนแปลง", "ข้อมูลไม่มีการเปลี่ยนแปลง", "warning")
+          PopupMessage(t('message.warning.no-change-found'), t('message.warning.data-not-change'), "warning")
           return
         }
         else if (!sensorSettingData) {
-          PopupMessage("ข้อมูลไม่สมบูรณ์", "กรุณากรอกข้อมูลเซ็นเซอร์", "warning")
+          PopupMessage(t('message.warning.data-incomplete'), t('message.warning.please-input-sensor-data'), "warning")
           return
         }
         else {
@@ -85,19 +92,22 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
             detection_area: sensorSettingData ? JSON.stringify(sensorSettingData) : ""
           }
           if (updateData) {
-            await dispatch(putCameraSettingThunk(updateData))
-            PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
+            await fetchClient<CameraSettingsData>(combineURL(API_URL, "/cameras/update"), {
+              method: "PATCH",
+              body: JSON.stringify(updateData),
+            })
+            PopupMessage(t('message.success.data-saved-successfully'), t('message.success.data-saved-successfully-detail'), "success")
           } 
           else {
-            PopupMessage("พบข้อผิดพลาด", "กรุณาใส่ข้อมูลให้ครบถ้วน", 'error')
+            PopupMessage(t('message.error.something-wrong-occur'), t('message.error.please-input-all-data'), 'error')
           }
         }
       }
     } 
     catch (error) {
-      PopupMessage("พบข้อผิดพลาด", `ไม่สามารถสร้างการตั้งค่ากล้องได้: ${error}`, 'error')
+      PopupMessage(t('message.error.something-wrong-occur'), t('message.error.setting-camera-error', { error: error }), 'error')
     }
-  }, [dispatch, sensorSettingData, selectedRow])
+  }, [sensorSettingData, selectedRow])
 
   const onRestartClick = useCallback(async (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault()
@@ -105,122 +115,151 @@ const SensorSetting: React.FC<SensorSettingProps> = ({closeDialog, selectedRow})
     
     try {
       if (selectedRow) {
-        await dispatch(putCameraSettingThunk(selectedRow))
-        PopupMessage("Restart Engine เสร็จสิ้น", "", "success")
+        await fetchClient<CameraSettingsData>(combineURL(API_URL, "/cameras/update"), {
+          method: "PATCH",
+          body: JSON.stringify(selectedRow),
+        })
+        PopupMessage(t('message.success.restart-engine-success'), "", "success")
         setTimeout(() => {
           setIsRestarting(false)
         }, 30000)
       }
     } 
     catch (error) {
-      PopupMessage("พบข้อผิดพลาด", `Restart Engine ผิดพลาด: ${error}`, 'error')
+      PopupMessage(t('message.error.something-wrong-occur'), t('message.error.restart-engine-error', { error: error }), 'error')
       setIsRestarting(false)
     }
-  }, [dispatch, selectedRow])
+  }, [selectedRow])
 
   return (
-    <div id='sensor-setting'>
-      <div className="bg-black text-white p-[5px] w-full">
-        <div className='flex justify-between mb-3 h-[120px]'>
-          <div className='w-[50%]'>
-            <TextBox
-              id="camera-id"
-              label="กล้อง (ID)"
-              placeHolder=""
-              className="w-full"
-              value={selectedRow?.cam_id}
-              disabled={true}
-            />
-          </div>
-          <div className='flex items-end justify-end space-x-2'>
-            {/* Clear Button */}
-            <button 
-              type="button" 
-              className="flex items-center justify-center bg-white w-[90px] h-[40px] rounded" 
-              onClick={() => handleClearCanvas()}
-            >
-              <img src="/icons/clear.png" alt="Clear" className='w-[20px] h-[20px]' />
-              <span className='ml-[5px] text-dodgerBlue'>Clear</span>
-            </button>
-            {/* Start Button */}
-            <button 
-              type="button" 
-              className={`flex items-center justify-center w-[150px] h-[40px] rounded 
-                ${ !isDrawingEnabled ? "bg-dodgerBlue" : "bg-dodgerBlue/30"}
-                disabled:bg-celti
-              `} 
-              onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
-              disabled={isDrawingEnabled || sensorSettingData !== null}
-            >
-              <img src="/icons/start.png" alt="Start" className='w-[20px] h-[20px]' />
-              <span className='ml-[5px]'>Start Plot Sensor</span>
-            </button>
-          </div>
-        </div>
-        <div className='p-5 border-[1px] border-dodgerBlue mb-[30px]'>
-          <div className='relative mb-[10px]'>
-            <img
-              src={`${FILE_URL}${selectedRow?.sample_image_url}`}
-              alt="Sensor Image"
-              className={`w-full h-[450px]`}
-              ref={imgRef}
-              onError={(e) => {
-                e.currentTarget.src = "/images/no-image.png"
-                e.currentTarget.classList.add("object-cover")
-              }}
-            />
-            { !selectedRow?.sample_image_url && (
-              <label className='absolute inset-0 flex items-center justify-center text-black bg-white'>กล้องยังไม่สามารถจับภาพได้</label>
-            ) }
-            {imgRef.current && (
-              <DrawingCanvas
-                imgRef={imgRef.current}
-                onShapeDrawn={handleCustomShapeDrawn}
-                selectedRow={selectedRow}
-                isDrawingEnabled={isDrawingEnabled}
-                clearCanvas={clearCanvas}
-              />
-            )}  
-          </div>
-          <div className='flex justify-center'>
-            {/* Restart Button */}
-            <button
-              type="button"
-              disabled={isRestarting}
-              className={`flex items-center justify-center w-[90px] h-[40px] rounded mr-[10px] 
-                ${isRestarting ? 'bg-gray-400 cursor-not-allowed' : 'bg-dodgerBlue'}
-              `}
-              onClick={onRestartClick}
-            >
-              <img
-                src={isRestarting ? "/icons/restart-disable.png" : "/icons/restart.png"}
-                alt="Restart"
-                className={`w-[20px] h-[20px] ${isRestarting ? 'animate-spin' : ''}`}
-              />
-              <span className="ml-[5px]">Restart</span>
-            </button>
-          </div>
-        </div>
-        <div className='flex space-x-2 justify-end'>
-          {/* Submit Button */}
-          <button 
-            type="button" 
-            className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded" 
-            onClick={(e) => handleSubmitClick(e)}
+    <Dialog id='sensor-setting' open={open} maxWidth={false} 
+    sx={{ zIndex: 1000 }}
+    slotProps={{
+      paper: {
+        sx: {
+          maxWidth: '950px',
+          width: '100%'
+        },
+      }
+    }}
+    >
+      <DialogTitle className='bg-black'>
+        <div className="flex justify-between items-center">
+          <Typography variant="h5" color="white" className="font-bold">{t('screen.sensor-setting')}</Typography>
+          <button
+            onClick={closeDialog} 
+            className="text-white bg-transparent border-0 text-[28px] pr-6"
           >
-            <Icon icon={Save} size={20} color='white' />
-            <span className='ml-[5px]'>Submit</span>
-          </button>
-          <button 
-            type="button" 
-            className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded" 
-            onClick={closeDialog}
-          >
-            ยกเลิก
+            &times;
           </button>
         </div>
-      </div>
-    </div>
+      </DialogTitle>
+      <DialogContent className='bg-black'>
+        <div>
+          <div className="bg-black text-white p-[5px] w-full">
+            <div className='flex justify-between mb-3 h-[120px]'>
+              <div className='w-[50%]'>
+                <TextBox
+                  id="camera-id"
+                  label={t('component.camera-id')}
+                  className="w-full"
+                  value={selectedRow?.cam_id}
+                  disabled={true}
+                />
+              </div>
+              <div className='flex items-end justify-end space-x-2'>
+                {/* Clear Button */}
+                <button 
+                  type="button" 
+                  className="flex items-center justify-center bg-white w-[90px] h-[40px] rounded" 
+                  onClick={() => handleClearCanvas()}
+                >
+                  <img src="/icons/clear.png" alt="Clear" className='w-[20px] h-[20px]' />
+                  <span className='ml-[5px] text-dodgerBlue'>{t('button.clear')}</span>
+                </button>
+                {/* Start Button */}
+                <button 
+                  type="button" 
+                  className={`flex items-center justify-center w-[150px] h-[40px] rounded 
+                    ${ !isDrawingEnabled ? "bg-dodgerBlue" : "bg-dodgerBlue/30"}
+                    disabled:bg-celti
+                  `} 
+                  onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
+                  disabled={isDrawingEnabled || sensorSettingData !== null}
+                >
+                  <img src="/icons/start.png" alt="Start" className='w-[20px] h-[20px]' />
+                  <span className='ml-[5px]'>{t('button.start-plot-sensor')}</span>
+                </button>
+              </div>
+            </div>
+            <div className='p-5 border-[1px] border-dodgerBlue mb-[30px]'>
+              <div className='relative mb-[10px]'>
+                <img
+                  src={`${IMAGE_URL}${selectedRow?.sample_image_url}`}
+                  alt="Sensor Image"
+                  className={`w-full h-[450px]`}
+                  ref={imgRef}
+                  onError={(e) => {
+                    e.currentTarget.src = "/images/no-image.png"
+                    e.currentTarget.classList.add("object-cover")
+                  }}
+                />
+                { 
+                  !selectedRow?.sample_image_url && (
+                    <label className='absolute inset-0 flex items-center justify-center text-black bg-white'>{t('text.camera-not-working')}</label>
+                  )
+                }
+                {imgRef.current && (
+                  <DrawingCanvas
+                    imgRef={imgRef.current}
+                    onShapeDrawn={handleCustomShapeDrawn}
+                    selectedRow={selectedRow}
+                    isDrawingEnabled={isDrawingEnabled}
+                    clearCanvas={clearCanvas}
+                  />
+                )}  
+              </div>
+              <div className='flex justify-center'>
+                {/* Restart Button */}
+                <button
+                  type="button"
+                  disabled={isRestarting}
+                  className={`flex items-center justify-center w-[90px] h-[40px] rounded mr-[10px] 
+                    ${isRestarting ? 'bg-gray-400 cursor-not-allowed' : 'bg-dodgerBlue'}
+                  `}
+                  onClick={onRestartClick}
+                >
+                  <img
+                    src={isRestarting ? "/icons/restart-disable.png" : "/icons/restart.png"}
+                    alt="Restart"
+                    className={`w-[20px] h-[20px] ${isRestarting ? 'animate-spin' : ''}`}
+                  />
+                  <span className="ml-[5px]">{t('button.restart')}</span>
+                </button>
+              </div>
+            </div>
+            <div className='flex space-x-2 justify-end'>
+              {/* Submit Button */}
+              <button 
+                type="button" 
+                className="flex items-center justify-center bg-dodgerBlue w-[90px] h-[40px] rounded" 
+                onClick={(e) => handleSubmitClick(e)}
+              >
+                <Icon icon={Save} size={20} color='white' />
+                <span className='ml-[5px]'>{t('button.submit')}</span>
+              </button>
+              <button 
+                type="button" 
+                className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded" 
+                onClick={closeDialog}
+              >
+                {t('button.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

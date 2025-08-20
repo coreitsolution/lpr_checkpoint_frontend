@@ -1,8 +1,12 @@
-import { useState, useCallback, useEffect } from 'react'
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "../../../app/store"
+import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Typography,
+} from "@mui/material"
 
 // Components
 import FileImportBreadCrumbs from '../../../components/breadcrumbs/FileImportBreadCrumbs'
@@ -16,34 +20,39 @@ import {
   ImportSpecialPlates,
   ImportSpecialPlatesDetail,
   NewSpecialPlates,
+  SpecialPlatesRespondsDetail,
 } from "../../../features/registration-data/RegistrationDataTypes"
-import { FileUploadDetail, DeleteRequestData } from "../../../features/file-upload/fileUploadTypes"
-
-// API
-import { 
-  postSpecialRegistrationDataThunk
-} from "../../../features/registration-data/RegistrationDataSlice"
-import {
-  deleteFilesDataThunk,
-} from "../../../features/file-upload/fileUploadSlice"
+import { FileUploadDetail, DeleteRequestData, FileDelete } from "../../../features/file-upload/fileUploadTypes"
 
 // Utils
 import { PopupMessage } from "../../../utils/popupMessage"
+import { fetchClient, combineURL } from "../../../utils/fetchClient"
 
 // Components
 import FilesUpload from '../../../components/import-files/FilesUpdate'
 import ImagesUpload from '../../../components/import-files/ImagesUpload'
 import Loading from "../../../components/loading/Loading"
 
+// i18n
+import { useTranslation } from "react-i18next";
+
+// Config
+import { getUrls } from '../../../config/runtimeConfig';
+
 dayjs.extend(buddhistEra)
 
 interface UploadFileProps {
+  open: boolean
   closeDialog: () => void
   isFileImportClose: boolean
 }
 
-const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose}) => {
-  const dispatch: AppDispatch = useDispatch()
+const UploadFile: React.FC<UploadFileProps> = ({open, closeDialog, isFileImportClose}) => {
+  const { API_URL } = getUrls();
+
+  // i18n
+  const { t } = useTranslation();
+
   const [step, setStep] = useState(0)
   const [imagesList, setImagesList] = useState<FileUploadDetail[]>([])
   const [filesList, setFilesList] = useState<FileUploadDetail[]>([])
@@ -51,10 +60,10 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
   const [finalList, setFinalList] = useState<ImportSpecialPlatesDetail[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const breadcrumbItems = [
-    { label: "อัปโหลดรูป", isCompleted: step > 0, isActive: step === 0 },
-    { label: "อัปโหลดไฟล์เอกสาร", isCompleted: step > 1, isActive: step === 1 },
-    { label: "อัปโหลดข้อมูล Excel", isCompleted: step > 2, isActive: step === 2 },
-    { label: "ยืนยัน", isCompleted: step > 3, isActive: step === 3 },
+    { label: t('text.image-upload'), isCompleted: step > 0, isActive: step === 0 },
+    { label: t('text.doc-file-upload'), isCompleted: step > 1, isActive: step === 1 },
+    { label: t('text.excel-file-upload'), isCompleted: step > 2, isActive: step === 2 },
+    { label: t('text.confirmation'), isCompleted: step > 3, isActive: step === 3 },
   ]
 
   useEffect(() => {
@@ -136,45 +145,51 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
           visible: 1,
         }
   
-        await dispatch(postSpecialRegistrationDataThunk(updatedFormData)).unwrap()
+        await fetchClient<SpecialPlatesRespondsDetail>(combineURL(API_URL, "/special-plates/create"), {
+          method: "POST",
+          body: JSON.stringify(updatedFormData),
+        });
         complete = true
       }
       if (complete) {
-        closeDialog()
-        PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
+        handleClose()
+        PopupMessage(t('message.success.data-saved-successfully'), t('message.success.data-saved-successfully-detail'), "success")
       }
     }
     catch (error) {
-      PopupMessage("", "เกิดข้อผิดพลาดในการบันทึกข้อมูล", "error")
+      PopupMessage("", t('message.error.error-while-saving-data'), "error")
     }
   }
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
     try {
-      await dispatch(
-        deleteFilesDataThunk(deleteFile)
-      ).unwrap()
+      await fetchClient<FileDelete>(combineURL(API_URL, "/upload/remove"), {
+        method: "POST",
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(deleteFile),
+      })
     }
     catch (error) {
       throw new Error(error instanceof Error ? error.message : String(error))
     }
   }
 
-  const handleDeleteFile = useCallback(async (url: string) => {
+  const handleDeleteFile = async (url: string) => {
     try {
       await deleteFileUpload({
         url: url
       })
     }
     catch (error) {
-      PopupMessage("เกิดข้อผิดพลาดในการลบไฟล์", error instanceof Error ? error.message : String(error), "error");
+      PopupMessage(t('message.error.error-while-deleting-data'), error instanceof Error ? error.message : String(error), "error");
     }
-  }, [dispatch])
+  }
 
   const handleConfirmClick = async () => {
     const importableData = finalList.filter(item => !item.cannotImport)
     setIsLoading(true)
-    console.time("addNewSpecialRegistration")
     await addNewSpecialRegistration(importableData)
 
     // Delete unused images
@@ -191,54 +206,79 @@ const UploadFile: React.FC<UploadFileProps> = ({closeDialog, isFileImportClose})
       await handleDeleteFile(file.url)
     }
     setIsLoading(false)
-    console.timeEnd("addNewSpecialRegistration")
+  }
+
+  const handleClose = () => {
+    setStep(0)
+    setImagesList([])
+    setFilesList([])
+    setTextsList([])
+    setFinalList([])
+    closeDialog()
   }
 
   return (
-    <div id='upload-file' className='h-[75vh]'>
-      {isLoading && <Loading />}
-      <FileImportBreadCrumbs items={breadcrumbItems} />
-      <div className="mt-4">
-        {step === 0 && <ImagesUpload setImagesDataList={setImagesDataList} imagesDataList={imagesList}/>}
-        {step === 1 && <FilesUpload setFilesDataList={setFilesDataList} filesDataList={filesList}/>}
-        {step === 2 && <TextUpload setTextsDataList={setTextsDataList} textsDataList={textsList} />}
-        {step === 3 && 
-        <Confirmation 
-          setFinalDataList={setFinalDataList} 
-          textsDataList={textsList}
-          imagesDataList={imagesList}
-          filesDataList={filesList}
-        />}
-      </div>
+    <Dialog id='upload-file' open={open} maxWidth="xl" fullWidth sx={{ zIndex: 1000 }}>
+      <DialogTitle className='bg-black'>
+        <div className="flex justify-between items-center">
+          <div>
+            <Typography variant="h5" color="white" className="font-bold">{t('button.import-data')}</Typography>
+          </div>
+          <button
+            onClick={handleClose} 
+            className="text-white bg-transparent border-0 text-[28px] pr-6"
+          >
+            &times;
+          </button>
+        </div>
+      </DialogTitle>
+      <DialogContent className='bg-black text-white'>
+        <div className='h-[75vh]'>
+          {isLoading && <Loading />}
+          <FileImportBreadCrumbs items={breadcrumbItems} />
+          <div className="mt-4">
+            {step === 0 && <ImagesUpload setImagesDataList={setImagesDataList} imagesDataList={imagesList}/>}
+            {step === 1 && <FilesUpload setFilesDataList={setFilesDataList} filesDataList={filesList}/>}
+            {step === 2 && <TextUpload setTextsDataList={setTextsDataList} textsDataList={textsList} />}
+            {step === 3 && 
+            <Confirmation 
+              setFinalDataList={setFinalDataList} 
+              textsDataList={textsList}
+              imagesDataList={imagesList}
+              filesDataList={filesList}
+            />}
+          </div>
 
-      <div className="flex justify-end mt-4 space-x-2">
-        {step > 0 && (
-          <button
-            className="px-4 py-2 text-white bg-gray-500 rounded-[5px] hover:bg-gray-700"
-            onClick={prevStep}
-          >
-            ย้อนกลับ
-          </button>
-        )}
-        {step < breadcrumbItems.length - 1 && (
-          <button
-            className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500"
-            onClick={nextStep}
-          >
-            ถัดไป
-          </button>
-        )}
-        {step === breadcrumbItems.length - 1 && (
-          <button
-            className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500 disabled:bg-slate-400"
-            onClick={handleConfirmClick}
-            disabled={!finalList.some(item => !item.cannotImport)}
-          >
-            ยืนยัน
-          </button>
-        )}
-      </div>
-    </div>
+          <div className="flex justify-end mt-4 space-x-2">
+            {step > 0 && (
+              <button
+                className="px-4 py-2 text-white bg-gray-500 rounded-[5px] hover:bg-gray-700"
+                onClick={prevStep}
+              >
+                {t('button.previous')}
+              </button>
+            )}
+            {step < breadcrumbItems.length - 1 && (
+              <button
+                className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500"
+                onClick={nextStep}
+              >
+                {t('button.next')}
+              </button>
+            )}
+            {step === breadcrumbItems.length - 1 && (
+              <button
+                className="px-4 py-2 text-white bg-dodgerBlue rounded-[5px] hover:bg-blue-500 disabled:bg-slate-400"
+                onClick={handleConfirmClick}
+                disabled={!finalList.some(item => !item.cannotImport)}
+              >
+                {t('button.confirm')}
+              </button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

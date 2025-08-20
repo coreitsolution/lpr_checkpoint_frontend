@@ -1,9 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import { PopupMessage, PopupMessageWithCancel } from "../../../utils/popupMessage"
 import { format, parse } from "date-fns"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState, AppDispatch } from "../../../app/store"
+import { useSelector } from "react-redux"
+import { RootState } from "../../../app/store"
 import { getUrls } from '../../../config/runtimeConfig';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material"
+import { useForm } from "react-hook-form";
+import { fetchClient, combineURL } from "../../../utils/fetchClient"
 
 // Components
 import { Checkbox } from "../../../components/ui/checkbox"
@@ -13,16 +20,6 @@ import Loading from "../../../components/loading/Loading"
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import DatePickerBuddhist from "../../../components/date-picker-buddhist/DatePickerBuddhist"
 
-// API
-import {
-  putSpecialPlateDataThunk,
-  postSpecialRegistrationDataThunk,
-} from "../../../features/registration-data/RegistrationDataSlice"
-import {
-  postFilesDataThunk,
-  deleteFilesDataThunk,
-} from "../../../features/file-upload/fileUploadSlice"
-
 // Types
 import {
   FileData,
@@ -31,16 +28,23 @@ import {
   NewFileRespondsData,
   NewSpecialPlates,
 } from "../../../features/registration-data/RegistrationDataTypes"
-import { DeleteRequestData } from "../../../features/file-upload/fileUploadTypes"
+import { 
+  DeleteRequestData, 
+  FileUpload, 
+  FileDelete 
+} from "../../../features/file-upload/fileUploadTypes"
 
 // Icon
 import { Icon } from "../../../components/icons/Icon"
 import { Download, Upload, Trash2 } from "lucide-react"
 
 // Utils
-import { formatPhone } from "../../../utils/comonFunction"
+import { formatPhone, getId } from "../../../utils/commonFunction"
+// i18n
+import { useTranslation } from "react-i18next";
 
 interface ManageExtraRegistrationProps {
+  open: boolean
   closeDialog: () => void
   selectedRow: SpecialPlatesRespondsDetail | null
   isEditMode: boolean
@@ -67,10 +71,14 @@ interface FormData {
 }
 
 const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
+  open,
   closeDialog,
   selectedRow,
   isEditMode,
 }) => {
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const [isLoading, setIsLoading] = useState(false)
   const hiddenFileInput = useRef<HTMLInputElement | null>(null)
   const [originalData, setOriginalData] = useState<FormData | null>(
@@ -80,11 +88,18 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
   const [provincesOptions, setProvincesOptions] = useState<{ label: string, value: number }[]>([])
   const [isBlackListType, setIsBlackListType] = useState(true)
 
-  const dispatch: AppDispatch = useDispatch()
-  const { FILE_URL } = getUrls();
+  const { IMAGE_URL, API_URL } = getUrls();
   const { provinces, registrationTypes } = useSelector(
     (state: RootState) => state.dropdown
   )
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    clearErrors,
+  } = useForm();
 
   useEffect(() => {
     if (registrationTypes && registrationTypes.data) {
@@ -99,12 +114,12 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
   useEffect(() => {
     if (provinces && provinces.data) {
       const options = provinces.data.map((row) => ({
-        label: row.name_th,
+        label: i18n.language === "th" ? row.name_th : row.name_en,
         value: row.id,
       }))
       setProvincesOptions(options)
     }
-  }, [provinces])
+  }, [provinces, i18n.language])
 
   const [formData, setFormData] = useState<FormData>({
     plate_group: "",
@@ -161,6 +176,19 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       checkIsBlackListType(selectedRow.plate_class_id)
       setFormData(data)
       setOriginalData(data)
+
+      setValue("plate_group", selectedRow.plate_group);
+      setValue("plate_number", selectedRow.plate_number);
+      setValue("province_id", selectedRow.province_id);
+      setValue("case_number", selectedRow.case_number);
+      setValue("arrest_warrant_date", parseDateString(selectedRow.arrest_warrant_date));
+      setValue("arrest_warrant_expire_date", parseDateString(selectedRow.arrest_warrant_expire_date));
+      setValue("behavior", selectedRow.behavior);
+      setValue("case_owner_name", selectedRow.case_owner_name);
+      setValue("case_owner_phone", formatPhone(selectedRow.case_owner_phone));
+      setValue("plate_class_id", selectedRow.plate_class_id);
+      setValue("case_owner_agency", selectedRow.case_owner_agency);
+      setValue("active", selectedRow.active);
     } 
     else {
       setFormData({
@@ -180,13 +208,25 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         active: 0,
         visible: 1,
       })
+      setValue("plate_group", "");
+      setValue("plate_number", "");
+      setValue("province_id", "");
+      setValue("case_number", "");
+      setValue("arrest_warrant_date", "");
+      setValue("arrest_warrant_expire_date", "");
+      setValue("behavior", "");
+      setValue("case_owner_name", "");
+      setValue("case_owner_phone", "");
+      setValue("plate_class_id", "");
+      setValue("case_owner_agency", "");
+      setValue("active", 0);
     }
     setTimeout(() => {
       setIsLoading(false)
     }, 500);
-  }, [selectedRow, isEditMode, dispatch])
+  }, [selectedRow, isEditMode])
 
-  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files) return
 
@@ -220,9 +260,14 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         formData.append("files", file)
       })
 
-      const response = await dispatch(
-        postFilesDataThunk(formData)
-      ).unwrap()
+      const response = await fetchClient<FileUpload>(combineURL(API_URL, "/upload"), {
+        method: "POST",
+        isFormData: true,
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: formData,
+      })
 
       if (response?.data) {
         const uploadedImages = response.data.map((file: any, index: any) => ({
@@ -253,11 +298,11 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       }
     } 
     catch (error) {
-      PopupMessage("เกิดข้อผิดพลาดในการอัพโหลดไฟล์", error instanceof Error ? error.message : String(error) , "error");
+      PopupMessage(t('message.error.error-while-uploading-data'), error instanceof Error ? error.message : String(error) , "error");
     }
-  }, [dispatch, formData.imagesData])
+  }
 
-  const handleDeleteImage = useCallback(async (position: number, url: string) => {
+  const handleDeleteImage = async (position: number, url: string) => {
     try {
       const deleteFile: DeleteRequestData = {
         url: url
@@ -276,10 +321,11 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         imagesData: updatedImagesData,
       }
     })
-  }, [dispatch])
+  }
 
   const handleTextChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }))
+    setValue(key, value);
   }
 
   const handleInputChange = (
@@ -292,6 +338,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       ...prevState,
       [name]: value,
     }))
+    setValue(name, value);
   }
 
   const handleSelectChange = (name: string, value: string) => {
@@ -299,6 +346,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       ...prevState,
       [name]: value,
     }))
+    setValue(name, value);
   }
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -306,6 +354,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       ...formData,
       active: checked ? 1 : 0,
     })
+    setValue("active", checked ? 1 : 0);
   }
 
   const convertImagesToArray = (imagesObj: {
@@ -346,13 +395,11 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
     return isActiveChanged && isOtherDataUnchanged;
   }
 
-  const handleSaveClick = async () => {
-    if (!validateForm()) return
-
+  const handleSaveClick = async (data: any) => {
     if (!hasChanges()) {
       PopupMessage(
-        "ไม่พบการเปลี่ยนแปลง",
-        "ข้อมูลไม่มีการเปลี่ยนแปลง",
+        t('message.warning.no-change-found'),
+        t('message.warning.data-not-change'),
         "warning"
       )
       return
@@ -360,37 +407,38 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
 
     try {
       const updatedFormData: NewSpecialPlates = {
-        arrest_warrant_date: formData.arrest_warrant_date
-          ? format(formData.arrest_warrant_date, "yyyy-MM-dd")
-          : "",
-        arrest_warrant_expire_date: formData.arrest_warrant_expire_date
-          ? format(formData.arrest_warrant_expire_date, "yyyy-MM-dd")
-          : "",
-        plate_group: formData.plate_group,
-        plate_number: formData.plate_number,
-        province_id: formData.province_id,
+        arrest_warrant_date: data.arrest_warrant_date
+          ? format(data.arrest_warrant_date, "yyyy-MM-dd")
+          : null,
+        arrest_warrant_expire_date: data.arrest_warrant_expire_date
+          ? format(data.arrest_warrant_expire_date, "yyyy-MM-dd")
+          : null,
+        plate_group: data.plate_group,
+        plate_number: data.plate_number,
+        province_id: getId(data.province_id),
         imagesData: formData.imagesData
           ? getImagesArrayWithoutNulls(convertImagesToArray(formData.imagesData))
           : [],
-        case_number: formData.case_number,
-        behavior: formData.behavior,
-        active: formData.active,
-        case_owner_phone: formData.case_owner_phone.replace("-", ""),
-        case_owner_name: formData.case_owner_name,
-        plate_class_id: formData.plate_class_id,
-        case_owner_agency: formData.case_owner_agency,
+        case_number: data.case_number,
+        behavior: data.behavior,
+        active: data.active,
+        case_owner_phone: data.case_owner_phone.replaceAll("-", ""),
+        case_owner_name: data.case_owner_name,
+        plate_class_id: getId(data.plate_class_id),
+        case_owner_agency: data.case_owner_agency,
         filesData: formData.filesData,
         visible: 1,
       }
 
       if (isEditMode && selectedRow) {
-        let title = "ยันยันการแก้ไข"
+        let title = t('message.warning.edit-confirmation')
         if (hasOnlyActiveChanged()) {
-          title = "ยันยันการเปลี่ยนสถานะ"
+          title = t('message.warning.update-status-confirmation')
         }
-        const confirmed = await PopupMessageWithCancel(title, "คุณต้องการดำเนินการต่อใช่หรือไม่?", "ยืนยัน", "ยกเลิก", "warning")
+        const confirmed = await PopupMessageWithCancel(title, t('message.warning.do-you-want-to-continue'), t('button.confirm'), t('button.cancel'), "warning")
         
         if (confirmed) {
+          setIsLoading(true)
           // Update existing data
           const updateDataWithId = { 
             ...updatedFormData, 
@@ -398,25 +446,37 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
             arrest_warrant_date: updatedFormData.arrest_warrant_date ? updatedFormData.arrest_warrant_date : "",
             arrest_warrant_expire_date: updatedFormData.arrest_warrant_expire_date ? updatedFormData.arrest_warrant_expire_date : "",
           }
-          await dispatch(
-            putSpecialPlateDataThunk(updateDataWithId)
-          ).unwrap()
+          await fetchClient<SpecialPlatesRespondsDetail>(
+            combineURL(API_URL, `/special-plates/update`),
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updateDataWithId),
+            }
+          )
         }
         else {
           return
         }
       } 
       else {
+        setIsLoading(true)
         // Add new data
-        await dispatch(
-          postSpecialRegistrationDataThunk(updatedFormData)
-        ).unwrap()
+        await fetchClient<SpecialPlatesRespondsDetail>(combineURL(API_URL, "/special-plates/create"), {
+          method: "POST",
+          body: JSON.stringify(updatedFormData),
+        });
       }
-      PopupMessage("บันทึกสำเร็จ", "ข้อมูลถูกบันทึกเรียบร้อย", "success")
+      PopupMessage(t('message.success.data-saved-successfully'), t('message.success.data-saved-successfully-detail'), "success")
       closeDialog()
     } 
     catch (error) {
-      PopupMessage("บันทึกไม่สำเร็จ", (error as { message: string }).message || "มีข้อผิดพลาดเกิดขึ้น", "error")
+      PopupMessage(t('message.error.error-while-saving-data'), (error as { message: string }).message || t('message.error.something-wrong-occur'), "error")
+    }
+    finally {
+      setTimeout(() => {
+        setIsLoading(false)
+      })
     }
   }
 
@@ -439,12 +499,17 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         newFiles.forEach(file => {
           formData.append("files", file) // Append each file individually
         })
-        // Dispatch the thunk to upload files and await the response
-        const response = await dispatch(
-          postFilesDataThunk(formData)
-        ).unwrap()
+
+        const response = await fetchClient<FileUpload>(combineURL(API_URL, "/upload"), {
+          method: "POST",
+          isFormData: true,
+          headers: { 
+            Accept: 'application/json',
+          },
+          body: formData,
+        })
   
-        if (response?.data) {
+        if (response.data) {
           const uploadedFiles: NewFileRespondsData[] = response.data.map((file) => ({
             title: file.title,
             url: file.url,
@@ -458,7 +523,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
         }
       }
       catch (error) {
-        PopupMessage("เกิดข้อผิดพลาดในการอัพโหลดไฟล์", error instanceof Error ? error.message : String(error), "error")
+        PopupMessage(t('message.error.error-while-uploading-data'), error instanceof Error ? error.message : String(error), "error")
       }
     }
 
@@ -480,75 +545,16 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       }))
     }
     catch (error) {
-      PopupMessage("เกิดข้อผิดพลาดในการลบไฟล์", error instanceof Error ? error.message : String(error), "error");
+      PopupMessage(t('message.error.error-while-deleting-data'), error instanceof Error ? error.message : String(error), "error");
     }
   }, [])
-
-  const validateForm = () => {
-    const requiredFields = [
-      "plate_group",
-      "plate_number",
-      "province_id",
-      "plate_class_id",
-      "case_number",
-      "arrest_warrant_date",
-      "arrest_warrant_expire_date",
-      "behavior",
-      "case_owner_name",
-      "case_owner_agency",
-      "case_owner_phone",
-    ]
-
-    const fieldErrorMessages: Record<string, string> = {
-      plate_group: "หมวดอักษร",
-      plate_number: "ป้ายทะเบียน",
-      province_id: "จังหวัด",
-      plate_class_id: "กลุ่มทะเบียน",
-      case_number: "หมายเลขคดี",
-      arrest_warrant_date: "วันที่ออกหมายจับ",
-      arrest_warrant_expire_date: "วันที่สิ้นสุดออกหมายจับ",
-      behavior: "พฤติการ",
-      case_owner_name: "เจ้าของข้อมูล",
-      case_owner_agency: "หน่วยงาน",
-      case_owner_phone: "เบอร์ติดต่อ",
-    };
-
-    const skipField = [
-      "case_number",
-      "arrest_warrant_date",
-      "arrest_warrant_expire_date",
-      "behavior",
-    ]
-
-    let errorField: string[] = []
-    
-    for (const field of requiredFields) {
-      const data = formData[field as keyof typeof formData]
-      if (skipField.includes(field) && formData["plate_class_id"]) {
-        if (!isBlackListType) {
-          continue
-        }
-        else if (!data) {
-          errorField.push(fieldErrorMessages[field])
-        }
-      }
-      else if (!data) {
-        errorField.push(fieldErrorMessages[field])
-      }
-    }
-    if (errorField.length > 0) {
-      const errorMessage = `กรุณากรอก "${errorField.join(", ")}"`;
-      PopupMessage("กรุณากรอกข้อมูล", errorMessage, "warning");
-      return false
-    }
-    return true
-  }
 
   const handleStartArrestDateChange = (date: Date | null) => {
     setFormData((prevState) => ({
       ...prevState,
       arrest_warrant_date: date,
     }))
+    setValue("arrest_warrant_date", date);
   }
 
   const handleEndArrestDateChange = (date: Date | null) => {
@@ -556,13 +562,18 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       ...prevState,
       arrest_warrant_expire_date: date,
     }))
+    setValue("arrest_warrant_expire_date", date);
   }
 
   const deleteFileUpload = async (deleteFile: DeleteRequestData) => {
     try {
-      await dispatch(
-        deleteFilesDataThunk(deleteFile)
-      ).unwrap()
+      await fetchClient<FileDelete>(combineURL(API_URL, "/upload/remove"), {
+        method: "POST",
+        headers: { 
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(deleteFile),
+      })
     }
     catch (error) {
       
@@ -599,6 +610,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       await deleteFileUpload(deleteRequest)
     }
 
+    clearData();
     closeDialog()
   }
 
@@ -611,7 +623,7 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
       return `${title}.${extension}`
     } 
     catch (error) {
-      console.error("Error extracting file name:", error)
+      console.error(t('message.error.extract-file-error', { error: error }))
       return `${title}.txt`
     }
   }
@@ -626,7 +638,14 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
 
   const checkIsBlackListType = (value: any) => {
     const type = registrationTypes?.data?.find((type) => type.id === value)?.title_en
-    setIsBlackListType(!type || type.toLowerCase() === "blacklist" ? true : false)
+    const isBlackList = !type || type.toLowerCase() === "blacklist" ? true : false
+    setIsBlackListType(isBlackList);
+    if (!isBlackList) {
+      clearErrors("case_number")
+      clearErrors("arrest_warrant_date")
+      clearErrors("arrest_warrant_expire_date")
+      clearErrors("behavior")
+    }
   }
 
   const handleRegistrationTypeChange = (
@@ -661,350 +680,423 @@ const ManageExtraRegistration: React.FC<ManageExtraRegistrationProps> = ({
     }
     return cleaned
   }
+
+  const clearData = () => {
+    setFormData({
+      plate_group: "",
+      plate_number: "",
+      province_id: 0,
+      imagesData: {},
+      case_number: "",
+      arrest_warrant_date: null,
+      arrest_warrant_expire_date: null,
+      behavior: "",
+      case_owner_name: "",
+      case_owner_phone: "",
+      plate_class_id: 0,
+      case_owner_agency: "",
+      active: 0,
+      filesData: [],
+      visible: 1,
+    })
+    setValue("plate_group", "");
+    setValue("plate_number", "");
+    setValue("province_id", "");
+    setValue("case_number", "");
+    setValue("arrest_warrant_date", "");
+    setValue("arrest_warrant_expire_date", "");
+    setValue("behavior", "");
+    setValue("case_owner_name", "");
+    setValue("case_owner_phone", "");
+    setValue("plate_class_id", "");
+    setValue("case_owner_agency", "");
+    setValue("active", 0);
+    clearErrors();
+  }
   
   return (
-    <div
-      id="manage-extra-registration"
-      className="bg-black text-white p-[30px] border-[1px] border-dodgerBlue"
-    >
-      {isLoading && <Loading />}
-      <div className="grid grid-cols-4 gap-2 items-start justify-start">
-        {/* Row 1 */}
-        <div className="mr-[50px] mb-[30px]">
-          <TextBox
-            sx={{ marginTop: "10px", fontSize: "15px" }}
-            id="letter-category"
-            label="หมวดอักษร*"
-            placeHolder=""
-            className="w-full"
-            value={formData.plate_group}
-            onChange={(event) =>
-              handleTextChange("plate_group", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[50px]">
-          <TextBox
-            sx={{ marginTop: "10px", fontSize: "15px" }}
-            id="car-registration"
-            label="ป้ายทะเบียน*"
-            placeHolder=""
-            className="w-full"
-            value={formData.plate_number}
-            onChange={(event) =>
-              handleTextChange("plate_number", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[20px]">
-          <AutoComplete 
-            id="provice-select"
-            sx={{ marginTop: "10px"}}
-            value={formData.province_id}
-            onChange={handleProvicesChange}
-            options={provincesOptions}
-            label="จังหวัด*"
-            labelFontSize="15px"
-          />
-        </div>
-        {/* Import File */}
-        <div
-          id="file-import-container"
-          className="col-start-4 row-span-9 h-full border-l-[2px] border-nobel pl-[25px]"
+    <Dialog id="manage-extra-registration" open={open} maxWidth="xl" fullWidth sx={{ zIndex: 1000 }}>
+      <DialogTitle className="text-[28px] text-white bg-black">{t('screen.manage-special-plate')}</DialogTitle>
+      <DialogContent className="bg-black text-white">
+        <form
+          className="bg-black text-white p-[30px] border-[1px] border-dodgerBlue"
+          onSubmit={handleSubmit(handleSaveClick)}
         >
-          <div className="h-full">
-            {/* Image Upload Section */}
-            <div id="image-import-part" className="flex flex-col items-center">
-              <label
-                htmlFor="image-upload"
-                className="relative flex items-center justify-center w-full h-[250px] mt-[5px] bg-[#48494B] cursor-pointer overflow-hidden hover:bg-gray-800"
-              >
-                { formData.imagesData && Object.keys(formData.imagesData).length > 0 ? (
-                  <div className="relative w-full h-full">
-                    {/* First Image (Full Size) */}
-                    {formData.imagesData[0] && (
-                      <div className="absolute inset-0">
-                        <img
-                          src={`${FILE_URL}${formData.imagesData[0].url}`}
-                          alt="Uploaded 1"
-                          className="object-contain w-full h-full"
-                        />
-                        <button
-                          type="button"
-                          className="absolute z-[52] top-2 right-2 text-white bg-red-500 rounded-full w-[30px] h-[30px] flex items-center justify-center hover:cursor-pointer"
-                          onClick={() => handleDeleteImage(0, formData.imagesData[0].url)}
-                        >
-                          &times;
-                        </button>
+          {isLoading && <Loading />}
+          <div className="grid grid-cols-4 gap-x-2 gap-y-1 items-start justify-start">
+            {/* Row 1 */}
+            <div className="mr-[50px] mb-[30px]">
+              <TextBox
+                sx={{ marginTop: "10px", fontSize: "15px" }}
+                id="letter-category"
+                label={t('component.plate-character')}
+                required={true}
+                value={formData.plate_group}
+                onChange={(event) =>
+                  handleTextChange("plate_group", event.target.value)
+                }
+                register={register("plate_group", { 
+                  required: true,
+                })}
+                error={!!errors.plate_group}
+              />
+            </div>
+            <div className="mr-[50px]">
+              <TextBox
+                sx={{ marginTop: "10px", fontSize: "15px" }}
+                id="car-registration"
+                label={t('component.plate')}
+                required={true}
+                value={formData.plate_number}
+                onChange={(event) =>
+                  handleTextChange("plate_number", event.target.value)
+                }
+                register={register("plate_number", { 
+                  required: true,
+                })}
+                error={!!errors.plate_number}
+              />
+            </div>
+            <div className="mr-[20px]">
+              <AutoComplete 
+                id="provice-select"
+                sx={{ marginTop: "10px"}}
+                value={formData.province_id}
+                onChange={handleProvicesChange}
+                options={provincesOptions}
+                label={t('component.province')}
+                required={true}
+                labelFontSize="15px"
+                register={register("province_id", { 
+                  required: true,
+                })}
+                error={!!errors.province_id}
+              />
+            </div>
+            {/* Import File */}
+            <div
+              id="file-import-container"
+              className="col-start-4 row-span-9 h-full border-l-[2px] border-nobel pl-[25px]"
+            >
+              <div className="h-full">
+                {/* Image Upload Section */}
+                <div id="image-import-part" className="flex flex-col items-center">
+                  <label
+                    htmlFor="image-upload"
+                    className="relative flex items-center justify-center w-full h-[250px] mt-[5px] bg-[#48494B] cursor-pointer overflow-hidden hover:bg-gray-800"
+                  >
+                    { formData.imagesData && Object.keys(formData.imagesData).length > 0 ? (
+                      <div className="relative w-full h-full">
+                        {/* First Image (Full Size) */}
+                        {formData.imagesData[0] && (
+                          <div className="absolute inset-0">
+                            <img
+                              src={`${IMAGE_URL}${formData.imagesData[0].url}`}
+                              alt="Uploaded 1"
+                              className="object-contain w-full h-full"
+                            />
+                            <button
+                              type="button"
+                              className="absolute z-[52] top-2 right-2 text-white bg-red-500 rounded-full w-[30px] h-[30px] flex items-center justify-center hover:cursor-pointer"
+                              onClick={() => handleDeleteImage(0, formData.imagesData[0].url)}
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Second and Third Images (Bottom Left) */}
+                        <div className="absolute bottom-2 left-2 flex gap-2">
+                          {[1, 2].map(
+                            (position) =>
+                              formData.imagesData[position] && (
+                                <div
+                                  key={position}
+                                  className="relative w-[80px] h-[60px] border border-white bg-tuna"
+                                >
+                                  <img
+                                    src={`${IMAGE_URL}${formData.imagesData[position].url}`}
+                                    alt={`Uploaded ${position + 1}`}
+                                    className="object-contain w-full h-full"
+                                  />
+                                  <button
+                                    type="button"
+                                    className="absolute z-[52] top-[-5px] right-[-5px] text-white bg-red-500 rounded-full w-[20px] h-[20px] flex items-center justify-center hover:cursor-pointer"
+                                    onClick={() => handleDeleteImage(position, formData.imagesData[position].url)}
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              )
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* No Images */
+                      <div className="flex flex-col justify-center items-center">
+                        <Icon icon={Download} size={80} color="#999999" />
+                        <span className="text-[18px] text-nobel mt-[20px]">
+                          {t('component.upload-image')}
+                        </span>
                       </div>
                     )}
+                    {/* Hidden File Input */}
+                    <input
+                      id="image-upload"
+                      type="file"
+                      name="images"
+                      accept="image/*"
+                      multiple
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                </div>
 
-                    {/* Second and Third Images (Bottom Left) */}
-                    <div className="absolute bottom-2 left-2 flex gap-2">
-                      {[1, 2].map(
-                        (position) =>
-                          formData.imagesData[position] && (
-                            <div
-                              key={position}
-                              className="relative w-[80px] h-[60px] border border-white bg-tuna"
-                            >
-                              <img
-                                src={`${FILE_URL}${formData.imagesData[position].url}`}
-                                alt={`Uploaded ${position + 1}`}
-                                className="object-contain w-full h-full"
-                              />
+                {/* File Upload Section */}
+                <div
+                  id="file-import-part"
+                  className="flex justify-end mt-[25px] space-x-2"
+                >
+                  <button
+                    type="button"
+                    className="flex justify-center items-center bg-dodgerBlue rounded w-[140px] h-[40px] hover:cursor-pointer"
+                    onClick={handleImportFileClick}
+                  >
+                    <Icon icon={Upload} size={20} color="white" />
+                    <span className="ml-[5px]">{t('component.upload-file')}</span>
+                  </button>
+                </div>
+
+                <input
+                  ref={hiddenFileInput}
+                  name="files"
+                  type="file"
+                  accept=".docx, .pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {/* File List Section */}
+                <div id="file-list-part" className="mt-[15px]">
+                  <table className="w-full">
+                    <tbody>
+                      {formData.filesData && formData.filesData.length > 0 ? (
+                        formData.filesData.map((file, index) => (
+                          <tr
+                            key={`${file.title}-${index}`}
+                            className={`h-[40px] ${
+                              index % 2 === 0 ? "bg-swamp" : "bg-celtic"
+                            } ${
+                              index === formData.filesData.length - 1
+                                ? "border-b border-white"
+                                : "border-b-[1px] border-dashed border-gray-300"
+                            }`}
+                          >
+                            <td className="font-medium text-center">
+                              {getFileName(file.title, file.url)}
+                            </td>
+                            <td className="font-medium text-center">
+                              {format(new Date(file.createdAt), "dd/MM/yyyy (hh:mm)")}
+                            </td>
+                            <td className="w-[30px]">
                               <button
                                 type="button"
-                                className="absolute z-[52] top-[-5px] right-[-5px] text-white bg-red-500 rounded-full w-[20px] h-[20px] flex items-center justify-center hover:cursor-pointer"
-                                onClick={() => handleDeleteImage(position, formData.imagesData[position].url)}
+                                onClick={() => handleDeleteFile(index, file.url)}
+                                className="hover:opacity-80 transition-opacity hover:cursor-pointer"
                               >
-                                &times;
+                                <Icon icon={Trash2} size={20} color="white" />
                               </button>
-                            </div>
-                          )
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="font-medium h-[40px] bg-swamp border-b border-white">
+                          <td className="text-start pl-[10px]">{t('text.no-data')}</td>
+                        </tr>
                       )}
-                    </div>
-                  </div>
-                ) : (
-                  /* No Images */
-                  <div className="flex flex-col justify-center items-center">
-                    <Icon icon={Download} size={80} color="#999999" />
-                    <span className="text-[18px] text-nobel mt-[20px]">
-                      อัพโหลดรูปภาพ
-                    </span>
-                  </div>
-                )}
-                {/* Hidden File Input */}
-                <input
-                  id="image-upload"
-                  type="file"
-                  name="images"
-                  accept="image/*"
-                  multiple
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={handleImageUpload}
-                />
-              </label>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-
-            {/* File Upload Section */}
-            <div
-              id="file-import-part"
-              className="flex justify-end mt-[25px] space-x-2"
-            >
+            {/* Row 2 */}
+            <div className="mr-[50px] mb-[30px]">
+              <AutoComplete 
+                id="select-registration-type"
+                sx={{ marginTop: "10px"}}
+                value={formData.plate_class_id}
+                onChange={handleRegistrationTypeChange}
+                options={registrationTypesOptions}
+                label={t('component.plate-type')}
+                required={true}
+                labelFontSize="15px"
+                register={register("plate_class_id", { 
+                  required: true,
+                })}
+                error={!!errors.plate_class_id}
+              />
+            </div>
+            {/* Row 3 */}
+            <div className="col-start-1 mr-[50px] mb-[30px]">
+              <TextBox
+                sx={{ marginTop: "10px", fontSize: "15px" }}
+                id="case-id"
+                label={t('component.case-number')}
+                value={formData.case_number}
+                onChange={(event) =>
+                  handleTextChange("case_number", event.target.value)
+                }
+                disabled={!isBlackListType}
+                register={register("case_number", { 
+                  required: isBlackListType ? true : false,
+                })}
+                error={!!errors.case_number}
+              />
+            </div>
+            <div className="mr-[50px] mb-[30px] pt-[3px]">
+              <label>{t('component.date-arrest-warrant')}</label>
+              <DatePickerBuddhist
+                value={formData.arrest_warrant_date}
+                sx={{
+                  marginTop: "8px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14
+                  }
+                }}
+                className="w-full"
+                id="start-arrest-date"
+                onChange={(value) => handleStartArrestDateChange(value)}
+                disabled={!isBlackListType}
+                register={register("arrest_warrant_date", { 
+                  required: isBlackListType ? true : false,
+                })}
+                error={!!errors.arrest_warrant_date}
+              >
+              </DatePickerBuddhist>
+            </div>
+            <div className="mr-[20px] mb-[30px] pt-[3px]">
+              <label>{t('component.date-expiration-arrest-warrant')}</label>
+              <DatePickerBuddhist
+                value={formData.arrest_warrant_expire_date}
+                sx={{
+                  marginTop: "8px",
+                  borderRadius: "5px",
+                  backgroundColor: "white",
+                  "& .MuiTextField-root": {
+                    height: "fit-content",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontSize: 14
+                  }
+                }}
+                className="w-full"
+                id="end-arrest-date"
+                onChange={(value) => handleEndArrestDateChange(value)}
+                disabled={!isBlackListType}
+                register={register("arrest_warrant_expire_date", { 
+                  required: isBlackListType ? true : false,
+                })}
+                error={!!errors.arrest_warrant_expire_date}
+              >
+              </DatePickerBuddhist>
+            </div>
+            {/* Row 4 */}
+            <div className="col-start-1 col-span-3 mr-[20px] mb-[30px]">
+              <label>{t('component.behavior')}</label>
+              <Textarea
+                className="resize-none w-full h-[100px] text-start text-wrap text-black mt-[15px] bg-white rounded-[5px]"
+                name="behavior"
+                value={formData.behavior}
+                onChange={(e) => handleInputChange(e)}
+                disabled={!isBlackListType}
+                register={register("behavior", { 
+                  required: isBlackListType ? true : false,
+                })}
+                error={!!errors.behavior}
+              />
+            </div>
+            {/* Row 5 */}
+            <div className="col-start-1 mr-[50px] mb-[30px]">
+              <TextBox
+                sx={{ marginTop: "10px", fontSize: "15px" }}
+                id="case-owner-name"
+                label={t('component.owner-data')}
+                value={formData.case_owner_name}
+                onChange={(event) =>
+                  handleTextChange("case_owner_name", event.target.value)
+                }
+                register={register("case_owner_name", { 
+                  required: true,
+                })}
+                error={!!errors.case_owner_name}
+              />
+            </div>
+            <div className="mr-[50px] mb-[30px]">
+              <TextBox
+                sx={{ marginTop: "10px", fontSize: "15px" }}
+                id="case-owner-agency"
+                label={t('component.owner-agency')}
+                value={formData.case_owner_agency}
+                onChange={(event) =>
+                  handleTextChange("case_owner_agency", event.target.value)
+                }
+                register={register("case_owner_agency", { 
+                  required: true,
+                })}
+                error={!!errors.case_owner_agency}
+              />
+            </div>
+            <div className="mr-[20px] mb-[30px]">
+              <TextBox
+                sx={{ marginTop: "10px", fontSize: "15px" }}
+                id="case-owner-phone"
+                label={t('component.contact-number')}
+                value={formData.case_owner_phone}
+                onChange={handlePhoneChange}
+                register={register("case_owner_phone", { 
+                  required: true,
+                })}
+                error={!!errors.case_owner_phone}
+              />
+            </div>
+            {/* Row 6 */}
+            <div className="col-start-1 flex items-center justify-start">
+              <Checkbox
+                id="active-checkbox"
+                className="border-[1px] border-white mr-[10px] w-[26px] h-[26px]"
+                value={formData.active}
+                checked={formData.active === 1}
+                onCheckedChange={handleCheckboxChange}
+              />
+              <label className="text-[15px]">{t('component.status-active')}</label>
+            </div>
+            {/* Row 7 */}
+            <div className="col-start-3 row-start-8 flex items-center justify-end mr-[20px]">
+              <button
+                type="submit"
+                className="bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px] focus:cursor-pointer"
+              >
+                {t('button.confirm')}
+              </button>
               <button
                 type="button"
-                className="flex justify-center items-center bg-dodgerBlue rounded w-[140px] h-[40px] hover:cursor-pointer"
-                onClick={handleImportFileClick}
+                className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded cursor-pointer"
+                onClick={handleCancelButton}
               >
-                <Icon icon={Upload} size={20} color="white" />
-                <span className="ml-[5px]">Upload Files</span>
+                {t('button.cancel')}
               </button>
             </div>
-
-            <input
-              ref={hiddenFileInput}
-              name="files"
-              type="file"
-              accept=".docx, .pdf"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-
-            {/* File List Section */}
-            <div id="file-list-part" className="mt-[15px]">
-              <table className="w-full">
-                <tbody>
-                  {formData.filesData && formData.filesData.length > 0 ? (
-                    formData.filesData.map((file, index) => (
-                      <tr
-                        key={`${file.title}-${index}`}
-                        className={`h-[40px] ${
-                          index % 2 === 0 ? "bg-swamp" : "bg-celtic"
-                        } ${
-                          index === formData.filesData.length - 1
-                            ? "border-b border-white"
-                            : "border-b-[1px] border-dashed border-gray-300"
-                        }`}
-                      >
-                        <td className="font-medium text-center">
-                          {getFileName(file.title, file.url)}
-                        </td>
-                        <td className="font-medium text-center">
-                          {format(new Date(file.createdAt), "dd/MM/yyyy (hh:mm)")}
-                        </td>
-                        <td className="w-[30px]">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFile(index, file.url)}
-                            className="hover:opacity-80 transition-opacity hover:cursor-pointer"
-                          >
-                            <Icon icon={Trash2} size={20} color="white" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="font-medium h-[40px] bg-swamp border-b border-white">
-                      <td className="text-start pl-[10px]">ไม่มีข้อมูล</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
-        </div>
-        {/* Row 2 */}
-        <div className="mr-[50px] mb-[30px]">
-          <AutoComplete 
-            id="select-registration-type"
-            sx={{ marginTop: "10px"}}
-            value={formData.plate_class_id}
-            onChange={handleRegistrationTypeChange}
-            options={registrationTypesOptions}
-            label="กลุ่มทะเบียน*"
-            labelFontSize="15px"
-          />
-        </div>
-        {/* Row 3 */}
-        <div className="col-start-1 mr-[50px] mb-[30px]">
-          <TextBox
-            sx={{ marginTop: "10px", fontSize: "15px" }}
-            id="case-id"
-            label="หมายเลขคดี"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_number}
-            onChange={(event) =>
-              handleTextChange("case_number", event.target.value)
-            }
-            disabled={!isBlackListType}
-          />
-        </div>
-        <div className="mr-[50px] mb-[30px] pt-[3px]">
-          <label>วันที่ออกหมายจับ</label>
-          <DatePickerBuddhist
-            value={formData.arrest_warrant_date}
-            sx={{
-              marginTop: "8px",
-              borderRadius: "5px",
-              backgroundColor: "white",
-              "& .MuiTextField-root": {
-                height: "fit-content",
-              },
-              "& .MuiOutlinedInput-input": {
-                fontSize: 14
-              }
-            }}
-            className="w-full"
-            id="start-arrest-date"
-            onChange={(value) => handleStartArrestDateChange(value)}
-            disabled={!isBlackListType}
-          >
-          </DatePickerBuddhist>
-        </div>
-        <div className="mr-[20px] mb-[30px] pt-[3px]">
-          <label>วันที่สิ้นสุดออกหมายจับ</label>
-          <DatePickerBuddhist
-            value={formData.arrest_warrant_expire_date}
-            sx={{
-              marginTop: "8px",
-              borderRadius: "5px",
-              backgroundColor: "white",
-              "& .MuiTextField-root": {
-                height: "fit-content",
-              },
-              "& .MuiOutlinedInput-input": {
-                fontSize: 14
-              }
-            }}
-            className="w-full"
-            id="end-arrest-date"
-            onChange={(value) => handleEndArrestDateChange(value)}
-            disabled={!isBlackListType}
-          >
-          </DatePickerBuddhist>
-        </div>
-        {/* Row 4 */}
-        <div className="col-start-1 col-span-3 mr-[20px] mb-[30px]">
-          <label>พฤติการ</label>
-          <Textarea
-            className="resize-none w-full h-[100px] text-start text-wrap text-black mt-[15px] bg-white rounded-[5px]"
-            name="behavior"
-            value={formData.behavior}
-            onChange={(e) => handleInputChange(e)}
-            disabled={!isBlackListType}
-          />
-        </div>
-        {/* Row 5 */}
-        <div className="col-start-1 mr-[50px] mb-[30px]">
-          <TextBox
-            sx={{ marginTop: "10px", fontSize: "15px" }}
-            id="case-owner-name"
-            label="เจ้าของข้อมูล"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_owner_name}
-            onChange={(event) =>
-              handleTextChange("case_owner_name", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[50px] mb-[30px]">
-          <TextBox
-            sx={{ marginTop: "10px", fontSize: "15px" }}
-            id="case-owner-agency"
-            label="หน่วยงาน"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_owner_agency}
-            onChange={(event) =>
-              handleTextChange("case_owner_agency", event.target.value)
-            }
-          />
-        </div>
-        <div className="mr-[20px] mb-[30px]">
-          <TextBox
-            sx={{ marginTop: "10px", fontSize: "15px" }}
-            id="case-owner-phone"
-            label="เบอร์ติดต่อ"
-            placeHolder=""
-            className="w-full"
-            value={formData.case_owner_phone}
-            onChange={handlePhoneChange}
-          />
-        </div>
-        {/* Row 6 */}
-        <div className="col-start-1 flex items-center justify-start">
-          <Checkbox
-            id="active-checkbox"
-            className="border-[1px] border-white mr-[10px] w-[26px] h-[26px]"
-            value={formData.active}
-            checked={formData.active === 1}
-            onCheckedChange={handleCheckboxChange}
-          />
-          <label className="text-[15px]">Active</label>
-        </div>
-        {/* Row 7 */}
-        <div className="col-start-3 row-start-8 flex items-center justify-end mr-[20px]">
-          <button
-            type="button"
-            className="bg-dodgerBlue w-[90px] h-[40px] rounded mr-[10px] focus:cursor-pointer"
-            onClick={handleSaveClick}
-          >
-            <span>บันทึก</span>
-          </button>
-          <button
-            type="button"
-            className="bg-white border-[1px] border-dodgerBlue text-dodgerBlue w-[90px] h-[40px] rounded cursor-pointer"
-            onClick={handleCancelButton}
-          >
-            ยกเลิก
-          </button>
-        </div>
-      </div>
-    </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

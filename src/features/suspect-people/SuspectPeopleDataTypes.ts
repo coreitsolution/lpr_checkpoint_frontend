@@ -25,6 +25,7 @@ export interface SuspectPeopleData {
   message?: string
   status?: string
   success?: string
+  countAll?: number
   data?: SuspectPeopleRespondsDetail[]
 }
 

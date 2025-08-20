@@ -1,6 +1,7 @@
 export interface AuthData {
   token: string | null;
   isAuthenticated: boolean;
+  username: string | null;
 }
 
 export interface LoginCredentials {

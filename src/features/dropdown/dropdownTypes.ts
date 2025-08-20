@@ -1,3 +1,8 @@
+export interface Option {
+  label: string;
+  value: number;
+}
+
 export interface Regions {
   message?: string
   status?: string
@@ -72,7 +77,7 @@ export interface PoliceDivisionsDetail {
 export interface Districts {
   message?: string
   status?: string
-  success?: string
+  success?: boolean
   data?: DistrictsDetail[]
 }
 
@@ -91,7 +96,7 @@ export interface DistrictsDetail {
 export interface SubDistricts {
   message?: string
   status?: string
-  success?: string
+  success?: boolean
   data?: SubDistrictsDetail[]
 }
 
@@ -167,7 +172,7 @@ export interface VehicleBodyTypeDetail
 {
   id: number
   body_type: string
-  body_type_en?: string
+  body_type_en: string
   body_type_th: string
   details?: string
   visible?: boolean
@@ -198,7 +203,7 @@ export interface VehicleColorDetail
 {
   id: number
   color: string
-  color_en?: string
+  color_en: string
   color_th: string
   visible?: boolean
   active?: boolean
@@ -252,4 +257,33 @@ export interface PersonTypes {
   status?: string
   success?: string
   data?: PersonTypesDetail[]
+}
+
+interface PoliceRegion {
+  id: number;
+  title_en: string;
+  title_th: string;
+  active: number;
+}
+
+export interface PoliceStation {
+  id: number;
+  province_id: number;
+  district_id: number | null;
+  police_region: PoliceRegion;
+  province_name: string;
+  station_name: string;
+  address: string | null;
+  phone: string | null;
+  fax: string | null;
+  visible: number;
+  active: number;
+  notes: string | null;
+}
+
+export interface PoliceStationResponse {
+  message?: string
+  status?: string
+  success?: string
+  data?: PoliceStation[]
 }

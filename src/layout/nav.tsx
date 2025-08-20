@@ -1,4 +1,4 @@
-import { Th } from "react-flags-select"
+import { Th, Gb, La } from "react-flags-select"
 import "./nav.scss";
 import { useCallback, useEffect, useState, useRef } from "react";
 import MenuIcon from "./menu-icon/menuicon";
@@ -9,68 +9,85 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "../app/store"
 import dayjs from 'dayjs';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
+import { useNavigate } from "react-router-dom";
+import { fetchClient, combineURL } from "../utils/fetchClient"
 
 // Context
 import { useHamburger } from "../context/HamburgerContext";
 
 // API
-import { 
-  fetchSettingsShortThunk,
-} from "../features/settings/settingsSlice"
 import {
   logout
 } from "../features/auth/authSlice"
-import { getUserInfo } from "../features/auth/authAPI";
+
+// Types
+import {
+  SettingDataShort,
+} from "../features/settings/settingsTypes";
+
+// Config
+import { getUrls } from '../config/runtimeConfig';
+
+// i18n
+import { useTranslation } from "react-i18next";
 
 dayjs.extend(buddhistEra);
 
 function Nav() {
+  const dispatch: AppDispatch = useDispatch()
+  
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const [languageSelected, setLanguageSelect] = useState("th");
   const [sidePosition, setSidePosition] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>("")
-  const [checkpoint, setCheckpoint] = useState<string>("ด่าน: ")
+  const [checkpoint, setCheckpoint] = useState<string>(`${t("text.station")}: `)
   const { isOpen, toggleMenu } = useHamburger()
   const [dropdownVisible, setDropdownVisible] = useState(false)
-  const [userInfo, setUserInfo] = useState<any>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
-  const dispatch: AppDispatch = useDispatch()
-  const { settingDataShort } = useSelector(
-    (state: RootState) => state.settingsData
+
+  const navigate = useNavigate();
+
+  const { PROJECT_NAME, API_URL } = getUrls();
+
+  const { username } = useSelector(
+    (state: RootState) => state.auth.authData
   )
 
   useEffect(() => {
-    dispatch(fetchSettingsShortThunk())
-    const interval = setInterval(() => {
-      setCurrentTime(dayjs(new Date()).format('DD-MM-BBBB HH:mm:ss'))
-    }, 1000)
-
-    const fetchUserInfo = async () => {
-      try {
-        const userInfo = await getUserInfo();
-        if (userInfo && userInfo.data && userInfo.data.length > 0) {
-          setUserInfo(userInfo.data[0]);
-        }
-      } 
-      catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    };
-
-    fetchUserInfo();
-
-    return () => clearInterval(interval)
-  }, [dispatch])
+    fetchCheckpointName();
+  }, [])
 
   useEffect(() => {
-    if (settingDataShort && settingDataShort.data ) {
-      setCheckpoint(`ด่าน: ${settingDataShort.data.checkpoint_name || ""}`)
+    const interval = setInterval(() => {
+      const format = i18n.language === "th" ? "DD-MM-BBBB HH:mm:ss" : "DD-MM-YYYY HH:mm:ss"
+      setCurrentTime(dayjs(new Date()).format(format))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [i18n.language])
+
+  const fetchCheckpointName = async () => {
+    try {
+      const response = await fetchClient<SettingDataShort>(combineURL(API_URL, "/settings/get-short"), {
+        method: "GET",
+      })
+
+      if (response.data) {
+        setCheckpoint(`${t('text.station')}: ${response.data.checkpoint_name || ""}`)
+      }
     }
-  }, [settingDataShort])
+    catch (error) {
+      console.error(error)
+    }
+  }
 
   const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLanguage = event.target.value
     setLanguageSelect(selectedLanguage)
+    i18n.changeLanguage(selectedLanguage);
   }
 
   const handleSlideUp = useCallback(() => {
@@ -94,11 +111,11 @@ function Nav() {
       icon: "special-plate",
       label: "special-plate",
     },
-    {
-      path: "/checkpoint/special-suspect-person",
-      icon: "order-detect-person",
-      label: "special-suspect-person",
-    },
+    // {
+    //   path: "/checkpoint/special-suspect-person",
+    //   icon: "order-detect-person",
+    //   label: "special-suspect-person",
+    // },
     { path: "/checkpoint/settings", icon: "settings", label: "settings" },
     // { path: "/checkpoint/user-manage", icon: "add-user", label: "add-user" },
     // { path: "/checkpoint/chart", icon: "bar-chart", label: "bar-chart" },
@@ -128,6 +145,7 @@ function Nav() {
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setDropdownVisible(false)
+    navigate('/checkpoint/user-info', { replace: true, state: { allowed: true } })
   };
   
   const handleLogoutClick = (e: React.MouseEvent) => {
@@ -161,8 +179,8 @@ function Nav() {
                     <div className={`line ${isOpen ? "open" : ""}`} />
                   </button>
                 </div>
-                <img src="/svg/sm-logo.svg" alt="Logo" className="w-[60px] h-[40px]" />
-                <span className="text-[25px]">License Plate Recognition</span>
+                <img src="/project-logo/sm-logo.png" alt="Logo" className="w-[60px] h-[40px]" />
+                <span className="text-[25px]">{PROJECT_NAME}</span>
               </div>
             </div>
             <div className="flex w-full">
@@ -179,7 +197,7 @@ function Nav() {
         {/* User Section */}
         <div className="flex items-center space-x-5 mr-[50px] text-white">
           <div className="flex items-center justify-center w-[150px]">
-            <p className="text-center text-[20px] overflow-hidden whitespace-nowrap text-ellipsis w-full" title={userInfo?.username ?? "User"}>{userInfo?.username ?? "User"}</p>
+            <p className="text-center text-[20px] overflow-hidden whitespace-nowrap text-ellipsis w-full" title={username ?? "User"}>{username ?? "User"}</p>
           </div>
           <div className="relative">
             <div className="bg-gradient-to-b from-aqua2 to-blueC p-[2px] rounded-full">
@@ -203,14 +221,14 @@ function Nav() {
                         className={`px-4 py-1 hover:bg-linkWater hover:text-black cursor-pointer text-sm text-white text-center`}
                         onClick={handleProfileClick}
                       >
-                        ข้อมูลส่วนตัว
+                        {t('button.profile')}
                       </li>
                       <div className="border-b-[1px] border-dodgerBlue mx-2"></div>
                       <li
                         className={`px-4 py-1 hover:bg-linkWater hover:text-black cursor-pointer text-sm text-white text-center`}
                         onClick={handleLogoutClick}
                       >
-                        ออกจากระบบ
+                        {t('button.logout')}
                       </li>
                     </ul>
                   </div>
@@ -220,14 +238,30 @@ function Nav() {
           </div>
           <div className="grid grid-cols-[20px_auto] border border-white rounded-[5px] py-[3px] px-[12px]">
             {/* <span className="mr-[5px]">{languageSelected === 'th' ? <Th /> : <Us />}</span> */}
-            <span className="mr-[5px]">{<Th /> }</span>
+            <span className="mr-[5px]">
+              {
+                (() => {
+                  switch (languageSelected) {
+                    case 'th':
+                      return <Th />;
+                    case 'en':
+                      return <Gb />;
+                    case 'la':
+                      return <La />;
+                    default:
+                      return <Th />;
+                  }
+                })()
+              }
+            </span>
             <select 
               className="bg-transparent text-[12px] text-center focus:outline-none focus:ring-0" 
               value={languageSelected} 
               onChange={handleLanguageChange}
             >
-              <option className="text-black" value="th">TH</option>
-              {/* <option className="text-black" value="en">EN</option> */}
+              <option className="text-black" value="th">Thai</option>
+              <option className="text-black" value="en">English</option>
+              <option className="text-black" value="la">Lao</option>
             </select>
           </div>
         </div>

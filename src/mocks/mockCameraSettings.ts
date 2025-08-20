@@ -1,4 +1,4 @@
-import { CameraDetailSettings, StreamDetail } from "../features/camera-settings/cameraSettingsTypes";
+import { CameraDetailSettings, CameraSettingsData, StreamDetail } from "../features/camera-settings/cameraSettingsTypes";
 
 export const cameraDetailSettingsData: CameraDetailSettings[] =
 Array.from({length:10}, (_, i) => (
@@ -6,6 +6,7 @@ Array.from({length:10}, (_, i) => (
     id: i + 1,
     cam_id: `CAM-10${i}`,
     cam_uid: "UID98765",
+    checkpoint_uid: 123456,
     checkpoint_name:  (i + 1) % 2 === 0 ? "Checkpoint A" : (i + 1) % 3 === 0 ? "Checkpoint C" : "Checkpoint B",
     organization: "Lpr",
     province_id: 10,
@@ -40,6 +41,7 @@ Array.from({length:10}, (_, i) => (
     streaming: true,
     visible: 1,
     active: 1,
+    deleted: 1,
     alive: 1,
     alpr_cam_id: 10000001,
     detecion_count: 0,
@@ -116,3 +118,30 @@ export const streamDetailData: StreamDetail[] = [
     },
   },
 ];
+
+export const cameraSettingsData: CameraSettingsData[] =
+Array.from({length:10}, (_, i) => (
+  {
+    id: i + 1,
+    cam_id: `CAM-10${i}`,
+    checkpoint_uid: 1,
+    province_id: 10,
+    district_id: 20,
+    sub_district_id: 30,
+    route: "Route 66",
+    latitude: 13.7563,
+    longitude: 100.5018,
+    rtsp_live_url: "rtsp://viewer:Lprviewer@localhost:8554/live",
+    rtsp_process_url: "rtsp://192.168.1.10/process",
+    stream_encode_id: 1,
+    api_server_url: "https://api.server.url",
+    visible: 1,
+    active: 1,
+    alive: 1,
+    alpr_cam_id: 10000001,
+    last_online: "2024-12-17T14:35:00Z",
+    last_check: "2024-12-17T15:00:00Z",
+    createdAt: "2024-01-01T10:00:00Z",
+    updatedAt: "2024-12-17T16:00:00Z",
+  }
+))

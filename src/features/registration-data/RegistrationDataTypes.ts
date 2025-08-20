@@ -36,8 +36,8 @@ export interface SpecialPlatesDetail {
   province_id: number
   plate_class_id: number
   case_number: string
-  arrest_warrant_date: string
-  arrest_warrant_expire_date: string
+  arrest_warrant_date: string | null
+  arrest_warrant_expire_date: string | null
   behavior: string
   case_owner_name: string
   case_owner_agency: string

@@ -253,10 +253,77 @@ export interface DocumentWithFullscreen extends Document {
   webkitExitFullscreen?: () => Promise<void>
 }
 
-export interface PdfDowload {
+export interface PdfDownload {
   statusCode?: number
   status?: string
   success?: boolean
   message?: string
   filePath: string
+}
+
+export interface Option {
+  label: string;
+  value: number;
+}
+
+export interface Pagination {
+  page: number;
+  maxPage: number;
+  limit: number;
+  count: number;
+  countAll: number;
+}
+
+export interface FileUpload {
+  filename: string
+  originalName: string
+  mimetype: string
+  sizeMB: number
+  title: string
+  url: string 
+  createdAt?: string;
+}
+
+export interface FileUploadResponse {
+  statusCode: number;
+  status: string;
+  success: boolean;
+  message: string;
+  pagination: Pagination;
+  data: FileUpload[];
+}
+
+export interface UserResponse {
+  statusCode: number;
+  status: string;
+  success: boolean;
+  message: string;
+  pagination: Pagination;
+  data: User[];
+}
+
+export interface User {
+  id: number
+  idcard: string;
+  tokens: string;
+  is_logged_in: boolean;
+  visible: boolean;
+  last_login: string;
+  created_at: string;
+  updated_at: string;
+  title_id: number
+  firstname: string
+  lastname: string
+  email: string
+  phone: string
+  job_position: string
+  agency: string
+  permissions: ""
+  status: string
+  active: number
+  image_url: string
+  user_group_id: number
+  username: string
+  password: string
+  dob: Date | null
 }
