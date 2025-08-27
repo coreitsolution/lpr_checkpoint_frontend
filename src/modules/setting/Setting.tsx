@@ -78,7 +78,7 @@ const Setting = () => {
   const [selectedRow, setSelectedRow] = useState<CameraDetailSettings | null>(null)
   const [checkpointData, setCheckpointData] = useState<Checkpoint | null>(null)
   const [cameraScreenSettingDetail, setCameraScreenSettingDetail] = useState<CameraScreenSettingDetail | null>(null)
-  const [selectedScreenValue, setSelectedScreenValue] = useState<number>(1)
+  const [selectedScreenValue, setSelectedScreenValue] = useState<number | ''>('')
   const [cameraSettingSelect, setCameraSettingSelect] = useState<{ name: string; value: number }[]>([]);
   const [rowSelected, setRowSelected] = useState<number[]>([])
 

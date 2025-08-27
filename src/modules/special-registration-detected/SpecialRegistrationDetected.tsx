@@ -383,7 +383,7 @@ const SpecialRegistrationDetected = () => {
                         <th className="text-center text-white w-[12%]">{t('table.column.image')}</th>
                         <th className="text-center text-white w-[15%]">{t('table.column.checkpoint')}</th>
                         <th className="text-center text-white w-[15%]">{t('table.column.car-type')}</th>
-                        <th className="text-center text-white w-[10%]">{t('table.column.car-type')}</th>
+                        <th className="text-center text-white w-[10%]">{t('table.column.model')}</th>
                         <th className="text-center text-white w-[10%]">{t('table.column.brand')}</th>
                         <th className="text-center text-white w-[10%]">{t('table.column.color')}</th>
                         <th className="text-center text-white w-[13%]">
