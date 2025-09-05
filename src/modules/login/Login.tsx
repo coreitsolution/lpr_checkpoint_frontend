@@ -120,12 +120,16 @@ const LoginPage = () => {
         transition={{ duration: 0.5 }}
       >
         <motion.div 
-          className="flex mb-[60px]"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          className="flex justify-center items-center" 
+          initial={{ opacity: 0, x: -20 }} 
+          animate={{ opacity: 1, x: 0 }} 
           transition={{ duration: 0.8 }}
         >
-          <div className="bg-cover bg-center w-full h-[95px]" style={{ backgroundImage: `url(${LogoImage})` }}></div>
+          <div 
+            className="bg-center bg-no-repeat bg-contain w-full min-h-[250px]" 
+            style={{ backgroundImage: `url(${LogoImage})` }}
+          >
+          </div>
         </motion.div>
 
         {/* Form Fields */}

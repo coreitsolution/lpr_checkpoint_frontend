@@ -50,7 +50,7 @@ function Nav() {
 
   const navigate = useNavigate();
 
-  const { PROJECT_NAME, API_URL } = getUrls();
+  const { PROJECT_NAME, API_URL, NAV_LOGO_BG_WHITE } = getUrls();
 
   const { username } = useSelector(
     (state: RootState) => state.auth.authData
@@ -179,7 +179,9 @@ function Nav() {
                     <div className={`line ${isOpen ? "open" : ""}`} />
                   </button>
                 </div>
-                <img src="/project-logo/sm-logo.png" alt="Logo" className="w-[60px] h-[40px]" />
+                <div className={`flex justify-center items-center ${NAV_LOGO_BG_WHITE ? "bg-white" : ""}`}>
+                  <img src="/project-logo/sm-logo.png" alt="Logo" className="w-[80px] h-[55px]" />
+                </div>
                 <span className="text-[25px]">{PROJECT_NAME}</span>
               </div>
             </div>

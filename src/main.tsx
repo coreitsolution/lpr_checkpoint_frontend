@@ -8,7 +8,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { HamburgerProvider } from "./context/HamburgerContext.tsx";
 import { StyledEngineProvider } from '@mui/material/styles';
-import { loadConfig } from './config/runtimeConfig';
+import { loadConfig, getUrls } from './config/runtimeConfig';
 import 'leaflet/dist/leaflet.css';
 import "leaflet-boundary-canvas";
 import './i18n';
@@ -23,6 +23,9 @@ const darkTheme = createTheme({
 });
 
 loadConfig().then(() => {
+  const { PROJECT_NAME } = getUrls();
+  document.title = PROJECT_NAME;
+
   const root = document.getElementById('root');
   if (root) {
     createRoot(root).render(
