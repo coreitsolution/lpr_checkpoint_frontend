@@ -177,7 +177,7 @@ const SpecialRegistrationDetected = () => {
       brand: data.vehicle_make_info ? data.vehicle_make_info.make_en : reformatString(data.vehicle_make),
       color: data.vehicle_color_info ? i18n.language === "th" ? data.vehicle_color_info.color_th : data.vehicle_color_info.color_en : reformatString(data.vehicle_color),
       registration_type: data.special_plate && data.special_plate.plate_class_info.title_en || "Normal",
-      date: dayjs(data.epoch_start).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYY'),
+      date: dayjs(data.epoch_start).format(i18n.language === "th" ? 'DD/MM/BBBB' : 'DD/MM/YYYY'),
       time: dayjs(data.epoch_start).format('HH:mm:ss'),
     }))
   ] : []
