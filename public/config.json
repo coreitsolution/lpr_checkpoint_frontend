@@ -12,5 +12,5 @@
   "VITE_SETTING_WEBSOCKET_URL": "ws://58.136.155.235:19093",
   "VITE_SETTING_WEBSOCKET_TOKEN": "3b0c1f8d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0",
   "PROJECT_NAME": "License Plate Recognition",
-  "NAV_LOGO_BG_WHITE": true
+  "NAV_LOGO_BG_WHITE": false
 }

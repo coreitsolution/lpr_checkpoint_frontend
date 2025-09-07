@@ -13,11 +13,17 @@ import TextBox from '../../../components/text-box/TextBox'
 import AutoComplete from "../../../components/auto-complete/AutoComplete"
 import SelectBox from "../../../components/select-box/SelectBox"
 
+// i18n
+import { useTranslation } from "react-i18next";
+
 interface SearchFilterProps {
   setFilterData: (filterData: FilterSpecialRegistration) => void
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
+
+  // i18n
+  const { t, i18n } = useTranslation();
 
   const [letterCategory, setLetterCategory] = useState("")
   const [carRegistration, setCarRegistration] = useState("")
@@ -44,12 +50,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
   useEffect(() => {
     if (provinces && provinces.data) {
       const options = provinces.data.map((row) => ({
-        label: row.name_th,
+        label: i18n.language === "th" ? row.name_th : row.name_en,
         value: row.id,
       }));
       setProvincesOptions(options)
     }
-  }, [provinces])
+  }, [provinces, i18n.language])
 
   useEffect(() => {
     if (registrationTypes && registrationTypes.data) {
@@ -57,10 +63,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         label: row.title_en,
         value: row.id,
       }));
-      setRegistrationTypesOptions([{label: "ทุกประเภท", value: 0}, ...options])
+      setRegistrationTypesOptions([{label: t('text.all'), value: 0}, ...options])
       setSelectedRegistrationType(0)
     }
-  }, [registrationTypes])
+  }, [registrationTypes, i18n.language])
 
   useEffect(() => {
     if (dataStatus) {
@@ -68,10 +74,10 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
         label: row.status,
         value: row.id,
       }));
-      setDataStatusOptions([{label: "ทุกสถานะ", value: 2}, ...options])
+      setDataStatusOptions([{label: t('text.all-status'), value: 2}, ...options])
       setSelectedStatus(2)
     }
-  }, [dataStatus])
+  }, [dataStatus, i18n.language])
 
   const handleReset = () => {
     setLetterCategory("")
@@ -86,7 +92,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
     setFilterData(filterData)
   }
 
-  const handleProvicesChange = (
+  const handleProvincesChange = (
     event: React.SyntheticEvent,
     value: { value: any; label: string } | null
   ) => {
@@ -118,7 +124,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               alt="Search Filter"
               className="w-[22px] h-[22px] ml-[10px]"
             />
-            <span className="flex justify-start text-[15px] ml-[15px]">เงื่อนไขการค้นหา</span>
+            <span className="flex justify-start text-[15px] ml-[15px]">{t('screen.search-condition')}</span>
           </div>
 
           <div className="h-[80vh] overflow-y-auto">
@@ -128,7 +134,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 <TextBox
                   sx={{ marginTop: "5px" }}
                   id="character"
-                  label="หมวดอักษร"
+                  label={t('component.plate-character')}
                   placeholder=""
                   value={letterCategory}
                   labelFontSize="15px"
@@ -139,7 +145,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 <TextBox
                   sx={{ marginTop: "5px" }}
                   id="registration-number"
-                  label="เลขทะเบียน"
+                  label={t('component.plate-number')}
                   placeholder=""
                   value={carRegistration}
                   labelFontSize="15px"
@@ -148,12 +154,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
               </div>
               <div className="flex flex-col w-full">
                 <AutoComplete 
-                  id="provice-select"
+                  id="province-select"
                   sx={{ marginTop: "10px"}}
                   value={selectedProvince}
-                  onChange={handleProvicesChange}
+                  onChange={handleProvincesChange}
                   options={provincesOptions}
-                  label="หมวดจังหวัด"
+                  label={t('component.province-category')}
                   labelFontSize="15px"
                 />
               </div>
@@ -164,7 +170,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   value={selectedRegistrationType}
                   onChange={(event: SelectChangeEvent<any>) => setSelectedRegistrationType(event.target.value)}
                   options={registrationTypesOptions}
-                  label="ประเภททะเบียน"
+                  label={t('component.plate-type')}
                   labelFontSize="15px"
                 />
               </div>
@@ -172,7 +178,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                 <TextBox
                   sx={{ marginTop: "5px" }}
                   id="agency"
-                  label="หน่วยงานเจ้าของข้อมูล"
+                  label={t('component.owner-data-agency')}
                   placeholder=""
                   value={agencyText}
                   labelFontSize="15px"
@@ -186,7 +192,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                   value={selectedStatus}
                   onChange={(event: SelectChangeEvent<any>) => setSelectedStatus(event.target.value)}
                   options={dataStatusOptions}
-                  label="สถานะข้อมูล"
+                  label={t('component.status-data')}
                   labelFontSize="15px"
                 />
               </div>
@@ -201,14 +207,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
                     alt="Search Icon" 
                     className='w-[20px] h-[20px]' 
                   />
-                  <span className="ml-[5px]">ค้นหา</span>
+                  <span className="ml-[5px]">{t('button.search')}</span>
                 </button>
                 <button 
                   type="button" 
                   className="bg-white text-dodgerBlue rounded border-[1px] border-dodgerBlue w-[90px] h-[35px]"
                   onClick={handleReset}
                 >
-                  ล้างข้อมูล
+                  {t('button.clear-data')}
                 </button>
               </div>
             </div>
