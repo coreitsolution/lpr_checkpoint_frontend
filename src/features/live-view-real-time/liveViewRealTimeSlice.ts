@@ -47,8 +47,8 @@ export const fetchLastRecognitionsThunk = createAsyncThunk(
 
 export const fetchConnectionThunk = createAsyncThunk(
   "liveViewRealTimes/fetchConnection",
-  async () => {
-    const response = await fetchConnection()
+  async (param?: Record<string, string>) => {
+    const response = await fetchConnection(param)
     return response
   }
 )

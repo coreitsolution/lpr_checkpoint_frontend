@@ -26,15 +26,13 @@ import {
   ConnectionResult, 
   SystemStatusData,
   RealTimeLprData,
-  VehicleCountResult,
-  SystemStatusResult,
   ZipDownload,
 } from "../../../features/live-view-real-time/liveViewRealTimeTypes"
 import { DirectionDetail } from "../../../features/api/types";
 
 // Services
-import { useSelector } from "react-redux"
-import { RootState } from "../../../app/store"
+import { useSelector, useDispatch } from "react-redux"
+import { RootState, AppDispatch } from "../../../app/store"
 
 // Component
 import Loading from "../../../components/loading/Loading"
@@ -42,6 +40,12 @@ import Loading from "../../../components/loading/Loading"
 // Utils
 import { reformatString, isNumber, formatNumber } from "../../../utils/commonFunction"
 import { PopupMessage } from "../../../utils/popupMessage"
+
+// API
+import { 
+  fetchSystemStatusThunk,
+  fetchVehicleCountThunk,
+} from "../../../features/live-view-real-time/liveViewRealTimeSlice"
 
 // i18n
 import { useTranslation } from "react-i18next";
@@ -84,6 +88,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
     (state: RootState) => state.realtimeData
   )
 
+  const dispatch = useDispatch<AppDispatch>();
+
   const tabIcon = {
     LastRecognitionIcon: "/icons/planing",
     VehicleCountIcon: "/icons/checklist",
@@ -98,10 +104,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         "orderBy": "id",
         "reverseOrder": "true",
       }
-      await fetchClient<VehicleCountResult>(combineURL(API_URL, "/lpr-data/get-vehicle-count"), {
-        method: "GET",
-        queryParams: query,
-      });
+      await dispatch(fetchVehicleCountThunk(query));
     }
     catch (ex) {
       setVehicleCountListData([])
@@ -115,10 +118,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
         "orderBy": "id",
         "reverseOrder": "true",
       }
-      await fetchClient<SystemStatusResult>(combineURL(API_URL, "/logs/get"), {
-        method: "GET",
-        queryParams: query,
-      });
+      await dispatch(fetchSystemStatusThunk(query));
     }
     catch (ex) {
       setSystemStatusListData([])
@@ -143,7 +143,7 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
       setLPRCameraDropdown(defaultDropdown)
       setLPRCameraSetting(0)
     }
-  }, [cameraSetting, i18n.language])
+  }, [cameraSetting, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (lastRecognitionData) {
@@ -204,20 +204,6 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
       setConnectionListData((prev) => [...prev, connectionData])
     }
   }, [connectionData])
-
-  useEffect(() => {
-    if (LPRCameraSetting === 0) {
-      setLastRecognitionListData(realtimeData)
-    }
-    else {
-      const filterData = realtimeData.filter((item) => item.alprCamId === LPRCameraSetting)
-      setLastRecognitionListData(filterData)
-    }
-  }, [LPRCameraSetting])
-
-  const sortedConnectionList = [...connectionListData]
-  .sort((a, b) => b.id - a.id)
-  .slice(0, 20)
 
   const handleDownloadButtonClick = async(event: React.MouseEvent, id: number) => {
     event.stopPropagation()
@@ -671,8 +657,8 @@ const CCTVSideBar: React.FC<CCTVSideBarProp> = ({setCollapse, cameraSetting, set
                   </thead>
                   {/* Table Body */}
                   <tbody className='text-[12px]'>
-                    {sortedConnectionList && sortedConnectionList.length > 0
-                      ? sortedConnectionList.map((item) => (
+                    {connectionListData && connectionListData.length > 0
+                      ? connectionListData.map((item) => (
                           <tr
                             key={item.id}
                             className="h-[35px] border-b-[1px] border-dashed border-darkGray"

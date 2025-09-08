@@ -455,7 +455,15 @@ const Setting = () => {
         <div className='grid grid-cols-4 gap-y-5 gap-x-2 py-[15px] px-[10px] border-[1px] border-dodgerBlue'>
           {
             (() => {
-              const address = checkpointData?.province_name ? `ต.${checkpointData?.subdistrict_name}/ อ.${checkpointData?.district_name}/ จ.${checkpointData?.province_name}` : "-";
+              let address = "-";
+              if (checkpointData?.province_name) {
+                if (i18n.language === 'th') {
+                  address = `ต.${checkpointData?.subdistrict_name}/ อ.${checkpointData?.district_name}/ จ.${checkpointData?.province_name}`;
+                }
+                else {
+                  address = `${checkpointData?.subdistrict_name}/ ${checkpointData?.district_name}/ ${checkpointData?.province_name}`;
+                }
+              }
               const latLon = checkpointData ? `${checkpointData.latitude}, ${checkpointData.longitude}` : "-";
               const checkpointInfo = checkpointData?.checkpoint_name || "-";
               const organization = checkpointData?.organization || "-";

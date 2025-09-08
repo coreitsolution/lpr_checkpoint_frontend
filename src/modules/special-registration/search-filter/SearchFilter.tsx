@@ -55,7 +55,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       }));
       setProvincesOptions(options)
     }
-  }, [provinces, i18n.language])
+  }, [provinces, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (registrationTypes && registrationTypes.data) {
@@ -66,7 +66,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setRegistrationTypesOptions([{label: t('text.all'), value: 0}, ...options])
       setSelectedRegistrationType(0)
     }
-  }, [registrationTypes, i18n.language])
+  }, [registrationTypes, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (dataStatus) {
@@ -77,7 +77,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setDataStatusOptions([{label: t('text.all-status'), value: 2}, ...options])
       setSelectedStatus(2)
     }
-  }, [dataStatus, i18n.language])
+  }, [dataStatus, i18n.language, i18n.isInitialized])
 
   const handleReset = () => {
     setLetterCategory("")

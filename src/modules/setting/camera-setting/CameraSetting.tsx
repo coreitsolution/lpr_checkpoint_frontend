@@ -89,8 +89,6 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
 
   const {
     provinces,
-    personTitles,
-    positions,
     streamEncodes,
   } = useSelector((state: RootState) => state.dropdown)
 
@@ -109,87 +107,76 @@ const CameraSetting: React.FC<CameraSettingProps> = ({
   } = useForm();
 
   useEffect(() => {
-    if (
-      provinces?.data &&
-      provinces?.data?.length > 0 &&
-      personTitles?.data && personTitles?.data.length > 0 &&
-      positions?.data && positions?.data.length > 0
-    ) {
-      if (isEditMode && selectedRow) {
-        setState((prev) => ({
-          ...prev,
-          id: selectedRow.id,
-          isLoading: false,
-          isLocationSettingOpen: false,
-          isSensorSettingOpen: false,
-          checkpointId: selectedRow.cam_id,
-          rtspLiveView: selectedRow.rtsp_live_url,
-          streamEncodeSelect: selectedRow.stream_encode_id,
-          apiServer: selectedRow.api_server_url,
-          rtspProcess: selectedRow.rtsp_process_url,
-          number_of_detections: 0,
-          province_id: selectedRow.province_id,
-          district_id: selectedRow.district_id,
-          sub_district_id: selectedRow.sub_district_id,
-          route: selectedRow.route,
-          latitude: selectedRow.latitude.toString(),
-          longitude: selectedRow.longitude.toString(),
-        }))
-        setOriginalData(selectedRow)
+    if (isEditMode && selectedRow) {
+      setState((prev) => ({
+        ...prev,
+        id: selectedRow.id,
+        isLoading: false,
+        isLocationSettingOpen: false,
+        isSensorSettingOpen: false,
+        checkpointId: selectedRow.cam_id,
+        rtspLiveView: selectedRow.rtsp_live_url,
+        streamEncodeSelect: selectedRow.stream_encode_id,
+        apiServer: selectedRow.api_server_url,
+        rtspProcess: selectedRow.rtsp_process_url,
+        number_of_detections: 0,
+        province_id: selectedRow.province_id,
+        district_id: selectedRow.district_id,
+        sub_district_id: selectedRow.sub_district_id,
+        route: selectedRow.route,
+        latitude: selectedRow.latitude.toString(),
+        longitude: selectedRow.longitude.toString(),
+      }))
+      setOriginalData(selectedRow)
 
-        setValue("checkpointId", selectedRow.cam_id);
-        setValue("rtspLiveView", selectedRow.rtsp_live_url);
-        setValue("streamEncodeSelect", selectedRow.stream_encode_id);
-        setValue("apiServer", selectedRow.api_server_url);
-        setValue("rtspProcess", selectedRow.rtsp_process_url);
-        setValue("number_of_detections", 0);
-        setValue("province_id", selectedRow.province_id);
-        setValue("district_id", selectedRow.district_id);
-        setValue("sub_district_id", selectedRow.sub_district_id);
-        setValue("route", selectedRow.route);
-        setValue("latitude", selectedRow.latitude.toString());
-        setValue("longitude", selectedRow.longitude.toString());
-      }
-      else {
-        setState({
-          id: undefined,
-          checkpointId: "",
-          isLoading: false,
-          isLocationSettingOpen: false,
-          isSensorSettingOpen: false,
-          rtspLiveView: "",
-          streamEncodeSelect: 0,
-          apiServer: "",
-          rtspProcess: "",
-          number_of_detections: 0,
-          province_id: 0,
-          district_id: 0,
-          sub_district_id: 0,
-          route: "",
-          latitude: "",
-          longitude: "",
-        })
+      setValue("checkpointId", selectedRow.cam_id);
+      setValue("rtspLiveView", selectedRow.rtsp_live_url);
+      setValue("streamEncodeSelect", selectedRow.stream_encode_id);
+      setValue("apiServer", selectedRow.api_server_url);
+      setValue("rtspProcess", selectedRow.rtsp_process_url);
+      setValue("number_of_detections", 0);
+      setValue("province_id", selectedRow.province_id);
+      setValue("district_id", selectedRow.district_id);
+      setValue("sub_district_id", selectedRow.sub_district_id);
+      setValue("route", selectedRow.route);
+      setValue("latitude", selectedRow.latitude.toString());
+      setValue("longitude", selectedRow.longitude.toString());
+    }
+    else {
+      setState({
+        id: undefined,
+        checkpointId: "",
+        isLoading: false,
+        isLocationSettingOpen: false,
+        isSensorSettingOpen: false,
+        rtspLiveView: "",
+        streamEncodeSelect: 0,
+        apiServer: "",
+        rtspProcess: "",
+        number_of_detections: 0,
+        province_id: 0,
+        district_id: 0,
+        sub_district_id: 0,
+        route: "",
+        latitude: "",
+        longitude: "",
+      })
 
-        setValue("checkpointId", "");
-        setValue("rtspLiveView", "");
-        setValue("streamEncodeSelect", "");
-        setValue("apiServer", "");
-        setValue("rtspProcess", "");
-        setValue("number_of_detections", 0);
-        setValue("province_id", "");
-        setValue("district_id", "");
-        setValue("sub_district_id", "");
-        setValue("route", "");
-        setValue("latitude", "");
-        setValue("longitude", "");
-      }
+      setValue("checkpointId", "");
+      setValue("rtspLiveView", "");
+      setValue("streamEncodeSelect", "");
+      setValue("apiServer", "");
+      setValue("rtspProcess", "");
+      setValue("number_of_detections", 0);
+      setValue("province_id", "");
+      setValue("district_id", "");
+      setValue("sub_district_id", "");
+      setValue("route", "");
+      setValue("latitude", "");
+      setValue("longitude", "");
     }
   }, [
-    provinces,
-    personTitles,
-    positions,
-    isEditMode,
-    selectedRow,
+    open
   ])
 
   useEffect(() => {

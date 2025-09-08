@@ -10,6 +10,7 @@ export interface LastRecognitionResult {
 export interface RegionInfo {
   id: number
   name_th: string
+  name: string
 }
 
 export interface LastRecognitionData {

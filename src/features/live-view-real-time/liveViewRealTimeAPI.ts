@@ -43,13 +43,15 @@ export const fetchVehicleCount = async (param?: Record<string, string>): Promise
   });
 };
 
-export const fetchConnection = async (): Promise<ConnectionResult> => {
+export const fetchConnection = async (param?: Record<string, string>): Promise<ConnectionResult> => {
+  const { API_URL } = getUrls();
   if (isDevEnv) {
     return Promise.resolve(connectionData);
   }
-  return await fetchClient<ConnectionResult>(
-    "https://jsonplaceholder.typicode.com/users"
-  );
+  return await fetchClient<ConnectionResult>(combineURL(API_URL, ""), {
+    method: "GET",
+    queryParams: param,
+  });
 };
 
 export const fetchSystemStatus = async (param?: Record<string, string>): Promise<SystemStatusResult> => {

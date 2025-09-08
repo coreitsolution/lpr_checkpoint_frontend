@@ -39,7 +39,6 @@ import { fetchClient, combineURL } from "../../utils/fetchClient"
 import { getUrls } from '../../config/runtimeConfig';
 
 // Constant
-import { SPECIAL_PLATE_FILE_NAME } from "../../constants/filename"
 import { SearchSpecialRowPerPages } from "../../constants/dropdown"
 
 // i18n
@@ -143,7 +142,7 @@ const SpecialRegistrationDetected = () => {
   }
 
   const headers = [
-    { label: SPECIAL_PLATE_FILE_NAME, key: "title" },
+    { label: t('file-name.special-plate'), key: "title" },
     { label: "", key: "province" },
     { label: "", key: "check_point" },
     { label: "", key: "vehicle_type" },
@@ -170,7 +169,7 @@ const SpecialRegistrationDetected = () => {
     },
     ...specialPlateSearchDataList.map((data) => ({
       title: data.plate,
-      province: data.region_info ? data.region_info.name_th : "",
+      province: data.region_info ? i18n.language === "th" ? data.region_info.name_th : data.region_info.name : "",
       check_point: data.camera_info ? data.camera_info.cam_id : "",
       vehicle_type: data.vehicle_body_type_info ?  i18n.language === "th" ? data.vehicle_body_type_info.body_type_th : data.vehicle_body_type_info.body_type_en : reformatString(data.vehicle_body_type),
       model: data.vehicle_model_info ? data.vehicle_model_info.model_en : reformatString(data.vehicle_body_type),
@@ -188,6 +187,9 @@ const SpecialRegistrationDetected = () => {
       try {
         const response = await fetchClient<PdfDownload>(combineURL(API_URL, "/lpr-data/search/get-pdf"), {
           method: "GET",
+          queryParams: {
+            lang: i18n.language === "en" ? "en" : "lao",
+          }
         });
         if (response) {
           window.open(`${FILE_URL}${response.filePath}`, "_blank");
@@ -334,7 +336,7 @@ const SpecialRegistrationDetected = () => {
                   <CSVLink
                     data={csvData}
                     headers={headers}
-                    filename={`${SPECIAL_PLATE_FILE_NAME}.csv`}
+                    filename={`${t('file-name.special-plate')}.csv`}
                     className="flex items-center"
                   >
                     <img
@@ -401,7 +403,7 @@ const SpecialRegistrationDetected = () => {
                             <tr key={index + 1} className={`h-[50px] w-full border-b-[1px] border-dashed border-darkGray
                               ${data.is_special_plate ? bgColor : ""}
                             `}>
-                              <td className={`text-start text-white ${data.is_special_plate ? bgColor : "bg-tuna"} pl-5`}>{`${data.plate} ${data.region_info.name_th}`}</td>
+                              <td className={`text-start text-white ${data.is_special_plate ? bgColor : "bg-tuna"} pl-5`}>{`${data.plate} ${data.region_info ? i18n.language === "th" ? data.region_info.name_th : data.region_info.name : ""}`}</td>
                               <td 
                                 className={`text-center text-white ${data.is_special_plate ? bgColor : "bg-celtic"}`}
                                 ref={el => tdRefs.current[index] = el}

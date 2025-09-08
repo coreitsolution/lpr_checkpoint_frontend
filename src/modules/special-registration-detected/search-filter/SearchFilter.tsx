@@ -76,7 +76,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       }))
       setProvincesOptions(options)
     }
-  }, [regions, i18n.language])
+  }, [regions, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (registrationTypes && registrationTypes.data) {
@@ -87,7 +87,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setRegistrationTypesOptions([{label: t('text.all'), value: 0}, ...options])
       setSelectedRegistrationType(0)
     }
-  }, [registrationTypes, i18n.language])
+  }, [registrationTypes, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (cameraSettings && cameraSettings.data) {
@@ -108,7 +108,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setCarTypesOptions([{label: t('text.all-type'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
       setSelectedCarType('all')
     }
-  }, [vehicleBodyTypes, i18n.language])
+  }, [vehicleBodyTypes, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (vehicleColors && vehicleColors.data) {
@@ -119,7 +119,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setCarColorsOptions([{label: t('text.all-color'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
       setSelectedCarColor('all')
     }
-  }, [vehicleColors, i18n.language])
+  }, [vehicleColors, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (vehicleMakes && vehicleMakes.data) {
@@ -130,7 +130,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setCarBrandsOptions([{label: t('text.all-brand'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })])
       setSelectedCarBrand('all')
     }
-  }, [vehicleMakes, i18n.language])
+  }, [vehicleMakes, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (vehicleModels && vehicleModels.data) {
@@ -142,7 +142,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setCarModelsOptions(([{label: t('text.all-model'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
       setSelectedCarModel('all')
     }
-  }, [vehicleModels, i18n.language])
+  }, [vehicleModels, i18n.language, i18n.isInitialized])
 
   useEffect(() => {
     if (selectedCarBrand && selectedCarBrand !== 'all' && carOriModelsOptions) {
@@ -159,7 +159,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({setFilterData}) => {
       setCarModelsOptions(([{label: t('text.all-model'), value: 'all'}, ...options.sort((a, b) => { return a.label.localeCompare(b.label) })]))
     }
     
-  }, [selectedCarBrand, i18n.language])
+  }, [selectedCarBrand, i18n.language, i18n.isInitialized])
 
   const handleReset = () => {
     setLetterCategory("")
