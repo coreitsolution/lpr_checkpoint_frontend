@@ -28,7 +28,8 @@
     "stop-video": "Stop",
     "submit": "Submit",
     "sync-data-status": "Sync Data Status",
-    "station-data": "Checkpoint Data"
+    "station-data": "Checkpoint Data",
+    "detail": "Detail"
   },
   "component": {
     "api-server": "API Server",
@@ -289,7 +290,8 @@
     "checkpoint-order-pass": "Travel through station/checkpoints",
     "vehicle-data2": "Vehicle Data",
     "plate": "Plate",
-    "model-type": "Model/Type"
+    "model-type": "Model/Type",
+    "camera": "Camera"
   },
   "title": {
     "add-camera": "Add Camera",

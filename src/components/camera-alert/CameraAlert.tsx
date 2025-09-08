@@ -5,6 +5,9 @@ import dayjs from 'dayjs';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 dayjs.extend(buddhistEra)
 
+// i18n
+import { useTranslation } from 'react-i18next';
+
 type NotificationData = {
   cameraName: string;
   approved?: boolean;
@@ -23,6 +26,9 @@ const CameraAlert: React.FC<CameraAlertProps> = ({
   data,
   toastProps,
 }) => {
+  // i18n
+  const { t, i18n } = useTranslation();
+
   const isColored = toastProps?.theme === 'light';
 
   const handleUpdate = () => {
@@ -47,16 +53,40 @@ const CameraAlert: React.FC<CameraAlertProps> = ({
         </div>
       </div>
       <div className="flex flex-col gap-2 items-center">
-        <p className="text-[16px] text-[#4A4A4A]">{`กล้อง: ${data?.cameraName}`}</p>
+        <p className="text-[16px] text-[#4A4A4A]">{`${t('text.camera')}: ${data?.cameraName}`}</p>
         {
-          data.isReactive ? (
+          i18n.language === 'th' ? (
+            data.isReactive ? (
             <p className="text-[14px] text-[#4A4A4A]">ได้กลับมา<span className='font-bold underline'>ถูกเปิดใช้งาน</span>เมื่อ {dayjs(data?.timestamp).format('DD/MM/BBBB HH:mm:ss')}</p>
+            ) :
+            (
+              <div className='flex flex-col gap-1 justify-center items-center'>
+                <p className="text-[14px] text-[#4A4A4A]">การลบกล้องนี้ได้รับการ<span className='font-bold underline'>{data?.approved ? 'อนุมัติ' : 'ปฏิเสธ'}</span></p>
+                <p className="text-[14px] text-[#4A4A4A]">เมื่อ {dayjs(data?.timestamp).format('DD/MM/BBBB HH:mm:ss')}</p>
+              </div>
+            )
+          ) : 
+          i18n.language === 'en' ? (
+            data.isReactive ? (
+            <p className="text-[14px] text-[#4A4A4A]">Has been <span className='font-bold underline'>reactivated</span> at {dayjs(data?.timestamp).format('DD/MM/YYYY HH:mm:ss')}</p>
+            ) :
+            (
+              <div className='flex flex-col gap-1 justify-center items-center'>
+                <p className="text-[14px] text-[#4A4A4A]">This camera deletion has been <span className='font-bold underline'>{data?.approved ? 'Approve' : 'Reject'}</span></p>
+                <p className="text-[14px] text-[#4A4A4A]">At {dayjs(data?.timestamp).format('DD/MM/YYYY HH:mm:ss')}</p>
+              </div>
+            )
           ) :
           (
-            <div className='flex flex-col gap-1 justify-center items-center'>
-              <p className="text-[14px] text-[#4A4A4A]">การลบกล้องนี้ได้รับการ<span className='font-bold underline'>{data?.approved ? 'อนุมัติ' : 'ปฏิเสธ'}</span></p>
-              <p className="text-[14px] text-[#4A4A4A]">เมื่อ {dayjs(data?.timestamp).format('DD/MM/BBBB HH:mm:ss')}</p>
-            </div>
+            data.isReactive ? (
+            <p className="text-[14px] text-[#4A4A4A]">ກັບມາ<span className='font-bold underline'>ເປີດໃຊ້ແລ້ວ</span> ເວລາ {dayjs(data?.timestamp).format('DD/MM/YYYY HH:mm:ss')}</p>
+            ) :
+            (
+              <div className='flex flex-col gap-1 justify-center items-center'>
+                <p className="text-[14px] text-[#4A4A4A]">ການລຶບກ້ອງນີ້ໄດ້ຖືກ<span className='font-bold underline'>{data?.approved ? 'ອະນຸມັດ' : 'ປະຕິເສດ'}</span></p>
+                <p className="text-[14px] text-[#4A4A4A]">ເວລາ {dayjs(data?.timestamp).format('DD/MM/YYYY HH:mm:ss')}</p>
+              </div>
+            )
           )
         }
         {
@@ -69,7 +99,7 @@ const CameraAlert: React.FC<CameraAlertProps> = ({
                 isColored ? 'text-[#071C3B] font-bold bg-[#FFC300]' : 'text-white font-bold bg-[#2B9BED]'
               )}
             >
-              รายละเอียด
+              {t('button.detail')}
             </button>
           )
         }

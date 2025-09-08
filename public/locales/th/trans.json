@@ -28,7 +28,8 @@
     "stop-video": "Stop",
     "submit": "Submit",
     "sync-data-status": "Sync Data Status",
-    "station-data": "ข้อมูลด่าน"
+    "station-data": "ข้อมูลด่าน",
+    "detail": "รายละเอียด"
   },
   "component": {
     "api-server": "API Server",
@@ -289,7 +290,8 @@
     "checkpoint-order-pass": "ลำดับการเดินทางผ่านจุดตรวจ/ด่านตรวจ",
     "vehicle-data2": "ข้อมูลรถยนต์",
     "plate": "ทะเบียนรถ",
-    "model-type": "รุ่น/แบบ"
+    "model-type": "รุ่น/แบบ",
+    "camera": "กล้อง"
   },
   "title": {
     "add-camera": "เพิ่มกล้อง",

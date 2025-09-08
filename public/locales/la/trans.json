@@ -28,7 +28,8 @@
     "stop-video": "Stop",
     "submit": "ສົ່ງ",
     "sync-data-status": "Sync Data Status",
-    "station-data": "ຂໍ້ມູນດ່ານ"
+    "station-data": "ຂໍ້ມູນດ່ານ",
+    "detail": "ລາຍລະອຽດ"
   },
   "component": {
     "api-server": "ເຊີບເວີ API",
@@ -289,7 +290,8 @@
     "checkpoint-order-pass": "ລໍາດັບຂອງການເດີນທາງຜ່ານດ່ານ / ດ່ານ",
     "vehicle-data2": "ຂໍ້ມູນຍານພາຫະນະ",
     "plate": "ທະບຽນລົດ",
-    "model-type": "ຕົວແບບ/ປະເພດ"
+    "model-type": "ຕົວແບບ/ປະເພດ",
+    "camera": "ກ້ອງ"
   },
   "title": {
     "add-camera": "ເພີ່ມກ້ອງ",
